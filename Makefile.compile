@@ -11,8 +11,8 @@ LD = $(CROSS_COMPILE)gcc
 
 INCLUDES  = $(addprefix -I, $(INC_DIR))
 
-CFLAGS   += -O2 -MMD $(INCLUDES)
-CXXFLAGS += -O2 -MMD $(INCLUDES)
+CFLAGS   += -O2 -MMD $(INCLUDES) -g 
+CXXFLAGS += -O2 -MMD $(INCLUDES) -g 
 
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
@@ -22,7 +22,11 @@ $(DST_DIR)/%.o: %.cpp
 	@echo + CXX $<
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
-$(DST_DIR)/%.o: %.c
+$(DST_DIR)/%.o: %.c 
+	@echo + CC $<
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -c -o $@ $<
+$(DST_DIR)/%.o: %.S   
 	@echo + CC $<
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -c -o $@ $<

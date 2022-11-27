@@ -25,6 +25,10 @@ file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0
 file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0
 file /lib/libdl.so.2 ${RISCV}/sysroot/lib/libdl.so.2 755 0 0
 file /lib/libpthread.so.0 ${RISCV}/sysroot/lib/libpthread.so.0 755 0 0
+file /lib/libstdc++.so.6 ${RISCV}/sysroot/lib/libstdc++.so.6 755 0 0
+file /lib/libgcc_s.so ${RISCV}/sysroot/lib/libgcc_s.so 755 0 0
+file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0
+
 
 file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
 file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab 755 0 0
@@ -92,6 +96,12 @@ file /lib/libz.so.1.2.11 ${RISCV_ROOTFS_HOME}/rootfsimg/build/zlib 755 0 0
 slink /lib/libz.so /lib/libz.so.1.2.11 755 0 0
 slink /lib/libz.so.1 /lib/libz.so.1.2.11 755 0 0
 
+#gmp libs?
+
 #strace
-file /bin/strace ${RISCV_ROOTFS_HOME}/rootfsimg/build/strace 755 0 0
-file /lib/librt.so.1 ${RISCV}/sysroot/lib/librt.so.1 755 0 0
+#file /bin/strace ${RISCV_ROOTFS_HOME}/rootfsimg/build/strace 755 0 0
+#file /lib/librt.so.1 ${RISCV}/sysroot/lib/librt.so.1 755 0 0
+
+#hello
+file /root/hello ${RISCV_ROOTFS_HOME}/rootfsimg/build/hello 755 0 0
+
