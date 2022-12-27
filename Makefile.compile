@@ -11,8 +11,8 @@ LD = $(CROSS_COMPILE)gcc
 
 INCLUDES  = $(addprefix -I, $(INC_DIR))
 
-CFLAGS   += -O2 -MMD $(INCLUDES) -g 
-CXXFLAGS += -O2 -MMD $(INCLUDES) -g 
+CFLAGS   += -O2 -march=rv64imad -MMD $(INCLUDES) -g 
+CXXFLAGS += -O2 -march=rv64imad -MMD $(INCLUDES) -g 
 
 # Files to be compiled
 OBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
@@ -23,13 +23,13 @@ $(DST_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 $(DST_DIR)/%.o: %.c 
-	@echo + CC $<
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	echo + CC $<
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
 $(DST_DIR)/%.o: %.S   
-	@echo + CC $<
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	echo + CC $<
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(APP): $(OBJS)
 	@echo + LD $@

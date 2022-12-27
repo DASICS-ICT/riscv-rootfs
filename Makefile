@@ -1,15 +1,24 @@
 $(shell mkdir -p rootfsimg/build)
 
-APPS = hello stream busybox redis dwarf/md5 dwarf/sort dwarf/wordcount ssh-dropbear zlib #strace
+APPS = busybox 
 APPS_DIR = $(addprefix apps/, $(APPS))
 
-.PHONY: rootfsimg $(APPS_DIR) clean
+DASICS = dasics-test
+DASICS_DIR = apps/dasics-test
+
+.PHONY: rootfsimg $(APPS_DIR) $(DASICS_DIR) clean
 
 rootfsimg: $(APPS_DIR)
 
 $(APPS_DIR): %:
 	-$(MAKE) -s -C $@ install
 
+$(DASICS_DIR):
+	-$(MAKE) -s -C $@ all
+
+all: $(APPS_DIR) $(DASICS_DIR)
+
 clean:
 	-$(foreach app, $(APPS_DIR), $(MAKE) -s -C $(app) clean ;)
+	-rm -rf apps/dasics-test/build
 	-rm -f rootfsimg/build/*
