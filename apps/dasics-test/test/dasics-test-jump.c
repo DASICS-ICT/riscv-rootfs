@@ -72,6 +72,8 @@ int ATTR_ULIB_TEXT test_jump() {
 
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
 
+	int real_num = write(1,"here is my word\t",17);
+
 	return 0;
 }
 
