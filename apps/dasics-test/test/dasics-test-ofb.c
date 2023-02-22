@@ -29,11 +29,11 @@ int ATTR_ULIB_TEXT test_ofb() {
 
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n", 0, 0); // lib call main 
 	char *ptr = (char *)generate_addr();	
-	dasics_umaincall(Umaincall_PRINT, "try to load from the unbounded address: 0x%x\n", ptr, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to load from the unbounded address: 0x%lx\n", ptr, 0); // lib call main 
     char data = *ptr; //should arise uload fault and skip the load instruction
-	dasics_umaincall(Umaincall_PRINT, "try to store to the unbounded address:  0x%x\n", ptr, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to store to the unbounded address:  0x%lx\n", ptr, 0); // lib call main 
 	*ptr = data;      //should arise ustore fault and skip the store instruction
-	dasics_umaincall(Umaincall_PRINT, "try to jump to the unbounded address:   0x%x\n", ptr, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to jump to the unbounded address:   0x%lx\n", ptr, 0); // lib call main 
 	void (*funcptr)() = ptr;
 	funcptr();        //should arise ufetch fault and skip the skip instruction
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
