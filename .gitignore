@@ -3,8 +3,9 @@
 !*/
 !Makefile*
 !.gitignore
-!*.[ch]
+!*.[chS]
 !*.cpp
+!*.py
 !config
 !*.sh
 !*.patch
