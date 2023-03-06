@@ -11,8 +11,6 @@ const char *test_info = "[MAIN]-  Test 4: test dadisc bound register free \n";
 
 static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
 
-#pragma GCC pop_options
-
 void exit_function() {
 	printf("[MAIN]test dasics finished\n");
 }

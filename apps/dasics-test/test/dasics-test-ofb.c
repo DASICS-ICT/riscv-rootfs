@@ -20,7 +20,6 @@ unsigned long ATTR_ULIB_TEXT generate_addr() {
 	return ptr;
 }
 
-#pragma GCC push_options
 #pragma GCC optimize("O0")
 int ATTR_ULIB_TEXT test_ofb() {
     // Test user main boundarys.
@@ -41,7 +40,6 @@ int ATTR_ULIB_TEXT test_ofb() {
 	return 0;
 }
 
-#pragma GCC pop_options
 
 void exit_function() {
 	printf("[MAIN]test dasics finished\n");

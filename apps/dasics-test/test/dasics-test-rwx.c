@@ -13,7 +13,6 @@ static char ATTR_ULIB_DATA secret[100] 		 = "[ULIB1]: It's the secret!";
 static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
 static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
 
-#pragma GCC push_options
 #pragma GCC optimize("O0")
 int ATTR_ULIB_TEXT test_rwx() {
     // Test user main boundarys.
@@ -46,7 +45,6 @@ int ATTR_ULIB_TEXT test_rwx() {
 	return 0;
 }
 
-#pragma GCC pop_options
 
 void exit_function() {
 	printf("[MAIN]test dasics finished\n");
