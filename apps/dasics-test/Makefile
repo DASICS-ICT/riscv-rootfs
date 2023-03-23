@@ -6,12 +6,14 @@ LIBS_DIR = ./lib
 TEST = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-jump \
 	   $(DST_DIR)/dasics-test-ofb \
+	   $(DST_DIR)/dasics-test-syscall \
 	   $(DST_DIR)/dasics-test-rwx
 
 SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-jump.c \
 	   $(TEST_DIR)/dasics-test-ofb.c \
 	   $(TEST_DIR)/dasics-test-rwx.c \
+	   $(TEST_DIR)/dasics-test-syscall.c \
 	   lib/udasics.c \
 	   lib/dasics_entry.S
 
@@ -62,7 +64,7 @@ $(TEST):%:%.o $(LIBOBJS)
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
 
-TEST_LIST = dasics-test-free dasics-test-jump dasics-test-ofb dasics-test-rwx
+TEST_LIST = dasics-test-free dasics-test-jump dasics-test-ofb dasics-test-rwx dasics-test-syscall
 
 all:$(TEST)
 	-$(foreach test, $(TEST_LIST), ln -sf $(abspath .)/build/$(test) $(RISCV_ROOTFS_HOME)/rootfsimg/build/$(test);)

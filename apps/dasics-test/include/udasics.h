@@ -9,6 +9,7 @@
 #define EXC_DASICS_UFETCH_FAULT  24
 #define EXC_DASICS_ULOAD_FAULT   26
 #define EXC_DASICS_USTORE_FAULT  28
+#define EXC_DASICS_UECALL_FAULT  30
 
 /* DASICS Main csrs */
 #define CSR_DUMCFG          0x5c0
@@ -72,11 +73,16 @@
 // TODO: Add UmaincallTypes
 typedef enum {
     Umaincall_PRINT, 
+    Umaincall_WRITE,
     Umaincall_UNKNOWN
 } UmaincallTypes;
 
+// suported syscall
+#define SYS_write 64
+
 void register_udasics(uint64_t funcptr);
 void unregister_udasics(void);
+uint32_t dasics_syscall_checker(uint64_t syscall,uint64_t arg0,uint64_t arg1,uint64_t arg2);
 uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t arg1, uint64_t arg2);
 void     dasics_ufault_handler(void);
 int32_t  dasics_libcfg_alloc(uint64_t cfg, uint64_t hi, uint64_t lo);

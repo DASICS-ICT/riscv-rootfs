@@ -34,7 +34,7 @@ int main() {
 	uint32_t result = dasics_libcfg_get(idx0) & DASICS_LIBCFG_V;
 
 	if(result)
-		printf("free function error!\n");
+		printf("\x1b[31m%s\x1b[0m","free function error!\n");
 
     dasics_print_cfg_register(idx0);
 
