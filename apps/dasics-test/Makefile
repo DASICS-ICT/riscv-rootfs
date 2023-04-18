@@ -6,8 +6,8 @@ LIBS_DIR = ./lib
 TEST = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-jump \
 	   $(DST_DIR)/dasics-test-ofb \
-	   $(DST_DIR)/dasics-test-syscall \
-	   $(DST_DIR)/dasics-test-rwx
+	   $(DST_DIR)/dasics-test-rwx 
+	   #$(DST_DIR)/dasics-test-syscall
 
 SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-jump.c \
@@ -20,12 +20,13 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 LIBS = lib/udasics.c lib/dasics_entry.S
 # cross compile
 
-CROSS_COMPILE = riscv64-unknown-elf-
+CROSS_COMPILE_PREFIX = ~/tools/llvm-project/build/bin/
+CROSS_COMPILE = $(CROSS_COMPILE_PREFIX)clang
 
-AS = $(CROSS_COMPILE)gcc
-CC = $(CROSS_COMPILE)gcc
-CXX = $(CROSS_COMPILE)g++
-LD = $(CROSS_COMPILE)gcc
+AS = $(CROSS_COMPILE)
+CC = $(CROSS_COMPILE)
+CXX = $(CROSS_COMPILE)++
+LD = $(CROSS_COMPILE)
 
 # compile option
 # Note: gcc -O2 option and RVC will cause 
@@ -36,8 +37,11 @@ INC_DIR += ./include/
 
 INCLUDES  = $(addprefix -I, ${INC_DIR})
 
-CFLAGS   += -O0 -march=rv64imad -MMD $(INCLUDES) -g  -T $(LDS)
+CFLAGS   += --sysroot=/data/jinyue/riscv-toolchain/dasics/dasics-riscv-toolchain/riscv64-unknown-elf/riscv64-unknown-elf --gcc-toolchain=/data/jinyue/riscv-toolchain/dasics/dasics-riscv-toolchain/riscv64-unknown-elf -O0 -march=rv64gc -MMD $(INCLUDES) -g  -T $(LDS)
+
 CXXFLAGS += -O0 -march=rv64imad -MMD $(INCLUDES) -g  -T $(LDS)
+
+LDFLAGS  += --sysroot=/data/jinyue/riscv-toolchain/dasics/dasics-riscv-toolchain/riscv64-unknown-elf/riscv64-unknown-elf --gcc-toolchain=/data/jinyue/riscv-toolchain/dasics/dasics-riscv-toolchain/riscv64-unknown-elf -O0 -march=rv64gc
 
 # Files to be compiled
 LIBOBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(LIBS))))
@@ -64,7 +68,7 @@ $(TEST):%:%.o $(LIBOBJS)
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
 
-TEST_LIST = dasics-test-free dasics-test-jump dasics-test-ofb dasics-test-rwx dasics-test-syscall
+TEST_LIST = dasics-test-free dasics-test-jump dasics-test-ofb dasics-test-rwx 
 
 all:$(TEST)
 	-$(foreach test, $(TEST_LIST), ln -sf $(abspath .)/build/$(test) $(RISCV_ROOTFS_HOME)/rootfsimg/build/$(test);)

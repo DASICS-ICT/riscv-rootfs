@@ -109,6 +109,9 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
     uint64_t dasics_free_zone_return_pc = csr_read(0x8a5);  // DasicsFreeZoneReturnPC
 
     uint64_t retval = 0;
+    int32_t max_cfgs = DASICS_LIBCFG_WIDTH << 1;
+    int32_t idx, is_inbound = 0;
+    uint64_t bound_lo_reg,bound_hi_reg;
 
     switch (type)
     {
@@ -126,11 +129,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
             printf((char *)arg0, arg1, arg2);
             break;
         
-        case Umaincall_WRITE:
-            int32_t max_cfgs = DASICS_LIBCFG_WIDTH << 1;
-            int32_t idx, is_inbound = 0;
-            uint64_t bound_lo_reg,bound_hi_reg;
-
+        case Umaincall_WRITE:            
             for(idx = 0; idx < max_cfgs; idx++){
                 LIBBOUND_LOOKUP(bound_hi_reg,bound_lo_reg,idx,READ)
                 

@@ -92,6 +92,6 @@ void dasics_print_cfg_register(int32_t idx);
 
 // extern uint64_t umaincall_helper;
 extern void dasics_ufault_entry(void);
-extern uint64_t dasics_umaincall(UmaincallTypes type, uint64_t arg0, uint64_t arg1, uint64_t arg2);
+extern uint64_t dasics_umaincall(UmaincallTypes type, const char* arg0, void* arg1, void* arg2);
 
 #endif
