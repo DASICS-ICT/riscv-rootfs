@@ -56,3 +56,6 @@ file /root/dasics-test-rwx ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-rwx 
 file /root/dasics-test-syscall ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-syscall 755 0 0
 file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
 
+#RIPE
+dir /root/RIPE 755 0 0
+file /root/RIPE/ripe_attack_generator ${RISCV_ROOTFS_HOME}/rootfsimg/build/ripe_attack_generator 755 0 0 
