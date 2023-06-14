@@ -57,7 +57,7 @@ file /root/dasics-test-syscall ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-
 file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
 
 #bash
-file /bin/bash ${RISCV_ROOTFS_HOME}/rootfsimg/out/bin/bash 755 0 0 
+file /bin/bash ${RISCV_ROOTFS_HOME}/rootfsimg/build/bash 755 0 0 
 
 
 #RIPE
