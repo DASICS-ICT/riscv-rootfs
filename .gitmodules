@@ -1,0 +1,3 @@
+[submodule "apps/hope-RIPE"]
+	path = apps/hope-RIPE
+	url = https://gitee.com/dasics/hope-ripe.git
