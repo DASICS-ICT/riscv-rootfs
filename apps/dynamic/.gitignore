@@ -1,0 +1,6 @@
+/*.txt
+/*.sh
+/sddiskmnt
+!*.S
+!*.lds
+!cert.crt

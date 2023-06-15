@@ -19,7 +19,9 @@ dir /var/log 755 0 0
 nod /dev/console 644 0 0 c 5 1
 nod /dev/null 644 0 0 c 1 3
 
-file /lib/ld-linux-riscv64-lp64d.so.1 ${RISCV}/sysroot/lib/ld-linux-riscv64-lp64d.so.1 755 0 0
+file /lib/ld-linux-riscv64-lp64d.so.1 /home/wanghan/riscv/riscv64-unknown-linux-gnu-pulp/sysroot/lib/ld-linux-riscv64-lp64d.so.1 755 0 0
+file /lib/ld-linux-riscv64-lp64.so.1 /home/wanghan/riscv/riscv64-unknown-linux-gnu-nod/sysroot/lib/ld-linux-riscv64-lp64.so.1 755 0 0
+file /usr/lib/libc.so.6 /home/wanghan/riscv/riscv64-unknown-linux-gnu-nod/sysroot/lib/libc.so.6 755 0 0
 file /lib/libc.so.6 ${RISCV}/sysroot/lib/libc.so.6 755 0 0
 file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0
 file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0
@@ -29,6 +31,9 @@ file /lib/libstdc++.so.6 ${RISCV}/sysroot/lib/libstdc++.so.6 755 0 0
 file /lib/libgcc_s.so ${RISCV}/sysroot/lib/libgcc_s.so 755 0 0
 file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0
 
+# dasics dynamic test 
+file /lib/mylib.so ${RISCV_ROOTFS_HOME}/rootfsimg/build/mylib.so 755 0 0
+file /lib/mylib1.so ${RISCV_ROOTFS_HOME}/rootfsimg/build/mylib1.so 755 0 0
 
 file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
 file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab 755 0 0
@@ -54,5 +59,9 @@ file /root/dasics-test-jump ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-jum
 file /root/dasics-test-ofb ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-ofb 755 0 0
 file /root/dasics-test-rwx ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-rwx 755 0 0
 file /root/dasics-test-syscall ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-syscall 755 0 0
+file /root/dasics-test-dynamic ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-dynamic 755 0 0
 file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
+file /root/cert.crt ${RISCV_ROOTFS_HOME}/rootfsimg/build/cert.crt 755 0 0
+file /root/test /home/wanghan/Workspace/release-dynamic/build/dynamic 755 0 0
+
 
