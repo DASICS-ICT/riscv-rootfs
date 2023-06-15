@@ -1,6 +1,5 @@
 *.*
 *
-!apps/hope-RIPE
 !*/
 !Makefile*
 !.gitignore
@@ -12,6 +11,6 @@
 !*.patch
 !*.txt
 !*.md
+!bash/*.tar.gz
 repo/
 build/
-
