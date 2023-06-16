@@ -16,7 +16,7 @@ $(BASH_DIR): $(BASH_TAR_GZ)
 $(BASH_BUILD): $(BASH_DIR)
 	cd bash-5.0 && ./configure --host=$(HOST) --prefix=$(BASH_BUILD_DIR) CXX=$(CXX) CC=$(CC)
 	cd bash-5.0 && make && make install	
-	ln -sf $< $(TARGET_BIN_DIR)/bash
+	ln -sf $@ $(TARGET_BIN_DIR)/bash
 
 bash: $(BASH_BUILD) 
 
