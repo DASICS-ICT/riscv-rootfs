@@ -45,13 +45,13 @@ uint64_t umaincall_helper;
 void register_udasics(uint64_t funcptr) 
 {
     umaincall_helper = (funcptr != 0) ? funcptr : (uint64_t) dasics_umaincall_helper;
-    csr_write(0x8a3, (uint64_t)dasics_umaincall);
+    csr_write(0x8b0, (uint64_t)dasics_umaincall);
     csr_write(0x005, (uint64_t)dasics_ufault_entry);
 }
 
 void unregister_udasics(void) 
 {
-    csr_write(0x8a3, 0);
+    csr_write(0x8b0, 0);
     csr_write(0x005, 0);    
 }
 
@@ -105,8 +105,8 @@ uint32_t dasics_syscall_proxy(uint64_t syscall, uint64_t arg0, uint64_t arg1,uin
 
 uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t arg1, uint64_t arg2)
 {
-    uint64_t dasics_return_pc = csr_read(0x8a4);            // DasicsReturnPC
-    uint64_t dasics_free_zone_return_pc = csr_read(0x8a5);  // DasicsFreeZoneReturnPC
+    uint64_t dasics_return_pc = csr_read(0x8b1);            // DasicsReturnPC
+    uint64_t dasics_free_zone_return_pc = csr_read(0x8b2);  // DasicsFreeZoneReturnPC
 
     uint64_t retval = 0;
 
@@ -154,8 +154,8 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
             break;
     }
 
-    csr_write(0x8a4, dasics_return_pc);             // DasicsReturnPC
-    csr_write(0x8a5, dasics_free_zone_return_pc);   // DasicsFreeZoneReturnPC
+    csr_write(0x8b1, dasics_return_pc);             // DasicsReturnPC
+    csr_write(0x8b2, dasics_free_zone_return_pc);   // DasicsFreeZoneReturnPC
 
     return retval;
 }
@@ -163,8 +163,8 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
 void dasics_ufault_handler(void)
 {
     // Save some registers that should be saved by callees
-    uint64_t dasics_return_pc = csr_read(0x8a4);
-    uint64_t dasics_free_zone_return_pc = csr_read(0x8a5);
+    uint64_t dasics_return_pc = csr_read(0x8b1);
+    uint64_t dasics_free_zone_return_pc = csr_read(0x8b2);
 
     uint64_t ucause = csr_read(ucause);
     uint64_t utval = csr_read(utval);
@@ -205,8 +205,8 @@ void dasics_ufault_handler(void)
                     //TODO: implementation of all syscalls
                     uint32_t ret = dasics_syscall_proxy(syscall, arg0, arg1, arg2, 0, 0, 0,0);
                     csr_write(uepc, uepc + 4);         
-                    csr_write(0x8a4, dasics_return_pc);
-                    csr_write(0x8a5, dasics_free_zone_return_pc);
+                    csr_write(0x8b1, dasics_return_pc);
+                    csr_write(0x8b2, dasics_free_zone_return_pc);
                     return;
             } 
             printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: lib ecall arguments beyond authority， dasics ecall fault occurs!\n");
@@ -227,8 +227,8 @@ void dasics_ufault_handler(void)
        // csr_write(uepc, uepc + 4); 
 
     // Restore those saved registers
-    csr_write(0x8a4, dasics_return_pc);
-    csr_write(0x8a5, dasics_free_zone_return_pc);
+    csr_write(0x8b1, dasics_return_pc);
+    csr_write(0x8b2, dasics_free_zone_return_pc);
 
 }
 
@@ -336,4 +336,3 @@ void dasics_print_cfg_register(int32_t idx)
 {
 	printf("DASICS uLib CFG Registers: idx:%x  config: %x \n",idx,dasics_libcfg_get(idx));
 }
-
