@@ -30,4 +30,5 @@ dasics_umaincall:
     jalr t0
     ld   ra, 8(sp)
     addi sp, sp, 16
-    .word 0x0000f00b    # pulpret in little endian
+    ret
+    //.word 0x0000f00b    # pulpret in little endian
