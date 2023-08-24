@@ -15,9 +15,10 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-rwx.c \
 	   $(TEST_DIR)/dasics-test-syscall.c \
 	   lib/udasics.c \
-	   lib/dasics_entry.S
+	   lib/dasics_entry.S \
+	   lib/dasics_call.S
 
-LIBS = lib/udasics.c lib/dasics_entry.S
+LIBS = lib/udasics.c lib/dasics_entry.S lib/dasics_call.S
 # cross compile
 
 CROSS_COMPILE = riscv64-unknown-elf-

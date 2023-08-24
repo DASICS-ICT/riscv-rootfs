@@ -39,10 +39,8 @@ int main() {
 	printf(test_info);
 
 	register_udasics(0);
-	test_ofb();
+	lib_call(&test_ofb);
 	unregister_udasics();
-
-	while(1);
 
 	return 0;
 }

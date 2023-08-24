@@ -6,14 +6,14 @@ uint64_t umaincall_helper;
 
 #define BOUND_REG_READ(hi,lo,idx)   \             
                     case idx:  \
-                        hi = csr_read(0x883 + idx * 2);  \
-                        lo = csr_read(0x884 + idx * 2);  \
+                        lo = csr_read(0x890 + idx * 2);  \
+                        hi = csr_read(0x891 + idx * 2);  \
                         break;
 
 #define BOUND_REG_WRITE(hi,lo,idx)   \             
                     case idx:  \
-                        csr_write(0x883 + idx * 2, hi);  \
-                        csr_write(0x884 + idx * 2, lo);  \
+                        csr_write(0x890 + idx * 2, lo);  \
+                        csr_write(0x891 + idx * 2, hi);  \
                         break;
 
 #define CONCAT(OP) BOUND_REG_##OP
@@ -57,7 +57,7 @@ void unregister_udasics(void)
 
 uint32_t dasics_sys_write_checker(uint64_t arg0,uint64_t arg1,uint64_t arg2)
 {
-    int32_t max_cfgs = DASICS_LIBCFG_WIDTH << 1;
+    int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
     int32_t idx, is_inbound = 0;
     uint64_t bound_lo_reg,bound_hi_reg;
 
@@ -127,7 +127,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
             break;
         
         case Umaincall_WRITE:
-            int32_t max_cfgs = DASICS_LIBCFG_WIDTH << 1;
+            int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
             int32_t idx, is_inbound = 0;
             uint64_t bound_lo_reg,bound_hi_reg;
 
@@ -135,6 +135,8 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
                 LIBBOUND_LOOKUP(bound_hi_reg,bound_lo_reg,idx,READ)
                 
                 uint64_t libcfg = dasics_libcfg_get(idx);
+                //printf("[INFO] libcfg:%lx,  bound_lo_reg:%lx,  bound_hi_reg:%lx |   start:%lx  end:%lx \n",libcfg, bound_lo_reg, bound_hi_reg,arg1, arg1 + arg2  );
+
                 is_inbound = ((libcfg & DASICS_LIBCFG_V) != 0) && ((libcfg & DASICS_LIBCFG_R) != 0) &&
                              (arg1 >= bound_lo_reg) && (arg1 + arg2 <= bound_hi_reg);
 
@@ -148,9 +150,18 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
                 write((int)arg0, (void *)arg1, (size_t)arg2);
                 break;
             
-            
+        case Umaincall_SETAZONERTPC:
+            asm volatile ( 
+                "li     t0,  0x1d1bc;"\ 
+                "csrw   0x8b2, t0;"
+                :
+                :
+                :"t0"
+            );     
+            break;       
+
         default:
-            printf("\x1b[33m%s\x1b[0m","Warning: Invalid umaincall number %u!\n", type); //could not use printf in kernel
+            printf("\x1b[33m%s\x1b[0m","Warning: Invalid umaincall number %d!\n", type); //could not use printf in kernel
             break;
     }
 
@@ -232,44 +243,91 @@ void dasics_ufault_handler(void)
 
 }
 
-int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t hi, uint64_t lo)
-{
-    uint64_t libcfg0 = csr_read(0x881);  // DasicsLibCfg0
-    uint64_t libcfg1 = csr_read(0x882);  // DasicsLibCfg1
+int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi) {
+    uint64_t libcfg = csr_read(0x880);  // DasicsLibCfg
+    int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
+    int32_t step = 4;
 
-    int32_t max_cfgs = DASICS_LIBCFG_WIDTH << 1;
-#ifndef RV32
-    int32_t step = 8;  // rv64
-#else
-    int32_t step = 4;  // rv32
-#endif
+    for (int32_t idx = 0; idx < max_cfgs; ++idx) {
+        uint64_t curr_cfg = (libcfg >> (idx * step)) & DASICS_LIBCFG_MASK;
 
-    int32_t idx;
-
-    for (idx = 0; idx < max_cfgs; ++idx)
-    {
-        int choose_libcfg0 = (idx < DASICS_LIBCFG_WIDTH);
-        int32_t _idx = choose_libcfg0 ? idx : idx - DASICS_LIBCFG_WIDTH;
-        uint64_t curr_cfg = ((choose_libcfg0 ? libcfg0 : libcfg1) >> (_idx * step)) & DASICS_LIBCFG_MASK;
-
-        if ((curr_cfg & DASICS_LIBCFG_V) == 0)  // Find avaliable cfg
+        if ((curr_cfg & DASICS_LIBCFG_V) == 0)  // Found available config
         {
-            if (choose_libcfg0)
-            {
-                libcfg0 &= ~(DASICS_LIBCFG_MASK << (_idx * step));
-                libcfg0 |= (cfg & DASICS_LIBCFG_MASK) << (_idx * step);
-                csr_write(0x881, libcfg0);  // DasicsLibCfg0
-            }
-            else
-            {
-                libcfg1 &= ~(DASICS_LIBCFG_MASK << (_idx * step));
-                libcfg1 |= (cfg & DASICS_LIBCFG_MASK) << (_idx * step);
-                csr_write(0x882, libcfg1);  // DasicsLibCfg1
+            // Write DASICS bounds csr
+            switch (idx) {
+                case 0:
+                    csr_write(0x890, lo);   // DasicsLibBound0Lo
+                    csr_write(0x891, hi);   // DasicsLibBound0Hi
+                    break;
+                case 1:
+                    csr_write(0x892, lo);   // DasicsLibBound1Lo
+                    csr_write(0x893, hi);   // DasicsLibBound1Hi
+                    break;
+                case 2:
+                    csr_write(0x894, lo);   // DasicsLibBound2Lo
+                    csr_write(0x895, hi);   // DasicsLibBound2Hi
+                    break;
+                case 3:
+                    csr_write(0x896, lo);   // DasicsLibBound3Lo
+                    csr_write(0x897, hi);   // DasicsLibBound3Hi
+                    break;
+                case 4:
+                    csr_write(0x898, lo);   // DasicsLibBound4Lo
+                    csr_write(0x899, hi);   // DasicsLibBound4Hi
+                    break;
+                case 5:
+                    csr_write(0x89a, lo);   // DasicsLibBound5Lo
+                    csr_write(0x89b, hi);   // DasicsLibBound5Hi
+                    break;
+                case 6:
+                    csr_write(0x89c, lo);   // DasicsLibBound6Lo
+                    csr_write(0x89d, hi);   // DasicsLibBound6Hi
+                    break;
+                case 7:
+                    csr_write(0x89e, lo);   // DasicsLibBound7Lo
+                    csr_write(0x89f, hi);   // DasicsLibBound7Hi
+                    break;
+                case 8:
+                    csr_write(0x8a0, lo);   // DasicsLibBound8Lo
+                    csr_write(0x8a1, hi);   // DasicsLibBound8Hi
+                    break;
+                case 9:
+                    csr_write(0x8a2, lo);   // DasicsLibBound9Lo
+                    csr_write(0x8a3, hi);   // DasicsLibBound9Hi
+                    break;
+                case 10:
+                    csr_write(0x8a4, lo);   // DasicsLibBound10Lo
+                    csr_write(0x8a5, hi);   // DasicsLibBound10Hi
+                    break;
+                case 11:
+                    csr_write(0x8a6, lo);   // DasicsLibBound11Lo
+                    csr_write(0x8a7, hi);   // DasicsLibBound11Hi
+                    break;
+                case 12:
+                    csr_write(0x8a8, lo);   // DasicsLibBound12Lo
+                    csr_write(0x8a9, hi);   // DasicsLibBound12Hi
+                    break;
+                case 13:
+                    csr_write(0x8aa, lo);   // DasicsLibBound13Lo
+                    csr_write(0x8ab, hi);   // DasicsLibBound13Hi
+                    break;
+                case 14:
+                    csr_write(0x8ac, lo);   // DasicsLibBound14Lo
+                    csr_write(0x8ad, hi);   // DasicsLibBound14Hi
+                    break;
+                case 15:
+                    csr_write(0x8ae, lo);   // DasicsLibBound15Lo
+                    csr_write(0x8af, hi);   // DasicsLibBound15Hi
+                    break;
+                default:
+                    break;
             }
 
-            // Write DASICS boundary csrs     
-            LIBBOUND_LOOKUP(hi,lo,idx,WRITE)       
-            
+            // Write config
+            libcfg &= ~(DASICS_LIBCFG_MASK << (idx * step));
+            libcfg |= (cfg & DASICS_LIBCFG_MASK) << (idx * step);
+            csr_write(0x880, libcfg);   // DasicsLibCfg
+
             return idx;
         }
     }
@@ -277,58 +335,77 @@ int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t hi, uint64_t lo)
     return -1;
 }
 
-int32_t dasics_libcfg_free(int32_t idx)
-{
-    if (idx < 0 || idx >= (DASICS_LIBCFG_WIDTH << 1))
-    {
-        return -1;
-    }
+int32_t dasics_libcfg_free(int32_t idx) {
+    if (idx < 0 || idx >= DASICS_LIBCFG_WIDTH) return -1;
 
-#ifndef RV32
-    int32_t step = 8;  // rv64
-#else
-    int32_t step = 4;  // rv32
-#endif
-
-    int choose_libcfg0 = (idx < DASICS_LIBCFG_WIDTH);
-    int32_t _idx = choose_libcfg0 ? idx : idx - DASICS_LIBCFG_WIDTH;
-
-    uint64_t libcfg = choose_libcfg0 ? csr_read(0x881):  // DasicsLibCfg0
-                                       csr_read(0x882);  // DasicsLibCfg1
-    libcfg &= ~(DASICS_LIBCFG_V << (_idx * step));
-
-    if (choose_libcfg0)
-    {
-        csr_write(0x881, libcfg);  // DasicsLibCfg0
-    }
-    else
-    {
-        csr_write(0x882, libcfg);  // DasicsLibCfg1
-    }
-
+    int32_t step = 4;
+    uint64_t libcfg = csr_read(0x880);  // DasicsLibCfg
+    libcfg &= ~(DASICS_LIBCFG_V << (idx * step));
+    csr_write(0x880, libcfg);   // DasicsLibCfg
     return 0;
 }
 
-uint32_t dasics_libcfg_get(int32_t idx)
+uint32_t dasics_libcfg_get(int32_t idx) {
+    if (idx < 0 || idx >= DASICS_LIBCFG_WIDTH) return -1;
+
+    int32_t step = 4;
+    uint64_t libcfg = csr_read(0x880);  // DasicsLibCfg
+    return (libcfg >> (idx * step)) & DASICS_LIBCFG_MASK;
+}
+
+int32_t dasics_jumpcfg_alloc(uint64_t lo, uint64_t hi)
 {
-    if (idx < 0 || idx >= (DASICS_LIBCFG_WIDTH << 1))
-    {
+    uint64_t jumpcfg = csr_read(0x8c8);    // DasicsJumpCfg
+    int32_t max_cfgs = DASICS_JUMPCFG_WIDTH;
+    int32_t step = 16;
+
+    for (int32_t idx = 0; idx < max_cfgs; ++idx) {
+        uint64_t curr_cfg = (jumpcfg >> (idx * step)) & DASICS_JUMPCFG_MASK;
+        if ((curr_cfg & DASICS_JUMPCFG_V) == 0) // found available cfg
+        {
+            // Write DASICS jump boundary CSRs
+            switch (idx) {
+                case 0:
+                    csr_write(0x8c0, lo);  // DasicsJumpBound0Lo
+                    csr_write(0x8c1, hi);  // DasicsJumpBound0Hi
+                    break;
+                case 1:
+                    csr_write(0x8c2, lo);  // DasicsJumpBound1Lo
+                    csr_write(0x8c3, hi);  // DasicsJumpBound1Hi
+                    break;
+                case 2:
+                    csr_write(0x8c4, lo);  // DasicsJumpBound2Lo
+                    csr_write(0x8c5, hi);  // DasicsJumpBound2Hi
+                    break;
+                case 3:
+                    csr_write(0x8c6, lo);  // DasicsJumpBound3Lo
+                    csr_write(0x8c7, hi);  // DasicsJumpBound3Hi
+                    break;
+                default:
+                    break;
+            }
+
+            jumpcfg &= ~(DASICS_JUMPCFG_MASK << (idx * step));
+            jumpcfg |= DASICS_JUMPCFG_V << (idx * step);
+            csr_write(0x8c8, jumpcfg); // DasicsJumpCfg
+
+            return idx;
+        }
+    }
+
+    return -1;
+}
+
+int32_t dasics_jumpcfg_free(int32_t idx) {
+    if (idx < 0 || idx >= DASICS_JUMPCFG_WIDTH) {
         return -1;
     }
 
-#ifndef RV32
-    int32_t step = 8;  // rv64
-#else
-    int32_t step = 4;  // rv32
-#endif
-
-    int choose_libcfg0 = (idx < DASICS_LIBCFG_WIDTH);
-    int32_t _idx = choose_libcfg0 ? idx : idx - DASICS_LIBCFG_WIDTH;
-
-    uint64_t libcfg = choose_libcfg0 ? csr_read(0x881):  // DasicsLibCfg0
-                                       csr_read(0x882);  // DasicsLibCfg1
-
-    return (libcfg >> (_idx * step)) & DASICS_LIBCFG_MASK;
+    int32_t step = 16;
+    uint64_t jumpcfg = csr_read(0x8c8);    // DasicsJumpCfg
+    jumpcfg &= ~(DASICS_JUMPCFG_V << (idx * step));
+    csr_write(0x8c8, jumpcfg); // DasicsJumpCfg
+    return 0;
 }
 
 

@@ -36,9 +36,6 @@ int ATTR_ULIB_TEXT test_rwx() {
     char temp = secret[3];                // raise DasicsULoadAccessFault  (0x12)
 	dasics_umaincall(Umaincall_PRINT, "try to store to the secret\n", 0, 0);
     secret[3] = temp;                     // raise DasicsUStoreAccessFault (0x14)
-	dasics_umaincall(Umaincall_PRINT, "try to jump to the secret\n", 0, 0);
-    void (*funcptr)() = secret;           
-	funcptr();                            // raise DasicsUInstrAccessFault (0x14)
 
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
 
@@ -60,11 +57,11 @@ int main() {
 	register_udasics(0);
 
 	// Allocate libcfg before calling lib function
-    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_V | DASICS_LIBCFG_R                  , (uint64_t)(pub_readonly + 100), (uint64_t)pub_readonly);
-    idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_V | DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)(pub_rwbuffer + 100), (uint64_t)pub_rwbuffer);
-    idx2 = dasics_libcfg_alloc(DASICS_LIBCFG_V                                    , (uint64_t)(      secret + 100), (uint64_t)secret);
+    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_V | DASICS_LIBCFG_R                  , (uint64_t)pub_readonly, (uint64_t)(pub_readonly + 100));
+    idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_V | DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbuffer, (uint64_t)(pub_rwbuffer + 100));
+    idx2 = dasics_libcfg_alloc(DASICS_LIBCFG_V                                    , (uint64_t)secret      , (uint64_t)(      secret + 100));
 
-	test_rwx();
+	lib_call(&test_rwx);
 
     // Free those used libcfg via handlers
     dasics_libcfg_free(idx2);

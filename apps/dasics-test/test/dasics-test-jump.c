@@ -62,17 +62,15 @@ int ATTR_ULIB_TEXT test_jump() {
 
 	dasics_umaincall(Umaincall_PRINT, "try to jump to main function\n", 0, 0); // lib call main 
     test_jump_main(); //raise fault
-
 	dasics_umaincall(Umaincall_PRINT, "try to jump to freezone function\n", 0, 0); // lib call main 
-    test_free_zone();
+
+	dasics_umaincall(Umaincall_SETAZONERTPC,0,0,0);
+	test_free_zone();
 
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
 
-	int real_num = write(1,"here is my word\t",17);
-
 	return 0;
 }
-
 
 void exit_function() {
 	printf("[MAIN]test dasics finished\n");
@@ -85,7 +83,7 @@ int main() {
 
 	register_udasics(0);
 
-	test_jump();
+	lib_call(&test_jump);
 
 	unregister_udasics();
 
