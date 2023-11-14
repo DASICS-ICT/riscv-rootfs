@@ -127,6 +127,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
             break;
         
         case Umaincall_WRITE:
+        {
             int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
             int32_t idx, is_inbound = 0;
             uint64_t bound_lo_reg,bound_hi_reg;
@@ -149,7 +150,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
                 printf("[INFO] write parameter check OK!\n");
                 write((int)arg0, (void *)arg1, (size_t)arg2);
                 break;
-            
+        }
         case Umaincall_SETAZONERTPC:
             asm volatile ( 
                 "li     t0,  0x1d1bc;"\ 
