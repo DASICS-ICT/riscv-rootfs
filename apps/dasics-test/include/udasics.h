@@ -2,6 +2,7 @@
 #define _UDASICS_H_
 
 #include <stdio.h>
+#include <stdint.h>
 #include "ucsr.h"
 #include "uattr.h"
 
