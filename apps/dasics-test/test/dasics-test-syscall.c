@@ -73,7 +73,7 @@ int main() {
 
 	int32_t idx0;
 
-    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_V | DASICS_LIBCFG_R                 , (uint64_t)pub_readonly,  (uint64_t)(pub_readonly + 128));
+    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)pub_readonly,  (uint64_t)(pub_readonly + 128));
 
 	lib_call(&test_syscall);
 

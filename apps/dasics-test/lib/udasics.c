@@ -308,7 +308,7 @@ int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi) {
 
             // Write config
             libcfg &= ~(DASICS_LIBCFG_MASK << (idx * step));
-            libcfg |= (cfg & DASICS_LIBCFG_MASK) << (idx * step);
+            libcfg |= ((cfg & DASICS_LIBCFG_MASK) | DASICS_LIBCFG_V) << (idx * step);
             csr_write(0x880, libcfg);   // DasicsLibCfg
 
             return idx;
