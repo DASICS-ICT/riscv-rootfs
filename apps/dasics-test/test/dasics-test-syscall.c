@@ -46,12 +46,6 @@ int ATTR_ULIB_TEXT test_syscall() {
 	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the bounded ready-only address: 0x%lx, and write to stdout\n", pub_readonly, 0); // lib call main 
     ulib_write(1,pub_readonly,100);
 
-	dasics_umaincall(Umaincall_PRINT, "using main call to write, but try to read from the unbounded address: 0x%lx, and write to stdout\n", ptr, 0); // lib call main 
-	dasics_umaincall(Umaincall_WRITE, 1,ptr,5); // lib call main ，should raise fault
-
-	dasics_umaincall(Umaincall_PRINT, "using main call to write, but try to read from the bounded ready-only address: 0x%lx, and write to stdout\n", pub_readonly, 0); // lib call main 
-	dasics_umaincall(Umaincall_WRITE, 1,pub_readonly,100); // lib call main
-
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
 
 	return 0;

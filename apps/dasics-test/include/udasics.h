@@ -100,8 +100,7 @@
 
 // TODO: Add UmaincallTypes
 typedef enum {
-    Umaincall_PRINT, 
-    Umaincall_WRITE,
+    Umaincall_PRINT,
     Umaincall_SETAZONERTPC,
     Umaincall_UNKNOWN
 } UmaincallTypes;

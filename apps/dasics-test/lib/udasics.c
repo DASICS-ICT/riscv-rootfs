@@ -126,32 +126,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
         print_arg2:
             printf((char *)arg0, arg1, arg2);
             break;
-        
-        case Umaincall_WRITE:
-        {
-            int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
-            int32_t idx, is_inbound = 0;
-            uint64_t bound_lo_reg,bound_hi_reg;
 
-            for(idx = 0; idx < max_cfgs; idx++){
-                LIBBOUND_LOOKUP(bound_hi_reg,bound_lo_reg,idx,READ)
-                
-                uint64_t libcfg = dasics_libcfg_get(idx);
-                //printf("[INFO] libcfg:%lx,  bound_lo_reg:%lx,  bound_hi_reg:%lx |   start:%lx  end:%lx \n",libcfg, bound_lo_reg, bound_hi_reg,arg1, arg1 + arg2  );
-
-                is_inbound = ((libcfg & DASICS_LIBCFG_V) != 0) && ((libcfg & DASICS_LIBCFG_R) != 0) &&
-                             (arg1 >= bound_lo_reg) && (arg1 + arg2 <= bound_hi_reg);
-
-                if(is_inbound) goto param_ok;
-            }
-            printf("\x1b[31m%s\x1b[0m","[ERROR] write parameter is out of bound!\n");
-            break;
-
-            param_ok:
-                printf("[INFO] write parameter check OK!\n");
-                write((int)arg0, (void *)arg1, (size_t)arg2);
-                break;
-        }
         case Umaincall_SETAZONERTPC:
             asm volatile ( 
                 "li     t0,  0x1d1bc;"\ 
