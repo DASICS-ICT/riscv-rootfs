@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <machine/syscall.h>
 #include "udasics.h"
 
@@ -42,6 +41,8 @@ uint64_t umaincall_helper;
                 printf("\x1b[31m%s\x1b[0m","[DASICS]Error: out of libound register range\n"); \
         }
 
+#define SYSCALL_ARGS  long sysno, long arg1, long arg2, \
+        long arg3, long arg4, long arg5, long arg6
 
 void register_udasics(uint64_t funcptr) 
 {
@@ -76,33 +77,39 @@ uint32_t dasics_sys_write_checker(uint64_t arg0,uint64_t arg1,uint64_t arg2)
 
 }
 
-
-uint32_t dasics_syscall_checker(uint64_t syscall,uint64_t arg0,uint64_t arg1,uint64_t arg2)
+static uint32_t dasics_syscall_checker(SYSCALL_ARGS)
 {
-    switch(syscall)
+    switch(sysno)
     {
         case SYS_write:
-            return dasics_sys_write_checker(arg0, arg1, arg2);
+            return dasics_sys_write_checker(arg1, arg2, arg3);
             break;
         default: //TODO: other syscall implement
             printf("\x1b[33m%s\x1b[0m","[Warning] unsurported syscall for dasics!\n");
             break;
     }
+
+    return 1;
 }
 
-uint32_t dasics_syscall_proxy(uint64_t syscall, uint64_t arg0, uint64_t arg1,uint64_t arg2,uint64_t arg3,uint64_t arg4,uint64_t arg5,uint64_t arg6)
+static long dasics_syscall_proxy(SYSCALL_ARGS)
 {
-    switch(syscall)
-    {
-        //TODO: implementation of more syscalls
-        case SYS_write:
-            return write((int)arg0, (void *)arg1, (size_t)arg2); 
-        default:
-            printf("\x1b[33m%s\x1b[0m","[Warning] unsurported syscall for dasics!\n");
-            break;
-    }
-}
+    register long a0 asm("a0") = arg1;
+    register long a1 asm("a1") = arg2;
+    register long a2 asm("a2") = arg3;
+    register long a3 asm("a3") = arg4;
+    register long a4 asm("a4") = arg5;
+    register long a5 asm("a5") = arg6;
+    register long a7 asm("a7") = sysno;
 
+    asm volatile("ecall"                        \
+                 : "+r"(a0)                     \
+                 : "r"(a1), "r"(a2), "r"(a3),   \
+                   "r"(a4), "r"(a5), "r"(a7)    \
+                 : "memory");
+
+    return a0;
+}
 
 uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
 {
@@ -152,19 +159,26 @@ void dasics_ufault_handler(void)
     uint64_t utval = csr_read(utval);
     uint64_t uepc = csr_read(uepc);
 
-    uint64_t arg0,arg1,arg2,syscall;
+    long sysno, arg1, arg2, arg3, arg4, arg5, arg6;
     __asm__ volatile(
-        "mv t0, a0\n"
-        "mv t1, a1\n"
-        "mv t2, a2\n"
-        "mv t3, a7\n"
-        "sd t0, %[arg0]\n"
+        "mv t0, a7\n"
+        "mv t1, a0\n"
+        "mv t2, a1\n"
+        "mv t3, a2\n"
+        "mv t4, a3\n"
+        "mv t5, a4\n"
+        "mv t6, a5\n"
+        "sd t0, %[sysno]\n"
         "sd t1, %[arg1]\n"
         "sd t2, %[arg2]\n"
-        "sd t3, %[syscall]\n"
-        : [arg0] "=m" (arg0),[arg1] "=m" (arg1),[arg2] "=m" (arg2), [syscall] "=m" (syscall)
-        :
-        : "memory"
+        "sd t3, %[arg3]\n"
+        "sd t4, %[arg4]\n"
+        "sd t5, %[arg5]\n"
+        "sd t6, %[arg6]\n"
+        : [arg1] "=m" (arg1), [arg2] "=m" (arg2), [arg3] "=m" (arg3), \
+          [arg4] "=m" (arg4), [arg5] "=m" (arg5), [arg6] "=m" (arg6), \
+          [sysno] "=m" (sysno)
+        :: "memory"
     );
 
     switch(ucause)
@@ -181,11 +195,9 @@ void dasics_ufault_handler(void)
         case EXC_DASICS_UECALL_FAULT:
             //printf("[DASICS EXCEPTION]Info: dasics uecall fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
             printf("[DASICS EXCEPTION]Info: dasics lib ecall occurs (ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx), try to check arguments...\n", ucause, uepc, utval);
-            if(dasics_syscall_checker(syscall,arg0, arg1, arg2)){
-                    printf("[DASICS EXCEPTION]Info: lib ecall arguments OK! sycall number:%d, syscall is permitted \n", syscall);   
-                    //__asm__ volatile ("ecall\n" );    
-                    //TODO: implementation of all syscalls
-                    uint32_t ret = dasics_syscall_proxy(syscall, arg0, arg1, arg2, 0, 0, 0,0);
+            if(dasics_syscall_checker(sysno, arg1, arg2, arg3, arg4, arg5, arg6)){
+                    printf("[DASICS EXCEPTION]Info: lib ecall arguments OK! sycall number:%d, syscall is permitted \n", sysno);
+                    uint64_t ret = dasics_syscall_proxy(sysno, arg1, arg2, arg3, arg4, arg5, arg6);
                     csr_write(uepc, uepc + 4);         
                     csr_write(0x8b1, dasics_return_pc);
                     csr_write(0x8b2, dasics_free_zone_return_pc);
