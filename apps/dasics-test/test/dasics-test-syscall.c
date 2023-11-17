@@ -34,17 +34,21 @@ int ATTR_ULIB_TEXT test_syscall() {
     // Test user main boundarys.
 	// Note: gcc -O2 option and RVC will cause 
 	// some unexpected compilation results.
+	int retval = 0;
 
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
 	char *ptr = (char *)0xffffffffabcdef00;
 	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, try to write to stdout\n"); // lib call main 
-    ulib_write(1,"syscall test string 1\n",22);
+    retval = ulib_write(1,"syscall test string 1\n",22);
+	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
 
 	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the unbounded address: 0x%lx, and write to stdout\n", ptr); // lib call main 
-    ulib_write(1,ptr,5);// raise fault
+    retval = ulib_write(1,ptr,5);// raise fault
+	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
 
 	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the bounded ready-only address: 0x%lx, and write to stdout\n", pub_readonly); // lib call main 
-    ulib_write(1,pub_readonly,100);
+    retval = ulib_write(1,pub_readonly,100);
+	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
 
 	dasics_umaincall(Umaincall_PRINT, "Test umaincall_print va_list: %d, %d, %d, %d, %d\n", 1, 2, 3, 4, 5);
 
