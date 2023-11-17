@@ -106,9 +106,6 @@ typedef enum {
     Umaincall_UNKNOWN
 } UmaincallTypes;
 
-// suported syscall
-#define SYS_write 64
-
 void register_udasics(uint64_t funcptr);
 void unregister_udasics(void);
 uint32_t dasics_syscall_checker(uint64_t syscall,uint64_t arg0,uint64_t arg1,uint64_t arg2);

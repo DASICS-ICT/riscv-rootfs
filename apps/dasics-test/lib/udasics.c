@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <machine/syscall.h>
 #include "udasics.h"
 
 uint64_t umaincall_helper;

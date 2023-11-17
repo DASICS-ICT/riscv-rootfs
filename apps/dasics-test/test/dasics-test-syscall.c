@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <machine/syscall.h>
 
 #include "udasics.h"
 
@@ -13,14 +14,14 @@ static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB]: It's readonly buffer!\n"
 static inline int __attribute__((always_inline)) ulib_write(int fd, const char* buf, size_t n) {
     int ret_val;
     __asm__ volatile (
-        "li	a7, 64\n"
+        "li	a7, %[sysno]\n"
         "mv a0, %[fd]\n"
         "mv a1, %[buf]\n"
         "mv a2, %[n]\n"   
         "ecall\n"  
         "mv %[ret_val], a0"  
         : [ret_val] "=r" (ret_val)
-        : [fd] "r" (fd), [buf] "r" (buf), [n] "r" (n)
+        : [fd] "r" (fd), [buf] "r" (buf), [n] "r" (n), [sysno] "i" (SYS_write)
         : "a7", "a0", "a1", "a2", "memory"
     );
     return ret_val;
