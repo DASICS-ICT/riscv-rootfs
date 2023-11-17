@@ -10,6 +10,9 @@
 
 const char *test_info = "[MAIN]-  Test 5: syscall interception test \n";
 static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB]: It's readonly buffer!\n";
+static char ATTR_ULIB_DATA covered_fully1[100] = "[ULIB]: This buffer is fully covered by DASICS libbounds!\n";
+static char ATTR_ULIB_DATA covered_fully2[100] = "[ULIB]: That buffer is fully covered by DASICS libbounds!\n";
+static char ATTR_ULIB_DATA covered_partially[100] = "[ULIB] ERROR: This buffer is partially covered, and should not be printed!\n";
 
 static inline int __attribute__((always_inline)) ulib_write(int fd, const char* buf, size_t n) {
     int ret_val;
@@ -52,6 +55,18 @@ int ATTR_ULIB_TEXT test_syscall() {
 
 	dasics_umaincall(Umaincall_PRINT, "Test umaincall_print va_list: %d, %d, %d, %d, %d\n", 1, 2, 3, 4, 5);
 
+	dasics_umaincall(Umaincall_PRINT, "Try to write the 1st fully covered buffer to stdout\n");
+	retval = ulib_write(1, covered_fully1, 100);
+	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
+
+	dasics_umaincall(Umaincall_PRINT, "Try to write the 2nd fully covered buffer to stdout\n");
+	retval = ulib_write(1, covered_fully2, 100);
+	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
+
+	dasics_umaincall(Umaincall_PRINT, "Try to write the partially covered buffer to stdout\n");
+	retval = ulib_write(1, covered_partially, 100);
+	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
+
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
 
 	return 0;
@@ -71,13 +86,31 @@ int main() {
 
 	register_udasics(0);
 
-	int32_t idx0;
+	int32_t idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)pub_readonly,  (uint64_t)(pub_readonly + 99));
 
-    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)pub_readonly,  (uint64_t)(pub_readonly + 128));
+	// For fully covered buffer 1st
+	int32_t idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1     ), (uint64_t)(covered_fully1 + 10));
+	int32_t idx2 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 +  9), (uint64_t)(covered_fully1 + 80));
+	int32_t idx3 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 + 81), (uint64_t)(covered_fully1 + 99));
+
+	// For partially covered buffer
+	int32_t idx4 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially     ), (uint64_t)(covered_partially + 10));
+	int32_t idx5 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially + 81), (uint64_t)(covered_partially + 99));
+
+	// For fully covered buffer 2nd
+	int32_t idx6 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 -  1), (uint64_t)(covered_fully2     ));
+	int32_t idx7 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 +  1), (uint64_t)(covered_fully2 + 99));
 
 	lib_call(&test_syscall);
 
     dasics_libcfg_free(idx0);
+	dasics_libcfg_free(idx1);
+	dasics_libcfg_free(idx2);
+	dasics_libcfg_free(idx3);
+	dasics_libcfg_free(idx4);
+	dasics_libcfg_free(idx5);
+	dasics_libcfg_free(idx6);
+	dasics_libcfg_free(idx7);
 
 	unregister_udasics();
 	exit(0);

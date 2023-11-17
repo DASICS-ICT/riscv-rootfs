@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <machine/syscall.h>
 #include "udasics.h"
 
@@ -44,6 +45,11 @@ uint64_t umaincall_helper;
 #define SYSCALL_ARGS  long sysno, long arg1, long arg2, \
         long arg3, long arg4, long arg5, long arg6
 
+typedef struct {
+    uint64_t lo;
+    uint64_t hi;
+} bound_t;
+
 void register_udasics(uint64_t funcptr) 
 {
     umaincall_helper = (funcptr != 0) ? funcptr : (uint64_t) dasics_umaincall_helper;
@@ -57,39 +63,72 @@ void unregister_udasics(void)
     csr_write(0x005, 0);    
 }
 
-uint32_t dasics_sys_write_checker(uint64_t arg0,uint64_t arg1,uint64_t arg2)
+static int bound_coverage_cmp(const void *a, const void *b)
 {
+    const bound_t *_a = (const bound_t *)a;
+    const bound_t *_b = (const bound_t *)b;
+    return (_a->lo < _b->lo) ? -1 : 1;
+}
+
+static int dasics_bound_checker(uint64_t lo, uint64_t hi, int perm)
+{
+    // In fact, this is a bound coverage problem for [lo, hi]
+    bound_t bounds[DASICS_LIBCFG_WIDTH];
+    int32_t idx, items = 0;
     int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
-    int32_t idx, is_inbound = 0;
-    uint64_t bound_lo_reg,bound_hi_reg;
 
-    for(idx = 0; idx < max_cfgs; idx++){
-        LIBBOUND_LOOKUP(bound_hi_reg,bound_lo_reg,idx,READ)
-
-        uint64_t libcfg = dasics_libcfg_get(idx);
-        is_inbound = ((libcfg & DASICS_LIBCFG_V) != 0) && ((libcfg & DASICS_LIBCFG_R) != 0) &&
-                        (arg1 >= bound_lo_reg) && (arg1 + arg2 <= bound_hi_reg);
-
-        if(is_inbound) return 1;
+    // Fill bounds array with permission matched libbounds
+    for (idx = 0; idx < max_cfgs; ++idx) {
+        uint32_t cfg = dasics_libcfg_get(idx);
+        if (cfg != -1 && (cfg & (perm | DASICS_LIBCFG_V)) != 0) {
+            // Permission matched, add this libbound to bound list
+            uint64_t bound_hi_reg, bound_lo_reg;
+            LIBBOUND_LOOKUP(bounds[items].hi, bounds[items].lo, idx, READ);
+            items++;
+        }
     }
 
-    return 0;
+    // Based on the lower bound, sort bounds array in an increasing order
+    qsort(bounds, items, sizeof(bound_t), bound_coverage_cmp);
 
+    // Calculate bound coverage via greedy algorithm
+    for (idx = 0; idx < items; ++idx) {
+        if (bounds[idx].lo <= lo + 1 && lo <= bounds[idx].hi) {
+            lo = bounds[idx].hi;
+        }
+        else if (bounds[idx].hi < lo) {
+            continue;
+        }
+        else {
+            break;
+        }
+    }
+
+    return hi <= lo;
 }
 
 static uint32_t dasics_syscall_checker(SYSCALL_ARGS)
 {
+    uint32_t retval = 1;
+
     switch(sysno)
     {
         case SYS_write:
-            return dasics_sys_write_checker(arg1, arg2, arg3);
+            if (arg3 < 0) {
+                // nbytes should not be less than zero
+                retval = 0;
+            }
+            else {
+                // Read the buffer content and write it to file descriptor
+                retval = dasics_bound_checker((uint64_t)arg2, (uint64_t)arg2 + (uint64_t)arg3 - 1, DASICS_LIBCFG_R);
+            }
             break;
         default: //TODO: other syscall implement
             printf("\x1b[33m%s\x1b[0m","[Warning] unsurported syscall for dasics!\n");
             break;
     }
 
-    return 1;
+    return retval;
 }
 
 static long dasics_syscall_proxy(SYSCALL_ARGS)
