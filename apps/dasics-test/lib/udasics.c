@@ -104,29 +104,23 @@ uint32_t dasics_syscall_proxy(uint64_t syscall, uint64_t arg0, uint64_t arg1,uin
 }
 
 
-uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t arg1, uint64_t arg2)
+uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
 {
     uint64_t dasics_return_pc = csr_read(0x8b1);            // DasicsReturnPC
     uint64_t dasics_free_zone_return_pc = csr_read(0x8b2);  // DasicsFreeZoneReturnPC
 
     uint64_t retval = 0;
 
+    va_list args;
+    va_start(args, type);
+
     switch (type)
     {
         // TODO: print supports variable arguments
-        case Umaincall_PRINT:
-            if (!arg0) break;
-            if (arg1) goto print_arg1; 
-            printf((char *)arg0);
-            break;
-        print_arg1:
-            if (arg2) goto print_arg2;
-            printf((char *)arg0, arg1);
-            break;
-        print_arg2:
-            printf((char *)arg0, arg1, arg2);
-            break;
-
+        case Umaincall_PRINT: {
+            const char *format = va_arg(args, const char *);
+            vprintf(format, args);
+        }
         case Umaincall_SETAZONERTPC:
             asm volatile ( 
                 "li     t0,  0x1d1bc;"\ 
@@ -144,6 +138,8 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t ar
 
     csr_write(0x8b1, dasics_return_pc);             // DasicsReturnPC
     csr_write(0x8b2, dasics_free_zone_return_pc);   // DasicsFreeZoneReturnPC
+
+    va_end(args);
 
     return retval;
 }

@@ -17,12 +17,12 @@ int ATTR_ULIB_TEXT test_ofb() {
 	// Note: gcc -O2 option and RVC will cause 
 	// some unexpected compilation results.
 
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n", 0, 0); // lib call main 
-	dasics_umaincall(Umaincall_PRINT, "try to load from the unbounded address: 0x%lx\n", unboundedData, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to load from the unbounded address: 0x%lx\n", unboundedData); // lib call main 
     char data = unboundedData[0]; //should arise uload fault and skip the load instruction
-	dasics_umaincall(Umaincall_PRINT, "try to store to the unbounded address:  0x%lx\n", unboundedData, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to store to the unbounded address:  0x%lx\n", unboundedData); // lib call main 
 	unboundedData[1] = data;      //should arise ustore fault and skip the store instruction
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
 
 	return 0;
 }

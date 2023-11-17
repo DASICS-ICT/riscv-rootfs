@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "ucsr.h"
 #include "uattr.h"
 
@@ -108,7 +109,7 @@ typedef enum {
 void register_udasics(uint64_t funcptr);
 void unregister_udasics(void);
 uint32_t dasics_syscall_checker(uint64_t syscall,uint64_t arg0,uint64_t arg1,uint64_t arg2);
-uint64_t dasics_umaincall_helper(UmaincallTypes type, uint64_t arg0, uint64_t arg1, uint64_t arg2);
+uint64_t dasics_umaincall_helper(UmaincallTypes type, ...);
 void     dasics_ufault_handler(void);
 int32_t  dasics_libcfg_alloc(uint64_t cfg, uint64_t hi, uint64_t lo);
 int32_t  dasics_libcfg_free(int32_t idx);
@@ -117,7 +118,7 @@ void dasics_print_cfg_register(int32_t idx);
 
 // extern uint64_t umaincall_helper;
 extern void dasics_ufault_entry(void);
-extern uint64_t dasics_umaincall(UmaincallTypes type, uint64_t arg0, uint64_t arg1, uint64_t arg2);
+extern uint64_t dasics_umaincall(UmaincallTypes type, ...);
 extern lib_call(void* func_name);
 extern azone_call(void* func_name);
 

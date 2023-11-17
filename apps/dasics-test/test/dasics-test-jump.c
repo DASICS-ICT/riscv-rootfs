@@ -40,12 +40,12 @@ int ATTR_ULIB_TEXT test_jump_lib() {
     // Test user main boundarys.
  	// Note: gcc -O2 option and RVC will cause 
  	// some unexpected compilation results
-	dasics_umaincall(Umaincall_PRINT, " - - - - - - UFREEZONE START - - - - - - - -  \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, " - - - - - - UFREEZONE START - - - - - - - -  \n"); // lib call main 
 
-	dasics_umaincall(Umaincall_PRINT, "try to jump to lib function \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to jump to lib function \n"); // lib call main 
 	test_jump_lib(); //raise fault
 
-	dasics_umaincall(Umaincall_PRINT, " - - - - - - UFREEZONE  END - - - - - - - -   \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, " - - - - - - UFREEZONE  END - - - - - - - -   \n"); // lib call main 
 	return 0;
  }
 
@@ -55,19 +55,19 @@ int ATTR_ULIB_TEXT test_jump() {
 	// Note: gcc -O2 option and RVC will cause 
 	// some unexpected compilation results.
 
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
 
-	dasics_umaincall(Umaincall_PRINT, "try to printf directly without maincall\n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to printf directly without maincall\n"); // lib call main 
     printf("should not print this info"); //raise fault
 
-	dasics_umaincall(Umaincall_PRINT, "try to jump to main function\n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to jump to main function\n"); // lib call main 
     test_jump_main(); //raise fault
-	dasics_umaincall(Umaincall_PRINT, "try to jump to freezone function\n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "try to jump to freezone function\n"); // lib call main 
 
-	dasics_umaincall(Umaincall_SETAZONERTPC,0,0,0);
+	dasics_umaincall(Umaincall_SETAZONERTPC);
 	test_free_zone();
 
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
 
 	return 0;
 }

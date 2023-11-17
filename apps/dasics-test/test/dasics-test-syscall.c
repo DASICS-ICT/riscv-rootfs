@@ -35,18 +35,20 @@ int ATTR_ULIB_TEXT test_syscall() {
 	// Note: gcc -O2 option and RVC will cause 
 	// some unexpected compilation results.
 
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
 	char *ptr = (char *)0xffffffffabcdef00;
-	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, try to write to stdout\n",0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, try to write to stdout\n"); // lib call main 
     ulib_write(1,"syscall test string 1\n",22);
 
-	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the unbounded address: 0x%lx, and write to stdout\n", ptr, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the unbounded address: 0x%lx, and write to stdout\n", ptr); // lib call main 
     ulib_write(1,ptr,5);// raise fault
 
-	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the bounded ready-only address: 0x%lx, and write to stdout\n", pub_readonly, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the bounded ready-only address: 0x%lx, and write to stdout\n", pub_readonly); // lib call main 
     ulib_write(1,pub_readonly,100);
 
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "Test umaincall_print va_list: %d, %d, %d, %d, %d\n", 1, 2, 3, 4, 5);
+
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
 
 	return 0;
 }

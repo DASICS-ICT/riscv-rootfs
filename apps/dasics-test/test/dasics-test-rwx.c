@@ -19,25 +19,25 @@ int ATTR_ULIB_TEXT test_rwx() {
 	// Note: gcc -O2 option and RVC will cause 
 	// some unexpected compilation results.
 
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
 
-	dasics_umaincall(Umaincall_PRINT, "try to print the read only buffer: %s\n", pub_readonly, 0);   // That's ok
-	dasics_umaincall(Umaincall_PRINT, "try to print the rw buffer: %s\n", pub_rwbuffer, 0); 		 // That's ok
+	dasics_umaincall(Umaincall_PRINT, "try to print the read only buffer: %s\n", pub_readonly);   // That's ok
+	dasics_umaincall(Umaincall_PRINT, "try to print the rw buffer: %s\n", pub_rwbuffer); 		 // That's ok
 
-	dasics_umaincall(Umaincall_PRINT, "try to modify the rw buffer: %s\n", pub_rwbuffer, 0);   		 // That's ok
+	dasics_umaincall(Umaincall_PRINT, "try to modify the rw buffer: %s\n", pub_rwbuffer);   		 // That's ok
     pub_rwbuffer[19] = pub_readonly[12];  // That's ok
     pub_rwbuffer[21] = 'B';               // That's ok
-	dasics_umaincall(Umaincall_PRINT, "new rw buffer: %s\n", pub_rwbuffer, 0);   // That's ok
+	dasics_umaincall(Umaincall_PRINT, "new rw buffer: %s\n", pub_rwbuffer);   // That's ok
     
-	dasics_umaincall(Umaincall_PRINT, "try to modify read only buffer\n", 0, 0);
+	dasics_umaincall(Umaincall_PRINT, "try to modify read only buffer\n");
 	pub_readonly[15] = 'B';               // raise DasicsUStoreAccessFault (0x14)
 
-	dasics_umaincall(Umaincall_PRINT, "try to load from the secret\n", 0, 0);
+	dasics_umaincall(Umaincall_PRINT, "try to load from the secret\n");
     char temp = secret[3];                // raise DasicsULoadAccessFault  (0x12)
-	dasics_umaincall(Umaincall_PRINT, "try to store to the secret\n", 0, 0);
+	dasics_umaincall(Umaincall_PRINT, "try to store to the secret\n");
     secret[3] = temp;                     // raise DasicsUStoreAccessFault (0x14)
 
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n", 0, 0); // lib call main 
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
 
 	return 0;
 }
