@@ -5,17 +5,17 @@
 
 uint64_t umaincall_helper;
 
-#define BOUND_REG_READ(hi,lo,idx)   \             
-                    case idx:  \
-                        lo = csr_read(0x890 + idx * 2);  \
-                        hi = csr_read(0x891 + idx * 2);  \
-                        break;
+#define BOUND_REG_READ(hi,lo,idx)   \
+        case idx:  \
+            lo = csr_read(0x890 + idx * 2);  \
+            hi = csr_read(0x891 + idx * 2);  \
+            break;
 
-#define BOUND_REG_WRITE(hi,lo,idx)   \             
-                    case idx:  \
-                        csr_write(0x890 + idx * 2, lo);  \
-                        csr_write(0x891 + idx * 2, hi);  \
-                        break;
+#define BOUND_REG_WRITE(hi,lo,idx)   \
+        case idx:  \
+            csr_write(0x890 + idx * 2, lo);  \
+            csr_write(0x891 + idx * 2, hi);  \
+            break;
 
 #define CONCAT(OP) BOUND_REG_##OP
 
@@ -122,14 +122,12 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
             vprintf(format, args);
         }
         case Umaincall_SETAZONERTPC:
-            asm volatile ( 
-                "li     t0,  0x1d1bc;"\ 
-                "csrw   0x8b2, t0;"
-                :
-                :
-                :"t0"
-            );     
-            break;       
+            asm volatile (
+                "li     t0,  0x1d1bc\n"
+                "csrw   0x8b2, t0\n"
+                :::"t0"
+            );
+            break;
 
         default:
             printf("\x1b[33m%s\x1b[0m","Warning: Invalid umaincall number %d!\n", type); //could not use printf in kernel

@@ -17,16 +17,6 @@
 #define EXC_DASICS_UECALL_FAULT     30
 #define EXC_DASICS_SECALL_FAULT     31
 
-/* U state csrs */
-#define CSR_USTATUS         0x000
-#define CSR_UIE             0x004
-#define CSR_UTVEC           0x005
-#define CSR_USCRATCH        0x040
-#define CSR_UEPC            0x041
-#define CSR_UCAUSE          0x042
-#define CSR_UTVAL           0x043
-#define CSR_UIP             0x044
-
 /* DASICS csrs */
 #define CSR_DUMCFG          0x9e0
 #define CSR_DUMBOUNDLO      0x9e2
@@ -119,7 +109,7 @@ void dasics_print_cfg_register(int32_t idx);
 // extern uint64_t umaincall_helper;
 extern void dasics_ufault_entry(void);
 extern uint64_t dasics_umaincall(UmaincallTypes type, ...);
-extern lib_call(void* func_name);
-extern azone_call(void* func_name);
+extern void lib_call(void* func_name);
+extern void azone_call(void* func_name);
 
 #endif
