@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 #include <unistd.h>
-#include <signal.h>
-#include <errno.h>
 #include <machine/syscall.h>
 
 #include "udasics.h"
@@ -13,23 +12,7 @@ static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB]: It's readonly buffer!\n"
 static char ATTR_ULIB_DATA covered_fully1[100] = "[ULIB]: This buffer is fully covered by DASICS libbounds!\n";
 static char ATTR_ULIB_DATA covered_fully2[100] = "[ULIB]: That buffer is fully covered by DASICS libbounds!\n";
 static char ATTR_ULIB_DATA covered_partially[100] = "[ULIB] ERROR: This buffer is partially covered, and should not be printed!\n";
-
-static inline int __attribute__((always_inline)) ulib_write(int fd, const char* buf, size_t n) {
-    int ret_val;
-    __asm__ volatile (
-        "li	a7, %[sysno]\n"
-        "mv a0, %[fd]\n"
-        "mv a1, %[buf]\n"
-        "mv a2, %[n]\n"   
-        "ecall\n"  
-        "mv %[ret_val], a0"  
-        : [ret_val] "=r" (ret_val)
-        : [fd] "r" (fd), [buf] "r" (buf), [n] "r" (n), [sysno] "i" (SYS_write)
-        : "a7", "a0", "a1", "a2", "memory"
-    );
-    return ret_val;
-}
-
+static char ATTR_ULIB_DATA read_buffer[500];
 
 #pragma GCC push_options
 #pragma GCC optimize("O0")
@@ -46,7 +29,7 @@ int ATTR_ULIB_TEXT test_syscall() {
 	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
 
 	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the unbounded address: 0x%lx, and write to stdout\n", ptr); // lib call main 
-    retval = ulib_write(1,ptr,5);// raise fault
+    retval = ulib_write(1,ptr,5);  // raise fault
 	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
 
 	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the bounded ready-only address: 0x%lx, and write to stdout\n", pub_readonly); // lib call main 
@@ -64,8 +47,21 @@ int ATTR_ULIB_TEXT test_syscall() {
 	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
 
 	dasics_umaincall(Umaincall_PRINT, "Try to write the partially covered buffer to stdout\n");
-	retval = ulib_write(1, covered_partially, 100);
+	retval = ulib_write(1, covered_partially, 100);  // raise fault
 	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
+
+	dasics_umaincall(Umaincall_PRINT, "Try to read from stdin to pub_readonly\n");
+	retval = ulib_pread(0, pub_readonly, 100, 0);  // raise fault
+	dasics_umaincall(Umaincall_PRINT, "read retval = %d\n", retval);
+
+	dasics_umaincall(Umaincall_PRINT, "Try to read from /root/scripts/run-dasics-test.sh\n");
+
+	int fd = ulib_openat(0, "/root/scripts/run-dasics-test.sh", O_RDONLY);  // Absolute path makes openat ignore dirfd
+	retval = ulib_read(fd, read_buffer, 450);
+	dasics_umaincall(Umaincall_PRINT, "read retval = %d\n", retval);
+	ulib_close(fd);
+
+	dasics_umaincall(Umaincall_PRINT, "read_buffer content:\n%s\n", read_buffer);
 
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
 
@@ -101,6 +97,10 @@ int main() {
 	int32_t idx6 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 -  1), (uint64_t)(covered_fully2     ));
 	int32_t idx7 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 +  1), (uint64_t)(covered_fully2 + 99));
 
+	// For read buffer
+	int32_t idx8 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)read_buffer, (uint64_t)(read_buffer + 499));
+	memset(read_buffer, '\0', sizeof(read_buffer));
+
 	lib_call(&test_syscall);
 
     dasics_libcfg_free(idx0);
@@ -111,6 +111,7 @@ int main() {
 	dasics_libcfg_free(idx5);
 	dasics_libcfg_free(idx6);
 	dasics_libcfg_free(idx7);
+	dasics_libcfg_free(idx8);
 
 	unregister_udasics();
 	exit(0);

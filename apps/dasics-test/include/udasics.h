@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include "ucsr.h"
 #include "uattr.h"
+#include "usyscall.h"
 
 /* Add dasics exceptions */
 #define EXC_DASICS_UFETCH_FAULT     24

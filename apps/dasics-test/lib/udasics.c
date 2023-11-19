@@ -42,9 +42,6 @@ uint64_t umaincall_helper;
                 printf("\x1b[31m%s\x1b[0m","[DASICS]Error: out of libound register range\n"); \
         }
 
-#define SYSCALL_ARGS  long sysno, long arg1, long arg2, \
-        long arg3, long arg4, long arg5, long arg6
-
 typedef struct {
     uint64_t lo;
     uint64_t hi;
@@ -116,18 +113,18 @@ static uint32_t dasics_syscall_checker(SYSCALL_ARGS)
 
     switch(sysno)
     {
-        case SYS_write:
+        case SYS_read : case SYS_write :
+        case SYS_pread: case SYS_pwrite:
             if (arg3 < 0) {
                 // nbytes should not be less than zero
                 retval = 0;
             }
             else {
-                // Read the buffer content and write it to file descriptor
-                retval = dasics_bound_checker((uint64_t)arg2, (uint64_t)arg2 + (uint64_t)arg3 - 1, DASICS_LIBCFG_R);
+                int perm = (sysno == SYS_read || sysno == SYS_pread) ? DASICS_LIBCFG_W : DASICS_LIBCFG_R;
+                retval = dasics_bound_checker((uint64_t)arg2, (uint64_t)arg2 + (uint64_t)arg3 - 1, perm);
             }
             break;
-        default: //TODO: other syscall implement
-            printf("\x1b[33m%s\x1b[0m","[Warning] unsurported syscall for dasics!\n");
+        default:
             break;
     }
 
@@ -165,7 +162,6 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
 
     switch (type)
     {
-        // TODO: print supports variable arguments
         case Umaincall_PRINT: {
             const char *format = va_arg(args, const char *);
             vprintf(format, args);
@@ -245,7 +241,7 @@ void dasics_ufault_handler(void)
                     csr_write(0x8b2, dasics_free_zone_return_pc);
                     return;
             } 
-            printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: lib ecall arguments beyond authority， dasics ecall fault occurs!\n");
+            printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: lib ecall arguments beyond authority, dasics ecall fault occurs!\n");
             break;
         default:
             printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: unexpected dasics fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
