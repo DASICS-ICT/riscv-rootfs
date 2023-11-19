@@ -82,7 +82,6 @@ static int dasics_bound_checker(uint64_t lo, uint64_t hi, int perm)
         }
         else if ((cfg & (perm | DASICS_LIBCFG_V)) != DASICS_LIBCFG_V) {
             // Permission matched, add this libbound to bound list
-            uint64_t bound_hi_reg, bound_lo_reg;
             LIBBOUND_LOOKUP(bounds[items].hi, bounds[items].lo, idx, READ);
             items++;
         }
