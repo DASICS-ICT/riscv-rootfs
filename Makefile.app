@@ -19,7 +19,8 @@ $(shell mkdir -p $(DST_DIR))
 .PHONY: install clean
 
 install: $(APP)
-	@ln -sf $(APP) $(RISCV_ROOTFS_HOME)/rootfsimg/build/$(NAME)
+	$(foreach app, $(APP), \
+		ln -sf $(app) $(RISCV_ROOTFS_HOME)/rootfsimg/build/$(notdir $(app));)
 
 clean: 
 	rm -rf $(APP_DIR)/build/

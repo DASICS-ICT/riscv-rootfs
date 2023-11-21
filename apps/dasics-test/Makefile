@@ -1,9 +1,9 @@
-NAME = dasics-test
-DST_DIR ?= ./build
-TEST_DIR = ./test
-LIBS_DIR = ./lib
+include $(RISCV_ROOTFS_HOME)/Makefile.app
 
-TEST = $(DST_DIR)/dasics-test-free \
+TEST_DIR = $(APP_DIR)/test
+LIBS_DIR = $(APP_DIR)/lib
+
+override APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-jump \
 	   $(DST_DIR)/dasics-test-ofb \
 	   $(DST_DIR)/dasics-test-syscall \
@@ -20,7 +20,6 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 
 LIBS = lib/udasics.c lib/dasics_entry.S lib/dasics_call.S
 # cross compile
-
 CROSS_COMPILE = riscv64-unknown-elf-
 
 AS = $(CROSS_COMPILE)gcc
@@ -32,13 +31,10 @@ LD = $(CROSS_COMPILE)gcc
 # Note: gcc -O2 option and RVC will cause 
 # some unexpected compilation results.
 
-LDS = $(NAME).lds
-INC_DIR += ./include/
-
 INCLUDES  = $(addprefix -I, ${INC_DIR})
 
-CFLAGS   += -O0 -march=rv64imad -MMD $(INCLUDES) -g  -T $(LDS)
-CXXFLAGS += -O0 -march=rv64imad -MMD $(INCLUDES) -g  -T $(LDS)
+CFLAGS   += -O0 -march=rv64imad -MMD $(INCLUDES) -g
+CXXFLAGS += -O0 -march=rv64imad -MMD $(INCLUDES) -g
 
 # Files to be compiled
 LIBOBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(LIBS))))
@@ -57,24 +53,10 @@ $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.S
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $^
 
-$(TEST):%:%.o $(LIBOBJS)
+$(APP):%:%.o $(LIBOBJS)
 	@echo + LD $@
 	@$(LD) $(LDFLAGS) -o $@ $^
-
-.PHONY: all clean
-
-include $(RISCV_ROOTFS_HOME)/Makefile.app
-
-TEST_LIST = dasics-test-free dasics-test-jump dasics-test-ofb dasics-test-rwx dasics-test-syscall
-
-all:$(TEST)
-	-$(foreach test, $(TEST_LIST), ln -sf $(abspath .)/build/$(test) $(RISCV_ROOTFS_HOME)/rootfsimg/build/$(test);)
-
-clean: 
-	rm -rf $(DST_DIR)
 
 # Dependencies
 DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
 -include $(DEPS)
-
-
