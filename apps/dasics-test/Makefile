@@ -1,5 +1,3 @@
-include $(RISCV_ROOTFS_HOME)/Makefile.app
-
 TEST_DIR = $(APP_DIR)/test
 LIBS_DIR = $(APP_DIR)/lib
 
@@ -8,6 +6,8 @@ override APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-ofb \
 	   $(DST_DIR)/dasics-test-syscall \
 	   $(DST_DIR)/dasics-test-rwx
+
+include $(RISCV_ROOTFS_HOME)/Makefile.app
 
 SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-jump.c \
