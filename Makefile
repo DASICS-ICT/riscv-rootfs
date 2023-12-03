@@ -1,6 +1,6 @@
 $(shell mkdir -p rootfsimg/build)
 
-APPS = busybox dasics-test
+APPS = busybox dasics-test mpk
 APPS_DIR = $(addprefix apps/, $(APPS))
 
 .PHONY: rootfsimg $(APPS_DIR) clean
