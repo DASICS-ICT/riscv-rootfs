@@ -273,75 +273,8 @@ int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi) {
 
         if ((curr_cfg & DASICS_LIBCFG_V) == 0)  // Found available config
         {
-            // Write DASICS bounds csr
-            switch (idx) {
-                case 0:
-                    csr_write(0x890, lo);   // DasicsLibBound0Lo
-                    csr_write(0x891, hi);   // DasicsLibBound0Hi
-                    break;
-                case 1:
-                    csr_write(0x892, lo);   // DasicsLibBound1Lo
-                    csr_write(0x893, hi);   // DasicsLibBound1Hi
-                    break;
-                case 2:
-                    csr_write(0x894, lo);   // DasicsLibBound2Lo
-                    csr_write(0x895, hi);   // DasicsLibBound2Hi
-                    break;
-                case 3:
-                    csr_write(0x896, lo);   // DasicsLibBound3Lo
-                    csr_write(0x897, hi);   // DasicsLibBound3Hi
-                    break;
-                case 4:
-                    csr_write(0x898, lo);   // DasicsLibBound4Lo
-                    csr_write(0x899, hi);   // DasicsLibBound4Hi
-                    break;
-                case 5:
-                    csr_write(0x89a, lo);   // DasicsLibBound5Lo
-                    csr_write(0x89b, hi);   // DasicsLibBound5Hi
-                    break;
-                case 6:
-                    csr_write(0x89c, lo);   // DasicsLibBound6Lo
-                    csr_write(0x89d, hi);   // DasicsLibBound6Hi
-                    break;
-                case 7:
-                    csr_write(0x89e, lo);   // DasicsLibBound7Lo
-                    csr_write(0x89f, hi);   // DasicsLibBound7Hi
-                    break;
-                case 8:
-                    csr_write(0x8a0, lo);   // DasicsLibBound8Lo
-                    csr_write(0x8a1, hi);   // DasicsLibBound8Hi
-                    break;
-                case 9:
-                    csr_write(0x8a2, lo);   // DasicsLibBound9Lo
-                    csr_write(0x8a3, hi);   // DasicsLibBound9Hi
-                    break;
-                case 10:
-                    csr_write(0x8a4, lo);   // DasicsLibBound10Lo
-                    csr_write(0x8a5, hi);   // DasicsLibBound10Hi
-                    break;
-                case 11:
-                    csr_write(0x8a6, lo);   // DasicsLibBound11Lo
-                    csr_write(0x8a7, hi);   // DasicsLibBound11Hi
-                    break;
-                case 12:
-                    csr_write(0x8a8, lo);   // DasicsLibBound12Lo
-                    csr_write(0x8a9, hi);   // DasicsLibBound12Hi
-                    break;
-                case 13:
-                    csr_write(0x8aa, lo);   // DasicsLibBound13Lo
-                    csr_write(0x8ab, hi);   // DasicsLibBound13Hi
-                    break;
-                case 14:
-                    csr_write(0x8ac, lo);   // DasicsLibBound14Lo
-                    csr_write(0x8ad, hi);   // DasicsLibBound14Hi
-                    break;
-                case 15:
-                    csr_write(0x8ae, lo);   // DasicsLibBound15Lo
-                    csr_write(0x8af, hi);   // DasicsLibBound15Hi
-                    break;
-                default:
-                    break;
-            }
+            // Write libbound
+            LIBBOUND_LOOKUP(hi, lo, idx, WRITE);
 
             // Write config
             libcfg &= ~(DASICS_LIBCFG_MASK << (idx * step));
