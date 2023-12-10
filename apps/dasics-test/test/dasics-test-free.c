@@ -31,9 +31,9 @@ int main() {
     // Free those used libcfg via handlers
     dasics_libcfg_free(idx0);   
 
-	uint32_t result = dasics_libcfg_get(idx0) & DASICS_LIBCFG_V;
+	uint32_t result = dasics_libcfg_get(idx0);
 
-	if(result)
+	if(result != (uint32_t)-1)
 		printf("\x1b[31m%s\x1b[0m","free function error!\n");
 
     dasics_print_cfg_register(idx0);
