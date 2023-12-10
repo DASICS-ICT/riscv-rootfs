@@ -54,5 +54,6 @@ file /root/dasics-test-jump ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-jum
 file /root/dasics-test-ofb ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-ofb 755 0 0
 file /root/dasics-test-rwx ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-rwx 755 0 0
 file /root/dasics-test-syscall ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-syscall 755 0 0
+file /root/dasics-test-bounds ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-bounds 755 0 0
 file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
 
