@@ -67,9 +67,6 @@ void register_udasics(uint64_t funcptr)
     int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
     int32_t step = 4;
 
-    // Set random seed
-    srand(2023);
-
     // Write OS-allocated bounds to hash table
     for (int32_t idx = 0; idx < max_cfgs; ++idx) {
         uint64_t curr_cfg = (libcfg >> (idx * step)) & DASICS_LIBCFG_MASK;
@@ -233,6 +230,30 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
     return retval;
 }
 
+static int dasics_oldest_victim(void) {
+    uint64_t dlaging0 = csr_read(0x881);  // DasicsLibAging0
+    uint64_t dlaging1 = csr_read(0x882);  // DasicsLibAging1
+    const uint64_t aging_width = 8;
+
+    int victim = 0;
+    uint8_t oldest = 0xffu;  // Smaller value is older
+
+    for (int i = 0; i < DASICS_LIBCFG_WIDTH; ++i) {
+        uint8_t aging_val;
+        if (i < DASICS_LIBCFG_WIDTH / 2) {
+            aging_val = (uint8_t)(dlaging0 >> (i * aging_width));
+        } else {
+            aging_val = (uint8_t)(dlaging1 >> ((i - DASICS_LIBCFG_WIDTH / 2) * aging_width));
+        }
+        if (aging_val <= oldest) {
+            victim = i;
+            oldest = aging_val;
+        }
+    }
+
+    return victim;
+}
+
 /**
  * Check whether the bounds hash table contains the corresponding entry
  * If so, load the entry to dlibcfg and dlibbounds
@@ -252,7 +273,7 @@ static int dasics_ldst_checker(uint64_t utval, int is_read)
         if (current->bound.lo <= utval && utval <= current->bound.hi && \
             (current->priv & valid_perm) == valid_perm) {
             // Find the matching bound, thus replace one libcfg & libbound with it
-            int victim = rand() % DASICS_LIBCFG_WIDTH;
+            int victim = dasics_oldest_victim();
             LIBBOUND_LOOKUP(current->bound.hi, current->bound.lo, victim, WRITE);
 
             // Write config
@@ -381,9 +402,9 @@ int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi) {
         }
     }
 
-    // Randomly kick out one victim if we cannot find one available place
+    // Kick out the oldest victim if we cannot find one available place
     if (victim == max_cfgs) {
-        victim = rand() % DASICS_LIBCFG_WIDTH;
+        victim = dasics_oldest_victim();
     }
 
     // Write libbound
@@ -393,6 +414,18 @@ int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi) {
     libcfg &= ~(DASICS_LIBCFG_MASK << (victim * step));
     libcfg |= ((uint64_t)entry->priv) << (victim * step);
     csr_write(0x880, libcfg);   // DasicsLibCfg
+
+    // Write init aging value
+    uint64_t aging_width = 8;
+    if (victim < DASICS_LIBCFG_WIDTH / 2) {
+        uint64_t dlaging = csr_read(0x881);
+        dlaging |= 0xfful << (victim * aging_width);
+        csr_write(0x881, dlaging);
+    } else {
+        uint64_t dlaging = csr_read(0x882);
+        dlaging |= 0xfful << ((victim - DASICS_LIBCFG_WIDTH / 2) * aging_width);
+        csr_write(0x882, dlaging);
+    }
 
     // Fill dlibcsr map with new handle
     dlibcfg_handle_map[victim] = entry->handle;
