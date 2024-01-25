@@ -19,7 +19,7 @@ dir /var/log 755 0 0
 nod /dev/console 644 0 0 c 5 1
 nod /dev/null 644 0 0 c 1 3
 
-file /lib/ld-linux-riscv64-lp64.so.1 ${RISCV}/sysroot/lib/ld-linux-riscv64-lp64.so.1 755 0 0
+file /lib/ld-linux-riscv64-lp64d.so.1 ${RISCV}/sysroot/lib/ld-linux-riscv64-lp64d.so.1 755 0 0
 file /lib/libc.so.6 ${RISCV}/sysroot/lib/libc.so.6 755 0 0
 file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0
 file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0
