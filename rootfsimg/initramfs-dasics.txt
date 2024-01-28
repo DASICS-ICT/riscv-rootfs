@@ -16,8 +16,8 @@ dir /var/tmp 755 0 0
 dir /root 755 0 0
 dir /var/log 755 0 0
 dir /etc/init.d 755 0 0
-dir /usr/lib/local 755 0 0
-dir /usr/lib/local/C.utf8 755 0 0
+dir /usr/lib/locale 755 0 0
+dir /usr/lib/locale/C.utf8 755 0 0
 dir /usr/lib/locale/C.utf8/LC_MESSAGES/ 755 0 0
 dir /home 755 0 0
 dir /home/wanghan 755 0 0 
@@ -54,7 +54,7 @@ file /usr/lib/locale/C.utf8/LC_TELEPHONE  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/loc
 file /usr/lib/locale/C.utf8/LC_TIME  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_TIME 755 0 0
 
 file /usr/lib/locale/C.utf8/LC_MESSAGES/SYS_LC_MESSAGES  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_MESSAGES/SYS_LC_MESSAGES 755 0 0
-
+file /usr/lib/locale/locale-archive ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/locale-archive 755 0 0
 
 nod /dev/console 644 0 0 c 5 1
 nod /dev/null 644 0 0 c 1 3
@@ -105,6 +105,9 @@ file /root/dasics-test-ofb ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-ofb 
 file /root/dasics-test-rwx ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-rwx 755 0 0
 file /root/dasics-test-syscall ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-syscall 755 0 0
 file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
+
+# strace
+file /bin/strace  ${RISCV_ROOTFS_HOME}/rootfsimg/build/strace 755 0 0
 
 # bash
 file /bin/bash ${RISCV_ROOTFS_HOME}/rootfsimg/build/bash 755 0 0
