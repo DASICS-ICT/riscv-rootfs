@@ -4,10 +4,7 @@ include $(RISCV_ROOTFS_HOME)/Makefile.app
 
 REPO_PATH = repo
 TARBALL = strace-6.6.tar.xz
-CONFIG_FLAGS = CC=riscv64-unknown-linux-gnu-gcc \
-			   CXX=riscv64-unknown-linux-gnu-g++ \
-			   --host=riscv64 \
-			   --enable-mpers=no
+CONFIG_FLAGS = --host=riscv64-unknown-linux-gnu
 
 $(TARBALL):
 	curl -O https://strace.io/files/6.6/$(TARBALL)
@@ -20,4 +17,4 @@ $(REPO_PATH): $(TARBALL)
 $(APP): | $(REPO_PATH)
 	cd $(REPO_PATH) && ./configure $(CONFIG_FLAGS)
 	$(MAKE) -C $(REPO_PATH)
-	cd build && ln -sf ../repo/strace strace
+	cd build && ln -sf ../repo/src/strace strace
