@@ -15,12 +15,51 @@ dir /var 755 0 0
 dir /var/tmp 755 0 0
 dir /root 755 0 0
 dir /var/log 755 0 0
+dir /etc/init.d 755 0 0
+dir /usr/lib/local 755 0 0
+dir /usr/lib/local/C.utf8 755 0 0
+dir /usr/lib/locale/C.utf8/LC_MESSAGES/ 755 0 0
+dir /home 755 0 0
+dir /home/wanghan 755 0 0 
+dir /home/wanghan/redis 755 0 0 
+dir /home/wanghan/sudo 755 0 0 
+dir /home/wanghan/ripe 755 0 0
+dir /home/wanghan/case-study 755 0 0
+
+
+file /etc/fstab ${RISCV_ROOTFS_HOME}/rootfsimg/etc/fstab 755 0 0
+file /etc/group ${RISCV_ROOTFS_HOME}/rootfsimg/etc/group 755 0 0
+file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/etc/inittab 755 0 0
+file /etc/localtime ${RISCV_ROOTFS_HOME}/rootfsimg/etc/localtime 755 0 0
+file /etc/nsswitch.conf ${RISCV_ROOTFS_HOME}/rootfsimg/etc/nsswitch.conf 755 0 0
+file /etc/passwd ${RISCV_ROOTFS_HOME}/rootfsimg/etc/passwd 755 0 0
+file /etc/passwd- ${RISCV_ROOTFS_HOME}/rootfsimg/etc/passwd- 755 0 0
+file /etc/profile ${RISCV_ROOTFS_HOME}/rootfsimg/etc/profile 755 0 0 
+file /etc/rpc ${RISCV_ROOTFS_HOME}/rootfsimg/etc/rpc 755 0 0
+file /etc/shadow ${RISCV_ROOTFS_HOME}/rootfsimg/etc/shadow 755 0 0
+file /etc/shadow- ${RISCV_ROOTFS_HOME}/rootfsimg/etc/shadow- 755 0 0
+file /etc/sudo.conf ${RISCV_ROOTFS_HOME}/rootfsimg/etc/sudo.conf 755 0 0
+file /etc/sudoers ${RISCV_ROOTFS_HOME}/rootfsimg/etc/sudoers 755 0 0
+
+file /usr/lib/locale/C.utf8/LC_ADDRESS  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_ADDRESS 755 0 0
+file /usr/lib/locale/C.utf8/LC_COLLATE  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_COLLATE 755 0 0
+file /usr/lib/locale/C.utf8/LC_CTYPE  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_CTYPE 755 0 0
+file /usr/lib/locale/C.utf8/LC_IDENTIFICATION  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_IDENTIFICATION 755 0 0
+file /usr/lib/locale/C.utf8/LC_MEASUREMENT  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_MEASUREMENT 755 0 0
+file /usr/lib/locale/C.utf8/LC_MONETARY  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_MONETARY 755 0 0
+file /usr/lib/locale/C.utf8/LC_NAME  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_NAME 755 0 0
+file /usr/lib/locale/C.utf8/LC_NUMERIC  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_NUMERIC 755 0 0
+file /usr/lib/locale/C.utf8/LC_PAPER  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_PAPER 755 0 0
+file /usr/lib/locale/C.utf8/LC_TELEPHONE  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_TELEPHONE 755 0 0
+file /usr/lib/locale/C.utf8/LC_TIME  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_TIME 755 0 0
+
+file /usr/lib/locale/C.utf8/LC_MESSAGES/SYS_LC_MESSAGES  ${RISCV_ROOTFS_HOME}/rootfsimg/lib/locale/C.utf8/LC_MESSAGES/SYS_LC_MESSAGES 755 0 0
+
 
 nod /dev/console 644 0 0 c 5 1
 nod /dev/null 644 0 0 c 1 3
 
-file /lib/ld-linux-riscv64-lp64d.so.1 /home/wanghan/riscv/riscv64-unknown-linux-gnu-pulp/sysroot/lib/ld-linux-riscv64-lp64d.so.1 755 0 0
-file /lib/ld-linux-riscv64-lp64.so.1 /home/wanghan/riscv/riscv64-unknown-linux-gnu-nod/sysroot/lib/ld-linux-riscv64-lp64.so.1 755 0 0
+file /lib/ld-linux-riscv64-lp64d.so.1 ${RISCV}/sysroot/lib/ld-linux-riscv64-lp64d.so.1 755 0 0
 file /usr/lib/libc.so.6 /home/wanghan/riscv/riscv64-unknown-linux-gnu-nod/sysroot/lib/libc.so.6 755 0 0
 file /lib/libc.so.6 ${RISCV}/sysroot/lib/libc.so.6 755 0 0
 file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0
@@ -30,14 +69,20 @@ file /lib/libpthread.so.0 ${RISCV}/sysroot/lib/libpthread.so.0 755 0 0
 file /lib/libstdc++.so.6 ${RISCV}/sysroot/lib/libstdc++.so.6 755 0 0
 file /lib/libgcc_s.so ${RISCV}/sysroot/lib/libgcc_s.so 755 0 0
 file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0
+file /lib/libnss_x-x.so.2 ${RISCV_ROOTFS_HOME}/apps/sudo/build/libnss_x-x.so.2 755 0 0
+file /lib/libnss_files.so.2 ${RISCV}/sysroot/lib/libnss_files.so.2 755 0 0
+file /lib/libz.so.1 ${RISCV}/sysroot/lib/libz.so.1 755 0 0
+file /lib/librt.so.1 ${RISCV}/sysroot/lib/librt.so.1 755 0 0
+file /lib/libatomic.so.1 ${RISCV}/sysroot/lib/libatomic.so.1 755 0 0
+file /lib/libutil.so.1 ${RISCV}/sysroot/lib/libutil.so.1 755 0 0
+file /lib/libcrypt.so.1 ${RISCV}/sysroot/lib/libcrypt.so.1 755 0 0
 
-# dasics dynamic test 
-file /lib/mylib.so ${RISCV_ROOTFS_HOME}/rootfsimg/build/mylib.so 755 0 0
-file /lib/mylib1.so ${RISCV_ROOTFS_HOME}/rootfsimg/build/mylib1.so 755 0 0
+
 
 file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
 file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab 755 0 0
 slink /init /bin/busybox 755 0 0
+file /bin/su ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 4755 0 0
 
 # scripts
 dir /root/scripts 755 0 0
@@ -59,9 +104,28 @@ file /root/dasics-test-jump ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-jum
 file /root/dasics-test-ofb ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-ofb 755 0 0
 file /root/dasics-test-rwx ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-rwx 755 0 0
 file /root/dasics-test-syscall ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-syscall 755 0 0
-file /root/dasics-test-dynamic ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-dynamic 755 0 0
 file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
-file /root/cert.crt ${RISCV_ROOTFS_HOME}/rootfsimg/build/cert.crt 755 0 0
-file /root/test /home/wanghan/Workspace/release-dynamic/build/dynamic 755 0 0
+
+# bash
+file /bin/bash ${RISCV_ROOTFS_HOME}/rootfsimg/build/bash 755 0 0
+
+# case study
+file /home/wanghan/attack-case ${RISCV_ROOTFS_HOME}/rootfsimg/build/attack-case 755 0 0
+
+# redis
+file /home/wanghan/redis/exploit ${RISCV_ROOTFS_HOME}/apps/redis/build/exploit 755 0 0
+file /home/wanghan/redis/redis-server ${RISCV_ROOTFS_HOME}/apps/redis/build/redis-server 755 0 0
+file /home/wanghan/redis/run_exploit.sh ${RISCV_ROOTFS_HOME}/apps/redis/build/run_exploit.sh 755 0 0
+file /home/wanghan/redis/redis.conf ${RISCV_ROOTFS_HOME}/apps/redis/build/redis.conf 755 0 0
+file /home/wanghan/redis/exploit_rv64.lua ${RISCV_ROOTFS_HOME}/apps/redis/build/exploit_rv64.lua 755 0 0
+
+# sudo 
+file /home/wanghan/sudo/exploit ${RISCV_ROOTFS_HOME}/apps/sudo/build/exploit 755 0 0
+file /bin/sudo ${RISCV_ROOTFS_HOME}/apps/sudo/build/sudo 4755 0 0
+slink /bin/sudoedit /bin/sudo 755 0 0
+
+# hope-RIPE 
+file /home/wanghan/ripe/ripe_attack_generator ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_attack_generator 755 0 0
+file /home/wanghan/ripe/ripe_tester.sh ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_tester.sh 755 0 0
 
 

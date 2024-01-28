@@ -12,6 +12,16 @@
 !*.md
 repo/
 build/
+apps/bash/bash-5.2.21
 
 !DASICS-dynamic-lib
 !apps/hope-RIPE
+!apps/redis
+!rootfsimg/etc/*
+!rootfsimg/etc/*/*
+!rootfsimg/lib/*
+!rootfsimg/lib/*/*
+!rootfsimg/lib/*/*/*
+
+
+
