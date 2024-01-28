@@ -13,3 +13,5 @@
 repo/
 build/
 
+!DASICS-dynamic-lib
+!apps/hope-RIPE
