@@ -20,11 +20,11 @@ dir /usr/lib/locale 755 0 0
 dir /usr/lib/locale/C.utf8 755 0 0
 dir /usr/lib/locale/C.utf8/LC_MESSAGES/ 755 0 0
 dir /home 755 0 0
-dir /home/wanghan 755 0 0 
-dir /home/wanghan/redis 755 0 0 
-dir /home/wanghan/sudo 755 0 0 
-dir /home/wanghan/ripe 755 0 0
-dir /home/wanghan/case-study 755 0 0
+dir /home/wanghan 755 1000 1000 
+dir /home/wanghan/redis 755 1000 1000 
+dir /home/wanghan/sudo 755 1000 1000 
+dir /home/wanghan/ripe 755 1000 1000 
+dir /home/wanghan/case-study 755 1000 1000 
 
 
 file /etc/fstab ${RISCV_ROOTFS_HOME}/rootfsimg/etc/fstab 755 0 0
@@ -60,7 +60,6 @@ nod /dev/console 644 0 0 c 5 1
 nod /dev/null 644 0 0 c 1 3
 
 file /lib/ld-linux-riscv64-lp64d.so.1 ${RISCV}/sysroot/lib/ld-linux-riscv64-lp64d.so.1 755 0 0
-file /usr/lib/libc.so.6 /home/wanghan/riscv/riscv64-unknown-linux-gnu-nod/sysroot/lib/libc.so.6 755 0 0
 file /lib/libc.so.6 ${RISCV}/sysroot/lib/libc.so.6 755 0 0
 file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0
 file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0
@@ -113,22 +112,22 @@ file /bin/strace  ${RISCV_ROOTFS_HOME}/rootfsimg/build/strace 755 0 0
 file /bin/bash ${RISCV_ROOTFS_HOME}/rootfsimg/build/bash 755 0 0
 
 # case study
-file /home/wanghan/attack-case ${RISCV_ROOTFS_HOME}/rootfsimg/build/attack-case 755 0 0
+file /home/wanghan/attack-case ${RISCV_ROOTFS_HOME}/rootfsimg/build/attack-case 755 1000 1000
 
 # redis
-file /home/wanghan/redis/exploit ${RISCV_ROOTFS_HOME}/apps/redis/build/exploit 755 0 0
-file /home/wanghan/redis/redis-server ${RISCV_ROOTFS_HOME}/apps/redis/build/redis-server 755 0 0
-file /home/wanghan/redis/run_exploit.sh ${RISCV_ROOTFS_HOME}/apps/redis/build/run_exploit.sh 755 0 0
-file /home/wanghan/redis/redis.conf ${RISCV_ROOTFS_HOME}/apps/redis/build/redis.conf 755 0 0
-file /home/wanghan/redis/exploit_rv64.lua ${RISCV_ROOTFS_HOME}/apps/redis/build/exploit_rv64.lua 755 0 0
+file /home/wanghan/redis/exploit ${RISCV_ROOTFS_HOME}/apps/redis/build/exploit 755 1000 1000
+file /home/wanghan/redis/redis-server ${RISCV_ROOTFS_HOME}/apps/redis/build/redis-server 755 1000 1000
+file /home/wanghan/redis/run_exploit.sh ${RISCV_ROOTFS_HOME}/apps/redis/build/run_exploit.sh 755 1000 1000
+file /home/wanghan/redis/redis.conf ${RISCV_ROOTFS_HOME}/apps/redis/build/redis.conf 755 1000 1000
+file /home/wanghan/redis/exploit_rv64.lua ${RISCV_ROOTFS_HOME}/apps/redis/build/exploit_rv64.lua 755 1000 1000
 
 # sudo 
-file /home/wanghan/sudo/exploit ${RISCV_ROOTFS_HOME}/apps/sudo/build/exploit 755 0 0
+file /home/wanghan/sudo/exploit ${RISCV_ROOTFS_HOME}/apps/sudo/build/exploit 755 1000 1000
 file /bin/sudo ${RISCV_ROOTFS_HOME}/apps/sudo/build/sudo 4755 0 0
 slink /bin/sudoedit /bin/sudo 755 0 0
 
 # hope-RIPE 
-file /home/wanghan/ripe/ripe_attack_generator ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_attack_generator 755 0 0
-file /home/wanghan/ripe/ripe_tester.sh ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_tester.sh 755 0 0
+file /home/wanghan/ripe/ripe_attack_generator ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_attack_generator 755 1000 1000
+file /home/wanghan/ripe/ripe_tester.sh ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_tester.sh 755 1000 1000
 
 
