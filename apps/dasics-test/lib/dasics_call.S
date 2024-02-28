@@ -16,6 +16,21 @@ lib_call:
 #-----------------------------------------------------------------------
 # : pass arguments to umaincall helper.
 #-----------------------------------------------------------------------
+.section .text
+.global lib_call_arg
+.type lib_call_arg, @function
+
+lib_call_arg:
+    addi   sp, sp, -8
+    sd     ra, 0(sp)
+    .word 0x0005108b    // dasicscall.jr ra, a0
+    ld     ra, 0(sp)
+    addi   sp, sp, 8
+    ret
+
+#-----------------------------------------------------------------------
+# : pass arguments to umaincall helper.
+#-----------------------------------------------------------------------
 .section .text.ufreezonetext
 .global azone_call
 .type azone_call, @function

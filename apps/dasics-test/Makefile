@@ -6,7 +6,8 @@ override APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-ofb \
 	   $(DST_DIR)/dasics-test-syscall \
 	   $(DST_DIR)/dasics-test-rwx \
-	   $(DST_DIR)/dasics-test-bounds
+	   $(DST_DIR)/dasics-test-bounds \
+	   $(DST_DIR)/attack-case
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
 
@@ -16,6 +17,7 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-rwx.c \
 	   $(TEST_DIR)/dasics-test-syscall.c \
 	   $(TEST_DIR)/dasics-test-bounds.c \
+	   $(TEST_DIR)/attack-case.c \
 	   lib/udasics.c \
 	   lib/dasics_entry.S \
 	   lib/dasics_call.S

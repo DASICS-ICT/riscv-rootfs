@@ -111,5 +111,5 @@ extern void dasics_ufault_entry(void);
 extern uint64_t dasics_umaincall(UmaincallTypes type, ...);
 extern void lib_call(void* func_name);
 extern void azone_call(void* func_name);
-
+extern void lib_call_arg(void* func_name, uint64_t a0, uint64_t a1, uint64_t a2);
 #endif
