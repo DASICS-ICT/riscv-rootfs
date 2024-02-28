@@ -28,18 +28,6 @@ uint64_t umaincall_helper;
             CONCAT(OP)(HI,LO,1);  \
             CONCAT(OP)(HI,LO,2);  \
             CONCAT(OP)(HI,LO,3);  \
-            CONCAT(OP)(HI,LO,4);  \
-            CONCAT(OP)(HI,LO,5);  \
-            CONCAT(OP)(HI,LO,6);  \
-            CONCAT(OP)(HI,LO,7);  \
-            CONCAT(OP)(HI,LO,8);  \
-            CONCAT(OP)(HI,LO,9);  \
-            CONCAT(OP)(HI,LO,10); \
-            CONCAT(OP)(HI,LO,11); \
-            CONCAT(OP)(HI,LO,12); \
-            CONCAT(OP)(HI,LO,13); \
-            CONCAT(OP)(HI,LO,14); \
-            CONCAT(OP)(HI,LO,15); \
             default: \
                 printf("\x1b[31m%s\x1b[0m","[DASICS]Error: out of libound register range\n"); \
         }
@@ -60,7 +48,7 @@ hashed_bound_t *bounds_table = NULL;
 static int available_handle = 0;  // FIXME: Currently we ignore int overflow conditions
 
 int dlibcfg_handle_map[DASICS_LIBCFG_WIDTH] = {-1};
-
+// 0x241a7
 void register_udasics(uint64_t funcptr) 
 {
     uint64_t libcfg = csr_read(0x880);  // DasicsLibCfg
@@ -91,13 +79,13 @@ void register_udasics(uint64_t funcptr)
     // Set maincall & ufault handler
     umaincall_helper = (funcptr != 0) ? funcptr : (uint64_t) dasics_umaincall_helper;
     csr_write(0x8b0, (uint64_t)dasics_umaincall);
-    csr_write(0x005, (uint64_t)dasics_ufault_entry);
+    // csr_write(0x005, (uint64_t)dasics_ufault_entry);
 }
 
 void unregister_udasics(void) 
 {
     csr_write(0x8b0, 0);
-    csr_write(0x005, 0);
+    // csr_write(0x005, 0);
 
     // Free bounds hash table
     hashed_bound_t *current, *temp;
@@ -199,7 +187,7 @@ static long dasics_syscall_proxy(SYSCALL_ARGS)
 uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
 {
     uint64_t dasics_return_pc = csr_read(0x8b1);            // DasicsReturnPC
-    uint64_t dasics_free_zone_return_pc = csr_read(0x8b2);  // DasicsFreeZoneReturnPC
+    // uint64_t dasics_free_zone_return_pc = csr_read(0x8b2);  // DasicsFreeZoneReturnPC
 
     uint64_t retval = 0;
 
@@ -211,10 +199,11 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
         case Umaincall_PRINT: {
             const char *format = va_arg(args, const char *);
             vprintf(format, args);
+            break;
         }
         case Umaincall_SETAZONERTPC:
             asm volatile (
-                "li     t0,  0x1d1bc\n"
+                "li     t0,  0x21860\n"
                 "csrw   0x8b2, t0\n"
                 :::"t0"
             );
@@ -226,7 +215,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
     }
 
     csr_write(0x8b1, dasics_return_pc);             // DasicsReturnPC
-    csr_write(0x8b2, dasics_free_zone_return_pc);   // DasicsFreeZoneReturnPC
+    // csr_write(0x8b2, dasics_free_zone_return_pc);   // DasicsFreeZoneReturnPC
 
     va_end(args);
 
@@ -274,7 +263,7 @@ void dasics_ufault_handler(void)
 {
     // Save some registers that should be saved by callees
     uint64_t dasics_return_pc = csr_read(0x8b1);
-    uint64_t dasics_free_zone_return_pc = csr_read(0x8b2);
+    // uint64_t dasics_free_zone_return_pc = csr_read(0x8b2);
 
     uint64_t ucause = csr_read(ucause);
     uint64_t utval = csr_read(utval);
@@ -318,7 +307,7 @@ void dasics_ufault_handler(void)
                 printf("[DASICS EXCEPTION]Info: dasics %s fault OK! new csr idx is %d, lo = %#lx, hi = %#lx\n", \
                     is_uload ? "uload" : "ustore", csr_idx, lo, hi);
                 csr_write(0x8b1, dasics_return_pc);
-                csr_write(0x8b2, dasics_free_zone_return_pc);
+                // csr_write(0x8b2, dasics_free_zone_return_pc);
                 return;
             }
             break;
@@ -331,7 +320,7 @@ void dasics_ufault_handler(void)
                     uint64_t ret = dasics_syscall_proxy(sysno, arg1, arg2, arg3, arg4, arg5, arg6);
                     csr_write(uepc, uepc + 4);         
                     csr_write(0x8b1, dasics_return_pc);
-                    csr_write(0x8b2, dasics_free_zone_return_pc);
+                    // csr_write(0x8b2, dasics_free_zone_return_pc);
                     return;
             } 
             printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: lib ecall arguments beyond authority, dasics ecall fault occurs!\n");
@@ -353,7 +342,7 @@ void dasics_ufault_handler(void)
 
     // Restore those saved registers
     csr_write(0x8b1, dasics_return_pc);
-    csr_write(0x8b2, dasics_free_zone_return_pc);
+    // csr_write(0x8b2, dasics_free_zone_return_pc);
 
 }
 
@@ -460,18 +449,18 @@ int32_t dasics_jumpcfg_alloc(uint64_t lo, uint64_t hi)
                     csr_write(0x8c0, lo);  // DasicsJumpBound0Lo
                     csr_write(0x8c1, hi);  // DasicsJumpBound0Hi
                     break;
-                case 1:
-                    csr_write(0x8c2, lo);  // DasicsJumpBound1Lo
-                    csr_write(0x8c3, hi);  // DasicsJumpBound1Hi
-                    break;
-                case 2:
-                    csr_write(0x8c4, lo);  // DasicsJumpBound2Lo
-                    csr_write(0x8c5, hi);  // DasicsJumpBound2Hi
-                    break;
-                case 3:
-                    csr_write(0x8c6, lo);  // DasicsJumpBound3Lo
-                    csr_write(0x8c7, hi);  // DasicsJumpBound3Hi
-                    break;
+                // case 1:
+                //     csr_write(0x8c2, lo);  // DasicsJumpBound1Lo
+                //     csr_write(0x8c3, hi);  // DasicsJumpBound1Hi
+                //     break;
+                // case 2:
+                //     csr_write(0x8c4, lo);  // DasicsJumpBound2Lo
+                //     csr_write(0x8c5, hi);  // DasicsJumpBound2Hi
+                //     break;
+                // case 3:
+                //     csr_write(0x8c6, lo);  // DasicsJumpBound3Lo
+                //     csr_write(0x8c7, hi);  // DasicsJumpBound3Hi
+                //     break;
                 default:
                     break;
             }

@@ -13,6 +13,7 @@ static char ATTR_ULIB_DATA secret[100] 		 = "[ULIB1]: It's the secret!";
 static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
 static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
 
+#pragma GCC push_options
 #pragma GCC optimize("O0")
 int test_jump_main() {
     // Test user main boundarys.
@@ -24,7 +25,6 @@ int test_jump_main() {
 	return 0;
 }
 
-#pragma GCC optimize("O0")
 int ATTR_ULIB_TEXT test_jump_lib() {
     // Test user main boundarys.
 	// Note: gcc -O2 option and RVC will cause 
@@ -35,22 +35,37 @@ int ATTR_ULIB_TEXT test_jump_lib() {
 	return 0;
 }
 
- #pragma GCC optimize("O0")
- int ATTR_UFREEZONE_TEXT test_free_zone() {
+int ATTR_ULIB_TEXT test_free_to_lib() {
     // Test user main boundarys.
- 	// Note: gcc -O2 option and RVC will cause 
- 	// some unexpected compilation results
-	dasics_umaincall(Umaincall_PRINT, " - - - - - - UFREEZONE START - - - - - - - -  \n"); // lib call main 
+	// Note: gcc -O2 option and RVC will cause 
+	// some unexpected compilation results.
 
-	dasics_umaincall(Umaincall_PRINT, "try to jump to lib function \n"); // lib call main 
-	test_jump_lib(); //raise fault
+	dasics_umaincall(Umaincall_PRINT, "[ULIB] should not jump to here !!!!\n"); 
 
-	dasics_umaincall(Umaincall_PRINT, " - - - - - - UFREEZONE  END - - - - - - - -   \n"); // lib call main 
 	return 0;
- }
+}
 
-#pragma GCC optimize("O0")
-int ATTR_ULIB_TEXT test_jump() {
+int ATTR_UFREEZONE_TEXT test_normal_free()
+{
+	dasics_umaincall(Umaincall_PRINT, "This is a normal free call\n");
+
+	return 0;
+}
+
+int ATTR_ULIB_TEXT test_lib_to_free() {
+    // Test user main boundarys.
+	// Note: gcc -O2 option and RVC will cause 
+	// some unexpected compilation results.
+
+	dasics_umaincall(Umaincall_PRINT, "Try to call free in lib area\n"); 
+
+	test_normal_free(); // raise fault
+
+	return 0;
+}
+
+
+int ATTR_UFREEZONE_TEXT test_jump() {
     // Test user main boundarys.
 	// Note: gcc -O2 option and RVC will cause 
 	// some unexpected compilation results.
@@ -62,15 +77,32 @@ int ATTR_ULIB_TEXT test_jump() {
 
 	dasics_umaincall(Umaincall_PRINT, "try to jump to main function\n"); // lib call main 
     test_jump_main(); //raise fault
-	dasics_umaincall(Umaincall_PRINT, "try to jump to freezone function\n"); // lib call main 
 
-	dasics_umaincall(Umaincall_SETAZONERTPC);
-	test_free_zone();
+	dasics_umaincall(Umaincall_PRINT, "try to jump from freezone area to lib area\n"); // free to lib
+	test_free_to_lib(); // raise fault
+
+	dasics_umaincall(Umaincall_PRINT, "try to jump between freezone area\n"); // free to free
+	test_normal_free(); // ok
 
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
 
 	return 0;
 }
+
+int ATTR_ULIB_TEXT test_normal_lib()
+{
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
+
+	dasics_umaincall(Umaincall_PRINT, "This is a normal lib call\n");
+
+	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
+
+	return 0;
+}
+
+
+
+#pragma GCC pop_options
 
 void exit_function() {
 	printf("[MAIN]test dasics finished\n");
@@ -83,7 +115,18 @@ int main() {
 
 	register_udasics(0);
 
+	// main -> lib -> return normal
+	lib_call(&test_normal_lib);
+
+	// 
 	lib_call(&test_jump);
+
+
+	lib_call(&test_jump_lib);
+
+
+	lib_call(&test_lib_to_free);
+
 
 	unregister_udasics();
 
