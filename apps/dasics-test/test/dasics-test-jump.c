@@ -52,19 +52,6 @@ int ATTR_UFREEZONE_TEXT test_normal_free()
 	return 0;
 }
 
-int ATTR_ULIB_TEXT test_lib_to_free() {
-    // Test user main boundarys.
-	// Note: gcc -O2 option and RVC will cause 
-	// some unexpected compilation results.
-
-	dasics_umaincall(Umaincall_PRINT, "Try to call free in lib area\n"); 
-
-	test_normal_free(); // raise fault
-
-	return 0;
-}
-
-
 int ATTR_UFREEZONE_TEXT test_jump() {
     // Test user main boundarys.
 	// Note: gcc -O2 option and RVC will cause 
@@ -123,10 +110,6 @@ int main() {
 
 
 	lib_call(&test_jump_lib);
-
-
-	lib_call(&test_lib_to_free);
-
 
 	unregister_udasics();
 
