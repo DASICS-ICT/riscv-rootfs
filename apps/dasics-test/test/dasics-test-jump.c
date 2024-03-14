@@ -9,10 +9,6 @@
 
 const char *test_info = "[MAIN]-  Test 2: lib function jump or call \n";
 
-static char ATTR_ULIB_DATA secret[100] 		 = "[ULIB1]: It's the secret!";
-static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
-static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
-
 #pragma GCC push_options
 #pragma GCC optimize("O0")
 int test_jump_main() {
@@ -25,7 +21,7 @@ int test_jump_main() {
 	return 0;
 }
 
-int ATTR_ULIB_TEXT test_jump_lib() {
+int ATTR_UFREEZONE_TEXT test_jump_lib() {
     // Test user main boundarys.
 	// Note: gcc -O2 option and RVC will cause 
 	// some unexpected compilation results.
@@ -76,7 +72,7 @@ int ATTR_UFREEZONE_TEXT test_jump() {
 	return 0;
 }
 
-int ATTR_ULIB_TEXT test_normal_lib()
+int ATTR_UFREEZONE_TEXT test_normal_lib()
 {
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
 
