@@ -84,18 +84,18 @@ slink /init /bin/busybox 755 0 0
 file /bin/su ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 4755 0 0
 
 # scripts
-dir /root/scripts 755 0 0
-dir /root/scripts/1 755 0 0
-dir /root/scripts/2 755 0 0
-dir /root/scripts/5 755 0 0
-file /root/scripts/setup-eth.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/setup-eth.sh 755 0 0
-file /root/scripts/nfs.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/nfs.sh 755 0 0
-file /root/scripts/1/load_dsid.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/1/load-cgroup.sh 755 0 0
-file /root/scripts/1/copy-file.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/1/copy-file.sh 755 0 0
-file /root/scripts/2/83-mount.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/2/83-mount.sh 755 0 0
-file /root/scripts/2/85-mount.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/2/85-mount.sh 755 0 0
-file /root/scripts/5/run.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/5/run.sh 755 0 0
-file /init-dsid.sh ${RISCV_ROOTFS_HOME}/rootfsimg/init-dsid.sh 755 0 0
+#dir /root/scripts 755 0 0
+#dir /root/scripts/1 755 0 0
+#dir /root/scripts/2 755 0 0
+#dir /root/scripts/5 755 0 0
+#file /root/scripts/setup-eth.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/setup-eth.sh 755 0 0
+#file /root/scripts/nfs.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/nfs.sh 755 0 0
+#file /root/scripts/1/load_dsid.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/1/load-cgroup.sh 755 0 0
+#file /root/scripts/1/copy-file.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/1/copy-file.sh 755 0 0
+#file /root/scripts/2/83-mount.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/2/83-mount.sh 755 0 0
+#file /root/scripts/2/85-mount.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/2/85-mount.sh 755 0 0
+#file /root/scripts/5/run.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/5/run.sh 755 0 0
+#file /init-dsid.sh ${RISCV_ROOTFS_HOME}/rootfsimg/init-dsid.sh 755 0 0
 
 #dasics-test
 #file /root/dasics-test-free ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-free 755 0 0
@@ -107,11 +107,11 @@ file /init-dsid.sh ${RISCV_ROOTFS_HOME}/rootfsimg/init-dsid.sh 755 0 0
 
 # strace
 file /bin/strace  ${RISCV_ROOTFS_HOME}/rootfsimg/build/strace 755 0 0
-# 
-# # bash
+
+# bash
 file /bin/bash ${RISCV_ROOTFS_HOME}/rootfsimg/build/bash 755 0 0
-# 
-# # case study
+
+# case study
 file /home/wanghan/attack-case ${RISCV_ROOTFS_HOME}/rootfsimg/build/attack-case 755 1000 1000
 
 # redis
@@ -127,8 +127,7 @@ file /bin/sudo ${RISCV_ROOTFS_HOME}/apps/sudo/build/sudo 4755 0 0
 slink /bin/sudoedit /bin/sudo 755 0 0
 
 # hope-RIPE 
-file /root/ripe_attack_generator ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_attack_generator 755 0 0
-file /root/ripe_tester.sh ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_tester.sh 755 0 0
+file /home/wanghan/ripe/ripe_attack_generator ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_attack_generator 755 1000 1000
 file /home/wanghan/ripe/ripe_tester.sh ${RISCV_ROOTFS_HOME}/apps/hope-RIPE/build/ripe_tester.sh 755 1000 1000
 
 # spec
@@ -143,6 +142,8 @@ file /spec/mcf ${RISCV_ROOTFS_HOME}/rootfsimg/spec/mcf  755 0 0
 file /spec/inp.in ${RISCV_ROOTFS_HOME}/rootfsimg/spec/inp.in 755 0 0
 file /spec/inp.out ${RISCV_ROOTFS_HOME}/rootfsimg/spec/inp.out 755 0 0
 file /spec/mcf.out ${RISCV_ROOTFS_HOME}/rootfsimg/spec/mcf.out 755 0 0
+
+
 # spec bzip2
 file /spec/bzip2 ${RISCV_ROOTFS_HOME}/rootfsimg/spec/bzip2 755 0 0
 file /spec/chicken.jpg ${RISCV_ROOTFS_HOME}/rootfsimg/spec/chicken.jpg 755 0 0
@@ -158,6 +159,8 @@ file /spec/gobmk ${RISCV_ROOTFS_HOME}/rootfsimg/spec/gobmk 755 0 0
 file /spec/nngs.tst ${RISCV_ROOTFS_HOME}/rootfsimg/spec/nngs.tst 755 0 0
 file /spec/nngs.out ${RISCV_ROOTFS_HOME}/rootfsimg/spec/nngs.out 755 0 0
 file /spec/gobmk.tar ${RISCV_ROOTFS_HOME}/rootfsimg/spec/gobmk.tar 755 0 0
+
+
 
 # spec hmmer
 file /spec/hmmer ${RISCV_ROOTFS_HOME}/rootfsimg/spec/hmmer 755 0 0
@@ -179,17 +182,4 @@ file /spec/sjeng ${RISCV_ROOTFS_HOME}/rootfsimg/spec/sjeng 755 0 0
 file /spec/ref.txt ${RISCV_ROOTFS_HOME}/rootfsimg/spec/ref.txt 755 0 0
 
 # spec 
-file /etc/init.d/rcS ${RISCV_ROOTFS_HOME}/rootfsimg/rcS 755 0 0
-
-
-# heartbleed
-file /lib/libssl.so.1.0.0 ${RISCV_ROOTFS_HOME}/rootfsimg/heartbleed/libssl.so.1.0.0 755 0 0
-file /lib/libcrypto.so.1.0.0 ${RISCV_ROOTFS_HOME}/rootfsimg/heartbleed/libcrypto.so.1.0.0 755 0 0
-file /root/run_heartblead.sh ${RISCV_ROOTFS_HOME}/rootfsimg/heartbleed/run_heartbleed.sh 755 0 0
-file /root/cert.crt ${RISCV_ROOTFS_HOME}/rootfsimg/heartbleed/cert.crt 755 0 0
-file /root/rsa_private.key ${RISCV_ROOTFS_HOME}/rootfsimg/heartbleed/rsa_private.key 755 0 0
-file /root/heartbleed ${RISCV_ROOTFS_HOME}/rootfsimg/heartbleed/heartbleed 755 0 0
-file /root/attack ${RISCV_ROOTFS_HOME}/rootfsimg/heartbleed/attack 755 0 0
-
-
 

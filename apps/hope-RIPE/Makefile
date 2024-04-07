@@ -5,7 +5,7 @@ include $(RISCV_ROOTFS_HOME)/Makefile.app
 REPO_PATH = repo
 $(REPO_PATH):
 	mkdir -p $@
-	git clone --depth 1 -b hope-ripe-xs-dasics git@github.com:DASICS-ICT/hope-RIPE.git $@
+	git clone --depth 1 -b libDASICS git@github.com:DASICS-ICT/hope-RIPE.git $@
 
 
 $(APP): | $(REPO_PATH)
