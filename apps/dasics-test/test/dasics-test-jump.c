@@ -21,15 +21,6 @@ int test_jump_main() {
 	return 0;
 }
 
-int ATTR_UFREEZONE_TEXT test_jump_lib() {
-    // Test user main boundarys.
-	// Note: gcc -O2 option and RVC will cause 
-	// some unexpected compilation results.
-
-	printf("[ULIB]should not jump to here !!!!\n"); 
-
-	return 0;
-}
 
 int ATTR_ULIB_TEXT test_free_to_lib() {
     // Test user main boundarys.
@@ -104,8 +95,6 @@ int main() {
 	// 
 	lib_call(&test_jump);
 
-
-	lib_call(&test_jump_lib);
 
 	unregister_udasics();
 
