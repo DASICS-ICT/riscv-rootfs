@@ -51,7 +51,7 @@ date -R
 set +x
 echo '======== END   libquantum ========'
 
-echo '======== BEGIN omnetpp ========'
+echo '======== BEGIN sjeng ========'
 set -x
 date -R
 
@@ -72,15 +72,6 @@ date -R
 set +x
 echo '======== END   gcc ========'
 
-echo '======== BEGIN perlbench ========'
-set -x
-date -R
-
-cd /spec/perlbench && time ./perlbench -I./lib diffmail.pl 4 800 10 17 19 300
-
-date -R
-set +x
-echo '======== END   perlbench ========'
 
 
 echo '======== BEGIN perlbench DASICS ========'
@@ -94,16 +85,6 @@ set +x
 echo '======== END   perlbench DASICS ========'
 
 
-echo '======== BEGIN h264ref ========'
-set -x
-date -R
-
-cd /spec/h264ref && time ./h264ref -d foreman_ref_encoder_main.cfg
-
-date -R
-set +x
-echo '======== END   h264ref ========'
-
 
 echo '======== BEGIN h264ref DASICS ========'
 set -x
@@ -115,17 +96,6 @@ date -R
 set +x
 echo '======== END   h264ref DASICS ========'
 
-echo '======== BEGIN astar ========'
-set -x
-date -R
-
-cd /spec/astar && time ./astar rivers.cfg
-
-date -R
-set +x
-echo '======== END   astar ========'
-
-
 echo '======== BEGIN astar DASICS ========'
 set -x
 date -R
@@ -135,16 +105,6 @@ cd /spec/astar && time ./astar rivers.cfg -dasics
 date -R
 set +x
 echo '======== END   astar DASICS ========'
-
-echo '======== BEGIN xalancbmk ========'
-set -x
-date -R
-
-cd /spec/xalancbmk && time ./xalancbmk  -v t5.xml xalanc.xsl
-
-date -R
-set +x
-echo '======== END   xalancbmk ========'
 
 
 echo '======== BEGIN xalancbmk DASICS ========'
@@ -156,16 +116,6 @@ cd /spec/xalancbmk && time ./xalancbmk  -v t5.xml xalanc.xsl -dasics
 date -R
 set +x
 echo '======== END   xalancbmk DASICS ========'
-
-echo '======== BEGIN omnetpp ========'
-set -x
-date -R
-
-cd /spec/omnetpp && time ./omnetpp  omnetpp.ini
-
-date -R
-set +x
-echo '======== END   omnetpp ========'
 
 
 echo '======== BEGIN omnetpp DASICS ========'

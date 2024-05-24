@@ -1,6 +1,6 @@
 $(shell mkdir -p rootfsimg/build)
 
-APPS = busybox bash hope-RIPE redis sudo strace case-study
+APPS = busybox
 APPS_DIR = $(addprefix apps/, $(APPS))
 
 

@@ -4,7 +4,9 @@
 ::sysinit:/bin/busybox mount -o remount,rw /dev/htifbd0 /
 ::sysinit:/bin/busybox --install -s
 ::sysinit:/bin/mkdir -p /dev/pts
-::sysinit:/bin/echo /bin/mdev > /proc/sys/kernel/hotplug
+# ::sysinit:/bin/tar -xvf /spec.tar
+#::sysinit:/perlbench/perlbench -I/perlbench/lib /perlbench/diffmail.pl 4 800 10 17 19 300 -dasics
+# ::sysinit:/bin/echo /bin/mdev > /proc/sys/kernel/hotplug
 ::sysinit:/sbin/mdev -s
 ::sysinit:/etc/init.d/rcS
 ::askfirst:-/bin/sh

@@ -79,7 +79,7 @@ file /lib/libcrypt.so.1 ${RISCV}/sysroot/lib/libcrypt.so.1 755 0 0
 
 
 file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
-file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab 755 0 0
+#file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab 755 0 0
 slink /init /bin/busybox 755 0 0
 # file /bin/su ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 4755 0 0
 
@@ -132,13 +132,11 @@ slink /init /bin/busybox 755 0 0
 
 # spec
 
-file /root/run.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run.sh 755 0 0
-file /root/run_test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run_test.sh 755 0 0
+# file /root/run.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run.sh 755 0 0
+# 
+# file /spec.tar ${RISCV_ROOTFS_HOME}/rootfsimg/spec.tar 755 0 0
 
-
-file /spec.tar ${RISCV_ROOTFS_HOME}/rootfsimg/spec.tar 755 0 0
-
-# dir /root/perlbench ${RISCV_ROOTFS_HOME}/rootfsimg/spec/perlbench 755 0 0
+file /root/perlbench.tar ${RISCV_ROOTFS_HOME}/rootfsimg/spec/perlbench.tar 755 0 0
 
 # spec mcf
 # file /spec/mcf ${RISCV_ROOTFS_HOME}/rootfsimg/spec/mcf  755 0 0

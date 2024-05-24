@@ -4,16 +4,16 @@
 ::sysinit:/bin/busybox mount -o remount,rw /dev/htifbd0 /
 ::sysinit:/bin/busybox --install -s
 ::sysinit:/bin/mkdir -p /dev/pts
-::sysinit:/bin/echo /bin/mdev > /proc/sys/kernel/hotplug
+# ::sysinit:/bin/echo /bin/mdev > /proc/sys/kernel/hotplug
 ::sysinit:/sbin/mdev -s
-::sysinit:/bin/mknod  -m 644  /dev/random  c 1 8
-::sysinit:/bin/ifconfig lo 127.0.0.1
-::sysinit:/bin/route add -net 127.0.0.0 netmask 255.255.255.0 lo
-::sysinit:/bin/ping 127.0.0.1 -c 4
+# ::sysinit:/bin/mknod  -m 644  /dev/random  c 1 8
+# ::sysinit:/bin/ifconfig lo 127.0.0.1
+# ::sysinit:/bin/route add -net 127.0.0.0 netmask 255.255.255.0 lo
+# ::sysinit:/bin/ping 127.0.0.1 -c 4
 # ::sysinit:/root/runall
-::sysinit:/root/heartbleed 9878 /root/cert.crt /root/rsa_private.key -dasics &
-::sysinit:/bin/sleep 30
-::sysinit:/root/attack 127.0.0.1 -p 9878
+# ::sysinit:/root/heartbleed 9878 /root/cert.crt /root/rsa_private.key -dasics &
+# ::sysinit:/bin/sleep 30
+# ::sysinit:/root/attack 127.0.0.1 -p 9878
 
 
 /dev/console::sysinit:-/bin/ash

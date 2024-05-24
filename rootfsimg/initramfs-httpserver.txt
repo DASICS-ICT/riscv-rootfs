@@ -1,0 +1,80 @@
+dir /bin 755 0 0
+dir /etc 755 0 0
+dir /dev 755 0 0
+dir /lib 755 0 0
+dir /proc 755 0 0
+dir /sbin 755 0 0
+dir /sys 755 0 0
+dir /tmp 755 0 0
+dir /usr 755 0 0
+dir /mnt 755 0 0
+dir /usr/bin 755 0 0
+dir /usr/lib 755 0 0
+dir /usr/sbin 755 0 0
+dir /var 755 0 0
+dir /var/tmp 755 0 0
+dir /root 755 0 0
+dir /var/log 755 0 0
+dir /etc/init.d 755 0 0
+dir /dev/shm 755 0 0
+dir /etc/lighttpd/ 755 0 0
+
+
+file /etc/fstab ${RISCV_ROOTFS_HOME}/rootfsimg/etc/fstab 755 0 0
+file /etc/group ${RISCV_ROOTFS_HOME}/rootfsimg/etc/group 755 0 0
+file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/etc/inittab-http 755 0 0
+file /etc/localtime ${RISCV_ROOTFS_HOME}/rootfsimg/etc/localtime 755 0 0
+file /etc/nsswitch.conf ${RISCV_ROOTFS_HOME}/rootfsimg/etc/nsswitch.conf 755 0 0
+file /etc/passwd ${RISCV_ROOTFS_HOME}/rootfsimg/etc/passwd 755 0 0
+file /etc/passwd- ${RISCV_ROOTFS_HOME}/rootfsimg/etc/passwd- 755 0 0
+file /etc/profile ${RISCV_ROOTFS_HOME}/rootfsimg/etc/profile 755 0 0 
+file /etc/rpc ${RISCV_ROOTFS_HOME}/rootfsimg/etc/rpc 755 0 0
+file /etc/shadow ${RISCV_ROOTFS_HOME}/rootfsimg/etc/shadow 755 0 0
+file /etc/shadow- ${RISCV_ROOTFS_HOME}/rootfsimg/etc/shadow- 755 0 0
+file /etc/sudo.conf ${RISCV_ROOTFS_HOME}/rootfsimg/etc/sudo.conf 755 0 0
+file /etc/sudoers ${RISCV_ROOTFS_HOME}/rootfsimg/etc/sudoers 755 0 0
+
+
+nod /dev/console 644 0 0 c 5 1
+nod /dev/null 644 0 0 c 1 3
+
+file /lib/ld-linux-riscv64-lp64d.so.1 /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/ld-linux-riscv64-lp64d.so.1 755 0 0
+file /lib/libc.so.6 /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/libc.so.6 755 0 0
+file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0
+file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0
+file /lib/libdl.so.2 ${RISCV}/sysroot/lib/libdl.so.2 755 0 0
+file /lib/libpthread.so.0 ${RISCV}/sysroot/lib/libpthread.so.0 755 0 0
+# file /lib/libstdc++.so.6 ${RISCV}/sysroot/lib/libstdc++.so.6 755 0 0
+# file /lib/libgcc_s.so ${RISCV}/sysroot/lib/libgcc_s.so 755 0 0
+# file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0
+file /lib/libz.so.1 ${RISCV}/sysroot/lib/libz.so.1 755 0 0
+file /lib/librt.so.1 ${RISCV}/sysroot/lib/librt.so.1 755 0 0
+file /lib/libatomic.so.1 ${RISCV}/sysroot/lib/libatomic.so.1 755 0 0
+file /lib/libutil.so.1 ${RISCV}/sysroot/lib/libutil.so.1 755 0 0
+file /lib/libcrypt.so.1 ${RISCV}/sysroot/lib/libcrypt.so.1 755 0 0
+file /lib/libcrypto.so.3 ${RISCV}/sysroot/usr/lib/libcrypto.so.3 755 0 0
+file /lib/libpcre.so.1 ${RISCV}/sysroot/usr/lib/libpcre.so.1 755 0 0
+file /lib/libssl.so.3 ${RISCV}/sysroot/usr/lib/libssl.so.3 755 0 0
+
+
+
+file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
+
+
+slink /init /bin/busybox 755 0 0
+file /bin/haveged /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/haveged/bin/haveged 755 0 0
+file /bin/lighttpd.conf /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/lighttpd.conf 755 0 0
+
+# file /bin/strace  ${RISCV_ROOTFS_HOME}/rootfsimg/build/strace 755 0 0
+
+# lighttpd
+file /bin/lighttpd.tar /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/lighttpd-install.tar  755 0 0
+file /bin/httperf.tar /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/httperf-install.tar  755 0 0
+file /bin/apache.tar /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/apache.tar  755 0 0
+
+
+file /etc/lighttpd/lighttpd.pem /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/lighttpd.pem  755 0 0
+file /etc/lighttpd/privkey.pem /home/wanghan/Workspace/DASICS_ICT/DASICS-DEMO/demo-lighttpd/privkey.pem  755 0 0
+
+
+

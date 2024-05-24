@@ -1,0 +1,16 @@
+::sysinit:/bin/busybox mount -t proc proc /proc
+::sysinit:/bin/busybox mount -t sysfs sysfs /sys
+::sysinit:/bin/busybox mount -t tmpfs tmpfs /tmp
+::sysinit:/bin/busybox mount -o remount,rw /dev/htifbd0 /
+::sysinit:/bin/busybox --install -s
+::sysinit:/bin/mkdir -p /dev/pts
+::sysinit:/bin/echo /bin/mdev > /proc/sys/kernel/hotplug
+::sysinit:/sbin/mdev -s
+::sysinit:/sbin/ifconfig lo 127.0.0.1
+::sysinit:/sbin/route add -net 127.0.0.0 netmask 255.255.255.0 lo
+::sysinit:/bin/haveged -w 1024 -v 1 --Foreground &
+::sysinit:/bin/tar -xvf /bin/lighttpd.tar
+::sysinit:/bin/tar -xvf /bin/httperf.tar
+::sysinit:/bin/tar -xvf /bin/apache.tar
+# ::sysinit:/lighttpd-install/sbin/lighttpd -f /bin/lighttpd.conf -m /lighttpd-install/lib -dasics &
+/dev/console::sysinit:-/bin/sh
