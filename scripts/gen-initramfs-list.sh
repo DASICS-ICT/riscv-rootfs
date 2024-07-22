@@ -10,8 +10,6 @@ dir /bin 755 0 0
 dir /etc 755 0 0
 dir /dev 755 0 0
 dir /lib 755 0 0
-dir /lib64 755 0 0
-dir /lib64/lp64d 755 0 0
 dir /proc 755 0 0
 dir /sbin 755 0 0
 dir /sys 755 0 0
@@ -50,12 +48,12 @@ LIBS+=(libpthread.so.0)
 LIBS+=(libresolv.so.2)
 
 for lib in ${LIBS[@]}; do
-    p="$RISCV/sysroot/lib64/lp64d/$lib"
+    p="$RISCV/sysroot/lib/$lib"
     if [ ! -f $p ]; then
         echo "Could not find library $p"
         exit 1
     fi
-    echo "file /lib64/lp64d/$lib $p 755 0 0" >> $1
+    echo "file /lib/$lib $p 755 0 0" >> $1
 done
 
 cat <<EOF >> $1
@@ -63,7 +61,7 @@ file /bin/busybox ${INITRAMFS_ROOT}/bin/busybox 755 0 0
 file /etc/inittab ${INITRAMFS_ROOT}/../files/etc/inittab 755 0 0
 slink /init /bin/busybox 755 0 0
 
-file /lib64/lp64d/libtirpc.so.3 ${INITRAMFS_ROOT}/lib/libtirpc.so.3 755 0 0
+file /lib/libtirpc.so.3 ${INITRAMFS_ROOT}/lib/libtirpc.so.3 755 0 0
 EOF
 
 BINS=()
