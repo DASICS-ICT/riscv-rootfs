@@ -113,3 +113,50 @@ for bin in ${BINS[@]}; do
     echo "file /bin/$bin ${INITRAMFS_ROOT}/bin/$bin 755 0 0" >> $1
 done
 
+########################################################################
+
+# Recursively add files and subdirectories under ${INITRAMFS_ROOT}/my-dir to ramfs
+
+target_directory="${INITRAMFS_ROOT}/my-dir"
+mkdir -p ${target_directory}
+log=$1
+
+function process_directory {
+  local dir="$1"
+
+  for item in "$dir"/*; do
+    if [ -d "$item" ]; then
+      # process current directory
+      local dirname=$(basename "$item")
+      local path=${item#${INITRAMFS_ROOT}}
+      local permissions="755 0 0"
+      echo "dir $path $permissions" >> $log
+      # process subdirectories
+      process_directory "$item" 
+    elif [ -f "$item" ]; then
+      # process file
+      local permissions="755 0 0"
+      local path=${item#${INITRAMFS_ROOT}}
+      echo "file $path $item $permissions" >> $log
+    fi
+  done
+}
+
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 DIRECTORY"
+  exit 1
+fi
+
+if [ ! -d "$target_directory" ]; then
+  echo "指定的目录不存在：$target_directory"
+  exit 1
+fi
+
+# process user-defined directories
+dir_permissions="755 0 0"
+abs_path=$(realpath $target_directory)
+ramfs_path=${abs_path#${INITRAMFS_ROOT}}
+echo "dir $ramfs_path $dir_permissions" >> $log
+
+process_directory "$target_directory"
+
