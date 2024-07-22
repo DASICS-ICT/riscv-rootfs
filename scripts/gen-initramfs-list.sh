@@ -26,6 +26,8 @@ dir /var/log 755 0 0
 
 nod /dev/console 644 0 0 c 5 1
 nod /dev/null 644 0 0 c 1 3
+nod /dev/nvme0n1 644 0 0 b 259 0
+nod /dev/nvme0n1p1 644 0 0 b 259 1
 EOF
 
 LIBS=()
@@ -59,6 +61,7 @@ done
 cat <<EOF >> $1
 file /bin/busybox ${INITRAMFS_ROOT}/bin/busybox 755 0 0
 file /etc/inittab ${INITRAMFS_ROOT}/../files/etc/inittab 755 0 0
+file /etc/fstab ${INITRAMFS_ROOT}/../files/etc/fstab 755 0 0
 slink /init /bin/busybox 755 0 0
 
 file /lib/libtirpc.so.3 ${INITRAMFS_ROOT}/lib/libtirpc.so.3 755 0 0

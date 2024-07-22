@@ -1,0 +1,2 @@
+# <file system>        <dir>         <type>    <options>             <dump> <pass>
+/dev/nvme0n1p1         /mnt          ext2       defaults              0      0
