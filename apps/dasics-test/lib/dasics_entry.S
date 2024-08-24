@@ -1,3 +1,5 @@
+#
+
 #--------------------------------------------------------------------
 # dasics_ufault_entry: entry function before handling dasics faults.
 #--------------------------------------------------------------------
@@ -32,3 +34,20 @@ dasics_umaincall:
     addi sp, sp, 16
     ret
     //.word 0x0000f00b    # pulpret in little endian
+
+// user interrupt entry (for utimer test)
+// TODO: 1.SAVE SOME CONTEXT when U_INT;
+//       2.SAVE U REG when switch process
+.section .text
+.global u_int_entry
+.type u_int_entry, @function
+.align 2, 0x13  # nop = addi x0, x0, 0
+
+
+u_int_entry: 
+    addi sp, sp, -16
+    sd   ra, 8(sp)
+    call u_int_handler
+    ld   ra, 8(sp)
+    addi sp, sp, 16
+    uret 
