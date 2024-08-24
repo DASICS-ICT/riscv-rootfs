@@ -5,7 +5,8 @@ override APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-jump \
 	   $(DST_DIR)/dasics-test-ofb \
 	   $(DST_DIR)/dasics-test-syscall \
-	   $(DST_DIR)/dasics-test-rwx
+	   $(DST_DIR)/dasics-test-rwx \
+	   $(DST_DIR)/n-ext-test
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
 
@@ -14,6 +15,8 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-ofb.c \
 	   $(TEST_DIR)/dasics-test-rwx.c \
 	   $(TEST_DIR)/dasics-test-syscall.c \
+	   $(TEST_DIR)/n-ext-test.c \
+	   $(TEST_DIR)/n-ext-entry.S \
 	   lib/udasics.c \
 	   lib/dasics_entry.S \
 	   lib/dasics_call.S
