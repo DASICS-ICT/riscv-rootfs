@@ -433,29 +433,3 @@ void dasics_print_cfg_register(int32_t idx)
 {
 	printf("DASICS uLib CFG Registers: idx:%x  config: %x \n",idx,dasics_libcfg_get(idx));
 }
-
-#define CAUSE_IRQ_U_EXT ((uint64_t)((1ULL<<63) | 8))
-
-void prepare_u_int(void){
-    csr_write(0x000,0x11); //set ustatus uie/upie
-    csr_write(0x004,0x111); // set uie: enable all u intr
-	csr_write(0x005,(uint64_t)u_int_entry); // set utvec
-}
-
-
-void clear_u_int(void){
-    csr_write(0x000,0x0); // clear ustatus uie/upie
-    csr_write(0x004,0x0); // clear uie: disable all u intr
-	csr_write(0x005,0x0); // clear utvec
-}
-
-void u_int_handler(void) {
-	uint64_t ucause = csr_read(ucause);
-    uint64_t utval = csr_read(utval);
-    uint64_t uepc = csr_read(uepc);
-	printf("[U_INT_HANDLER] catch u-int, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
-	if (ucause == CAUSE_IRQ_U_EXT){
-		printf("[U_INT_HANDLER] clear timer\n");
-		csr_write(0x045,0);
-	}
-}

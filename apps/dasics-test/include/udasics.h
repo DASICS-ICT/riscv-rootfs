@@ -112,9 +112,4 @@ extern uint64_t dasics_umaincall(UmaincallTypes type, ...);
 extern void lib_call(void* func_name);
 extern void azone_call(void* func_name);
 
-
-void prepare_u_int(void);
-void clear_u_int(void);
-extern void u_int_entry(void);
-extern void u_int_handler(void);
 #endif

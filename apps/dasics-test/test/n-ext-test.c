@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <machine/syscall.h>
 
-#include "udasics.h"
+#include "uintr.h"
 
 
 const char *test_info = "[MAIN] N-extension u-timer interrupt test\n";
@@ -19,17 +19,17 @@ int main(void) {
 
 	printf(test_info);
 
-    prepare_u_int();
+    prepare_u_intr();
 	csr_write(0x045,0);
 
 	for (int i=0;i<10;i++){
-		printf("[U_INT_HANDLER] set timer for %d time(s).\n",i);
+		printf("[U_INTR_HANDLER] set timer for %d time(s).\n",i);
 		csr_write(0x045, 1000000);
 		uint64_t count;
-		while ((count = csr_read(0x045)) != 0);
+		while ((count = csr_read(0x045)) != 0) printf("%d\n",count);
 	}
 
-	clear_u_int();
+	clear_u_intr();
 	exit(0);
 	return(0);
 }

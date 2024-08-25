@@ -18,9 +18,15 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/n-ext-test.c \
 	   $(LIBS_DIR)/udasics.c \
 	   $(LIBS_DIR)/dasics_entry.S \
-	   $(LIBS_DIR)/dasics_call.S
+	   $(LIBS_DIR)/dasics_call.S \
+	   $(LIBS_DIR)/uintr.c \
+	   $(LIBS_DIR)/uintr_entry.S 
 
-LIBS = lib/udasics.c lib/dasics_entry.S lib/dasics_call.S
+LIBS = lib/udasics.c \
+	   lib/dasics_entry.S \
+	   lib/dasics_call.S \
+	   lib/uintr.c \
+	   lib/uintr_entry.S 
 # cross compile
 CROSS_COMPILE = riscv64-unknown-elf-
 
