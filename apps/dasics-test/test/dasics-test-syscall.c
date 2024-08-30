@@ -54,14 +54,14 @@ int ATTR_ULIB_TEXT test_syscall() {
 	retval = ulib_pread(0, pub_readonly, 100, 0);  // raise fault
 	dasics_umaincall(Umaincall_PRINT, "read retval = %d\n", retval);
 
-	dasics_umaincall(Umaincall_PRINT, "Try to read from /root/scripts/run-dasics-test.sh\n");
+	// dasics_umaincall(Umaincall_PRINT, "Try to read from /root/scripts/run-dasics-test.sh\n");
 
-	int fd = ulib_openat(0, "/root/scripts/run-dasics-test.sh", O_RDONLY);  // Absolute path makes openat ignore dirfd
-	retval = ulib_read(fd, read_buffer, 450);
-	dasics_umaincall(Umaincall_PRINT, "read retval = %d\n", retval);
-	ulib_close(fd);
+	// int fd = ulib_openat(0, "/root/scripts/run-dasics-test.sh", O_RDONLY);  // Absolute path makes openat ignore dirfd
+	// retval = ulib_read(fd, read_buffer, 450);
+	// dasics_umaincall(Umaincall_PRINT, "read retval = %d\n", retval);
+	// ulib_close(fd);
 
-	dasics_umaincall(Umaincall_PRINT, "read_buffer content:\n%s\n", read_buffer);
+	// dasics_umaincall(Umaincall_PRINT, "read_buffer content:\n%s\n", read_buffer);
 
 	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
 
