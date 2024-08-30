@@ -166,13 +166,8 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
             vprintf(format, args);
         }
         case Umaincall_SETAZONERTPC:
-            asm volatile (
-                "li     t0,  0x1d1bc\n"
-                "csrw   0x8b2, t0\n"
-                :::"t0"
-            );
+            dasics_free_zone_return_pc = 0x1e154;
             break;
-
         default:
             printf("\x1b[33m%s\x1b[0m","Warning: Invalid umaincall number %d!\n", type); //could not use printf in kernel
             break;
@@ -217,7 +212,6 @@ void dasics_ufault_handler(void)
           [sysno] "=m" (sysno)
         :: "memory"
     );
-
     switch(ucause)
     {
         case EXC_DASICS_UFETCH_FAULT:
