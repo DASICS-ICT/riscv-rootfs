@@ -6,7 +6,8 @@ override APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-ofb \
 	   $(DST_DIR)/dasics-test-syscall \
 	   $(DST_DIR)/dasics-test-rwx \
-	   $(DST_DIR)/n-ext-test
+	   $(DST_DIR)/n-ext-test \
+	   #$(DST_DIR)/mpk
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
 
@@ -20,7 +21,8 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(LIBS_DIR)/dasics_entry.S \
 	   $(LIBS_DIR)/dasics_call.S \
 	   $(LIBS_DIR)/uintr.c \
-	   $(LIBS_DIR)/uintr_entry.S 
+	   $(LIBS_DIR)/uintr_entry.S \
+	   #$(TEST_DIR)/mpk.c 
 
 LIBS = lib/udasics.c \
 	   lib/dasics_entry.S \
@@ -41,8 +43,8 @@ LD = $(CROSS_COMPILE)gcc
 
 INCLUDES  = $(addprefix -I, ${INC_DIR})
 
-CFLAGS   += -O0 -march=rv64imad -MMD $(INCLUDES) -g
-CXXFLAGS += -O0 -march=rv64imad -MMD $(INCLUDES) -g
+CFLAGS   += -O0 -march=rv64imad -MMD $(INCLUDES) -g -static
+CXXFLAGS += -O0 -march=rv64imad -MMD $(INCLUDES) -g -static
 
 # Files to be compiled
 LIBOBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(LIBS))))

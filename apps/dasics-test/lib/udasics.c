@@ -166,7 +166,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
             vprintf(format, args);
         }
         case Umaincall_SETAZONERTPC:
-            dasics_free_zone_return_pc = 0x1e22c;
+            dasics_free_zone_return_pc = 0x1e1cc;
             break;
         default:
             printf("\x1b[33m%s\x1b[0m","Warning: Invalid umaincall number %d!\n", type); //could not use printf in kernel
