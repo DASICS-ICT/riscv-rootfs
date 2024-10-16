@@ -166,7 +166,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
             vprintf(format, args);
         }
         case Umaincall_SETAZONERTPC:
-            dasics_free_zone_return_pc = 0x1e154;
+            dasics_free_zone_return_pc = 0x1e1cc;
             break;
         default:
             printf("\x1b[33m%s\x1b[0m","Warning: Invalid umaincall number %d!\n", type); //could not use printf in kernel
@@ -190,6 +190,7 @@ void dasics_ufault_handler(void)
     uint64_t ucause = csr_read(ucause);
     uint64_t utval = csr_read(utval);
     uint64_t uepc = csr_read(uepc);
+    uint64_t dfreason = csr_read(0x8b3);
 
     long sysno, arg1, arg2, arg3, arg4, arg5, arg6;
     __asm__ volatile(
@@ -212,35 +213,42 @@ void dasics_ufault_handler(void)
           [sysno] "=m" (sysno)
         :: "memory"
     );
-    switch(ucause)
+    // here only handle DasicsUCheckFault
+    switch(dfreason)
     {
-        case EXC_DASICS_UFETCH_FAULT:
-            printf("[DASICS EXCEPTION]Info: dasics ufetch fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
+        case EXC_DASICS_JUMP_FAULT:
+            printf("[DASICS UEXCEPTION]Info: dasics jump fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx\n", ucause, uepc, utval, dfreason);
             break;
-        case EXC_DASICS_ULOAD_FAULT:
-            printf("[DASICS EXCEPTION]Info: dasics uload fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
+        case EXC_DASICS_LOAD_FAULT:
+            printf("[DASICS UEXCEPTION]Info: dasics load fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx\n", ucause, uepc, utval, dfreason);
             break;
-        case EXC_DASICS_USTORE_FAULT:
-            printf("[DASICS EXCEPTION]Info: dasics ustore fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
+        case EXC_DASICS_STORE_FAULT:
+            printf("[DASICS UEXCEPTION]Info: dasics store fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx\n", ucause, uepc, utval, dfreason);
             break;
-        case EXC_DASICS_UECALL_FAULT:
+        case EXC_DASICS_ECALL_FAULT:
             //printf("[DASICS EXCEPTION]Info: dasics uecall fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
-            printf("[DASICS EXCEPTION]Info: dasics lib ecall occurs (ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx), try to check arguments...\n", ucause, uepc, utval);
+            printf("[DASICS UEXCEPTION]Info: dasics lib ecall occurs (ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx), try to check arguments...\n", ucause, uepc, utval, dfreason);
             if(dasics_syscall_checker(sysno, arg1, arg2, arg3, arg4, arg5, arg6)){
-                    printf("[DASICS EXCEPTION]Info: lib ecall arguments OK! sycall number:%d, syscall is permitted \n", sysno);
+                    printf("[DASICS UEXCEPTION]Info: lib ecall arguments OK! sycall number:%d, syscall is permitted \n", sysno);
                     uint64_t ret = dasics_syscall_proxy(sysno, arg1, arg2, arg3, arg4, arg5, arg6);
                     csr_write(uepc, uepc + 4);         
                     csr_write(0x8b1, dasics_return_pc);
                     csr_write(0x8b2, dasics_free_zone_return_pc);
                     return;
             } 
-            printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: lib ecall arguments beyond authority, dasics ecall fault occurs!\n");
+            printf("\x1b[31m%s\x1b[0m","[DASICS UEXCEPTION]Error: lib ecall arguments beyond authority, dasics ecall fault occurs!\n");
+            break;
+        case EXC_MPK_LOAD_FAULT:
+            printf("[DASICS UEXCEPTION]Info: mpk load fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx\n", ucause, uepc, utval, dfreason);
+            break;
+        case EXC_MPK_STORE_FAULT:
+            printf("[DASICS UEXCEPTION]Info: mpk store fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx\n", ucause, uepc, utval, dfreason);
             break;
         default:
-            printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: unexpected dasics fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
+            printf("\x1b[31m%s\x1b[0m","[DASICS UEXCEPTION]Error: unexpected dasics fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx\n", ucause, uepc, utval, dfreason);
             break;
     }
-    printf("[DASICS EXCEPTION]Info: dasics_return_pc:0x%lx\n", dasics_return_pc);	
+    printf("[DASICS UEXCEPTION]Info: dasics_return_pc:0x%lx\n", dasics_return_pc);	
 
     // switch base on cause types.
     // currently just skip this inst.

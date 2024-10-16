@@ -9,15 +9,12 @@
 #include "usyscall.h"
 
 /* Add dasics exceptions */
-#define EXC_DASICS_UFETCH_FAULT     24
-#define EXC_DASICS_SFETCH_FAULT     25
-#define EXC_DASICS_ULOAD_FAULT      26
-#define EXC_DASICS_SLOAD_FAULT      27
-#define EXC_DASICS_USTORE_FAULT     28
-#define EXC_DASICS_SSTORE_FAULT     29
-#define EXC_DASICS_UECALL_FAULT     30
-#define EXC_DASICS_SECALL_FAULT     31
-
+#define EXC_DASICS_ECALL_FAULT     1
+#define EXC_DASICS_LOAD_FAULT      2
+#define EXC_DASICS_STORE_FAULT     3
+#define EXC_DASICS_JUMP_FAULT     4
+#define EXC_MPK_LOAD_FAULT          5
+#define EXC_MPK_STORE_FAULT         6
 /* DASICS csrs */
 #define CSR_DUMCFG          0x9e0
 #define CSR_DUMBOUNDLO      0x9e2
