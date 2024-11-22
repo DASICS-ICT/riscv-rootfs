@@ -7,7 +7,7 @@
 
 #include "udasics.h"
 
-const char *test_info = "[MAIN]-  Test 4: test dadisc bound register free \n";
+const char *test_info = "[MAIN]-  Test 4: test dasics bound register free \n";
 
 static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
 
@@ -24,19 +24,19 @@ int main() {
 
 	register_udasics(0);
 
-    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)(pub_rwbuffer + 100), (uint64_t)pub_rwbuffer);
+    idx0 = dasics_membound_alloc(DASICS_MEMCFG_R | DASICS_MEMCFG_W, (uint64_t)(pub_rwbuffer + 100), (uint64_t)pub_rwbuffer);
 
-    dasics_print_cfg_register(idx0);
+    // dasics_print_cfg_register(idx0);
 
-    // Free those used libcfg via handlers
-    dasics_libcfg_free(idx0);   
+    // Free those used memcfg via handlers
+    dasics_membound_free(idx0);   
 
-	uint32_t result = dasics_libcfg_get(idx0) & DASICS_LIBCFG_V;
+	uint64_t result = get_dasics_bound_cfg(dasics_membound_get(idx0)) & DASICS_MEMCFG_V;
 
 	if(result)
 		printf("\x1b[31m%s\x1b[0m","free function error!\n");
 
-    dasics_print_cfg_register(idx0);
+    // dasics_print_cfg_register(idx0);
 
 	unregister_udasics();
 

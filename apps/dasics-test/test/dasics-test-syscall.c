@@ -82,36 +82,36 @@ int main() {
 
 	register_udasics(0);
 
-	int32_t idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)pub_readonly,  (uint64_t)(pub_readonly + 99));
+	int32_t idx0 = dasics_membound_alloc(DASICS_MEMCFG_R, (uint64_t)pub_readonly,  (uint64_t)(pub_readonly + 99));
 
 	// For fully covered buffer 1st
-	int32_t idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1     ), (uint64_t)(covered_fully1 + 10));
-	int32_t idx2 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 +  9), (uint64_t)(covered_fully1 + 80));
-	int32_t idx3 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 + 81), (uint64_t)(covered_fully1 + 99));
+	int32_t idx1 = dasics_membound_alloc(DASICS_MEMCFG_R, (uint64_t)(covered_fully1     ), (uint64_t)(covered_fully1 + 10));
+	int32_t idx2 = dasics_membound_alloc(DASICS_MEMCFG_R, (uint64_t)(covered_fully1 +  9), (uint64_t)(covered_fully1 + 80));
+	int32_t idx3 = dasics_membound_alloc(DASICS_MEMCFG_R, (uint64_t)(covered_fully1 + 81), (uint64_t)(covered_fully1 + 99));
 
 	// For partially covered buffer
-	int32_t idx4 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially     ), (uint64_t)(covered_partially + 10));
-	int32_t idx5 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially + 81), (uint64_t)(covered_partially + 99));
+	int32_t idx4 = dasics_membound_alloc(DASICS_MEMCFG_R, (uint64_t)(covered_partially     ), (uint64_t)(covered_partially + 10));
+	int32_t idx5 = dasics_membound_alloc(DASICS_MEMCFG_R, (uint64_t)(covered_partially + 81), (uint64_t)(covered_partially + 99));
 
 	// For fully covered buffer 2nd
-	int32_t idx6 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 -  1), (uint64_t)(covered_fully2     ));
-	int32_t idx7 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 +  1), (uint64_t)(covered_fully2 + 99));
+	int32_t idx6 = dasics_membound_alloc(DASICS_MEMCFG_R, (uint64_t)(covered_fully2 -  1), (uint64_t)(covered_fully2     ));
+	int32_t idx7 = dasics_membound_alloc(DASICS_MEMCFG_R, (uint64_t)(covered_fully2 +  1), (uint64_t)(covered_fully2 + 99));
 
 	// For read buffer
-	int32_t idx8 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)read_buffer, (uint64_t)(read_buffer + 499));
+	int32_t idx8 = dasics_membound_alloc(DASICS_MEMCFG_R | DASICS_MEMCFG_W, (uint64_t)read_buffer, (uint64_t)(read_buffer + 499));
 	memset(read_buffer, '\0', sizeof(read_buffer));
 
 	lib_call(&test_syscall);
 
-    dasics_libcfg_free(idx0);
-	dasics_libcfg_free(idx1);
-	dasics_libcfg_free(idx2);
-	dasics_libcfg_free(idx3);
-	dasics_libcfg_free(idx4);
-	dasics_libcfg_free(idx5);
-	dasics_libcfg_free(idx6);
-	dasics_libcfg_free(idx7);
-	dasics_libcfg_free(idx8);
+    dasics_membound_free(idx0);
+	dasics_membound_free(idx1);
+	dasics_membound_free(idx2);
+	dasics_membound_free(idx3);
+	dasics_membound_free(idx4);
+	dasics_membound_free(idx5);
+	dasics_membound_free(idx6);
+	dasics_membound_free(idx7);
+	dasics_membound_free(idx8);
 
 	unregister_udasics();
 	exit(0);

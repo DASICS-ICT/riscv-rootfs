@@ -56,17 +56,17 @@ int main() {
 
 	register_udasics(0);
 
-	// Allocate libcfg before calling lib function
-    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R                  , (uint64_t)pub_readonly, (uint64_t)(pub_readonly + 100));
-    idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbuffer, (uint64_t)(pub_rwbuffer + 100));
-    idx2 = dasics_libcfg_alloc(0                                , (uint64_t)secret      , (uint64_t)(      secret + 100));
+	// Allocate memcfg before calling lib function
+    idx0 = dasics_membound_alloc(DASICS_MEMCFG_R                  , (uint64_t)pub_readonly, (uint64_t)(pub_readonly + 100));
+    idx1 = dasics_membound_alloc(DASICS_MEMCFG_R | DASICS_MEMCFG_W, (uint64_t)pub_rwbuffer, (uint64_t)(pub_rwbuffer + 100));
+    idx2 = dasics_membound_alloc(0                                , (uint64_t)secret      , (uint64_t)(      secret + 100));
 
 	lib_call(&test_rwx);
 
-    // Free those used libcfg via handlers
-    dasics_libcfg_free(idx2);
-    dasics_libcfg_free(idx1);
-    dasics_libcfg_free(idx0);
+    // Free those used memcfg via handlers
+    dasics_membound_free(idx2);
+    dasics_membound_free(idx1);
+    dasics_membound_free(idx0);
 
 	unregister_udasics();
 
