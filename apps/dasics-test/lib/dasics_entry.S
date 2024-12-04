@@ -17,6 +17,19 @@ dasics_ufault_entry:
     addi sp, sp, 16
     uret 
 
+.section .text
+.global dasics_ufault_entry_direct
+.type dasics_ufault_entry_direct, @function
+.align 2, 0x13  # nop = addi x0, x0, 0
+
+dasics_ufault_entry_direct: 
+    addi sp, sp, -16
+    sd   ra, 8(sp)
+    call dasics_ufault_handler_direct
+    ld   ra, 8(sp)
+    addi sp, sp, 16
+    uret 
+
 #-----------------------------------------------------------------------
 # dasics_umaincall: pass arguments to umaincall helper.
 #-----------------------------------------------------------------------

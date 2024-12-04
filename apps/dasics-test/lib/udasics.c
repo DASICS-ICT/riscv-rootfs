@@ -54,6 +54,13 @@ void register_udasics(uint64_t funcptr)
     csr_write(0x005, (uint64_t)dasics_ufault_entry);
 }
 
+void register_udasics_direct(uint64_t funcptr) 
+{
+    umaincall_helper = (funcptr != 0) ? funcptr : (uint64_t) dasics_umaincall_helper;
+    csr_write(0x8b0, (uint64_t)dasics_umaincall);
+    csr_write(0x005, (uint64_t)dasics_ufault_entry_direct);
+}
+
 void unregister_udasics(void) 
 {
     csr_write(0x8b0, 0);
@@ -181,6 +188,16 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
     return retval;
 }
 
+void dasics_ufault_handler_direct(void){
+    __asm__ volatile(
+        "ecall\n"
+        :::
+    );
+    uint64_t uepc = csr_read(uepc);
+    csr_write(uepc, uepc + 4); 
+    return;
+}
+
 void dasics_ufault_handler(void)
 {
     // Save some registers that should be saved by callees
@@ -227,9 +244,9 @@ void dasics_ufault_handler(void)
             break;
         case EXC_DASICS_ECALL_FAULT:
             //printf("[DASICS EXCEPTION]Info: dasics uecall fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
-            printf("[DASICS UEXCEPTION]Info: dasics lib ecall occurs (ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx), try to check arguments...\n", ucause, uepc, utval, dfreason);
+            // printf("[DASICS UEXCEPTION]Info: dasics lib ecall occurs (ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx, dfreason = 0x%lx), try to check arguments...\n", ucause, uepc, utval, dfreason);
             if(dasics_syscall_checker(sysno, arg1, arg2, arg3, arg4, arg5, arg6)){
-                    printf("[DASICS UEXCEPTION]Info: lib ecall arguments OK! sycall number:%d, syscall is permitted \n", sysno);
+                    // printf("[DASICS UEXCEPTION]Info: lib ecall arguments OK! sycall number:%d, syscall is permitted \n", sysno);
                     uint64_t ret = dasics_syscall_proxy(sysno, arg1, arg2, arg3, arg4, arg5, arg6);
                     csr_write(uepc, uepc + 4);         
                     csr_write(0x8b1, dasics_return_pc);

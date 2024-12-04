@@ -13,6 +13,18 @@ lib_call:
     addi   sp, sp, 8
     ret
 
+.section .text
+.global main_call
+.type main_call, @function
+
+main_call:
+    addi   sp, sp, -8
+    sd     ra, 0(sp)
+    jalr   a0
+    ld     ra, 0(sp)
+    addi   sp, sp, 8
+    ret
+
 #-----------------------------------------------------------------------
 # : pass arguments to umaincall helper.
 #-----------------------------------------------------------------------
