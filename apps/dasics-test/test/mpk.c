@@ -15,7 +15,7 @@ int main(void)
     atexit(exit_function);
     register_udasics(0);
 
-    printf("[MAIN]-  Test 6: MPK test");
+    printf("[MAIN]-  Test 7: MPK test");
 
     printf("Set array[4096] to all 'b'\n");
     char __attribute__((aligned(4096))) array[4096] = {'b'};

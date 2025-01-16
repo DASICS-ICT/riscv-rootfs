@@ -6,6 +6,7 @@ override APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-ofb \
 	   $(DST_DIR)/dasics-test-syscall \
 	   $(DST_DIR)/dasics-test-rwx \
+	   $(DST_DIR)/dasics-test-spectre \
 	   $(DST_DIR)/n-ext-test \
 	   #$(DST_DIR)/mpk
 
@@ -16,6 +17,7 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-ofb.c \
 	   $(TEST_DIR)/dasics-test-rwx.c \
 	   $(TEST_DIR)/dasics-test-syscall.c \
+	   $(DST_DIR)/dasics-test-spectre.c \
 	   $(TEST_DIR)/n-ext-test.c \
 	   $(LIBS_DIR)/udasics.c \
 	   $(LIBS_DIR)/dasics_entry.S \

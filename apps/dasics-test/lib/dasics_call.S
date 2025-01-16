@@ -13,6 +13,18 @@ lib_call:
     addi   sp, sp, 8
     ret
 
+# below for spectre
+.section .text
+.global lib_call_1
+.type lib_call_1, @function
+lib_call_1:
+    addi   sp, sp, -8
+    sd     ra, 0(sp)
+    .word 0x0005908b    // dasicscall.jr ra, a1
+    ld     ra, 0(sp)
+    addi   sp, sp, 8
+    ret
+
 #-----------------------------------------------------------------------
 # : pass arguments to umaincall helper.
 #-----------------------------------------------------------------------
