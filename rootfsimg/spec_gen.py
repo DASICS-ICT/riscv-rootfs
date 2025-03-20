@@ -526,6 +526,8 @@ default_files = [
   "file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0",
   "file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0",
   "file /lib/libdl.so.2 ${RISCV}/sysroot/lib/libdl.so.2 755 0 0",
+  "file /lib/libstdc++.so.6 ${RISCV}/sysroot/lib/libstdc++.so.6 755 0 0",
+  "file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0",
   "file /lib/libpthread.so.0 ${RISCV}/sysroot/lib/libpthread.so.0 755 0 0",
   "",
   "# busybox",
@@ -589,19 +591,30 @@ def generate_run_sh(specs, withTrap=False):
   lines.append("#!/bin/sh")
   lines.append("echo '===== Start running SPEC2006 ====='")
   for spec in specs:
-    lines.append(f"echo '======== BEGIN {spec} ========'")
+    lines.append(f"echo '======== NO-DASICS BEGIN {spec} ========'")
     lines.append("set -x")
     lines.append("date -R")
     lines.append("")
     spec_bin = spec_info[spec][0][0].split("/")[-1]
-    spec_cmd = " ".join(spec_info[spec][1])
+    spec_cmd = " ".join(spec_info[spec][1]) + " > result.txt"
     spec_check = " ".join(spec_info[spec][2])
     lines.append(f"cd /spec && time ./{spec_bin} {spec_cmd}")
     lines.append("")
     lines.append("date -R")
     lines.append("set +x")
-    lines.append(f"echo '======== END   {spec} ========'")
-    lines.append(f"md5sum {spec_check}")
+    lines.append(f"echo '======== NO-DASICS END   {spec} ========'")
+    lines.append(f"echo '======== DASICS BEGIN {spec} ========'")
+    lines.append("set -x")
+    lines.append("date -R")
+    lines.append("")
+    spec_bin = spec_info[spec][0][0].split("/")[-1]
+    spec_cmd = " ".join(spec_info[spec][1]) + " -dasics " + " > result.txt"
+    spec_check = " ".join(spec_info[spec][2])
+    lines.append(f"cd /spec && time ./{spec_bin} {spec_cmd}")
+    lines.append("")
+    lines.append("date -R")
+    lines.append("set +x")
+    lines.append(f"echo '======== DASICS END   {spec} ========'")
   lines.append("echo '===== Finish running SPEC2006 ====='")
   if withTrap:
     lines.append("/spec_common/trap")
