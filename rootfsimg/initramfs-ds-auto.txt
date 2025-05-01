@@ -57,5 +57,9 @@ file /root/dasics-test-syscall ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-
 file /root/n-ext-test ${RISCV_ROOTFS_HOME}/rootfsimg/build/n-ext-test 755 0 0
 file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
 
+#mpk
+file /root/api /data/jinyue/Workspace/R3-DASICS/software/mpk/rootfs/apps/mpk/api/build/api 755 0 0
+
+
 dir /etc/init.d 755 0 0
 file /etc/init.d/rcS ${RISCV_ROOTFS_HOME}/rootfsimg/rcS 755 0 0
