@@ -1,8 +1,8 @@
 ::sysinit:/bin/busybox mount -t proc proc /proc
 ::sysinit:/bin/busybox mount -t sysfs sysfs /sys
 ::sysinit:/bin/busybox mount -t tmpfs tmpfs /tmp
-::sysinit:/bin/busybox mount /dev/nvme0n1p1 /mnt
-::sysinit:/bin/busybox ifconfig eth0 10.42.0.2 netmask 255.255.255.0 
+# ::sysinit:/bin/busybox mount /dev/nvme0n1p1 /mnt
+# ::sysinit:/bin/busybox ifconfig eth0 10.42.0.2 netmask 255.255.255.0 
 ::sysinit:/bin/busybox --install -s
 ::sysinit:/bin/mkdir -p /dev/pts
 /dev/console::sysinit:-/bin/ash
