@@ -62,7 +62,7 @@ done
 cat <<EOF >> $1
 file /bin/busybox ${INITRAMFS_ROOT}/bin/busybox 755 0 0
 file /etc/inittab ${INITRAMFS_ROOT}/../files/etc/inittab 755 0 0
-
+slink /init /bin/busybox 755 0 0
 file /lib/libtirpc.so.3 ${INITRAMFS_ROOT}/lib/libtirpc.so.3 755 0 0
 EOF
 
