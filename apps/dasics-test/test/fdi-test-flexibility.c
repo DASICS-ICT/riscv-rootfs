@@ -37,7 +37,7 @@ void exit_function() {
 }
 
 int main(int argc, char *argv[]) {
-    atexit(exit_function);
+    // atexit(exit_function);
     register_udasics(0);
 
     printf("╔═══════════════════════════════════════╗\n");

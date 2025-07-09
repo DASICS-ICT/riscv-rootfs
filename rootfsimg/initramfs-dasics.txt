@@ -46,12 +46,13 @@ file /root/scripts/1/copy-file.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/1/copy-
 file /root/scripts/2/83-mount.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/2/83-mount.sh 755 0 0
 file /root/scripts/2/85-mount.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/2/85-mount.sh 755 0 0
 file /root/scripts/5/run.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/5/run.sh 755 0 0
+file /root/scripts/run-fdi-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-fdi-test.sh 777 0 0
 file /init-dsid.sh ${RISCV_ROOTFS_HOME}/rootfsimg/init-dsid.sh 755 0 0
 
 #dasics-test
-file /root/fdi-test-ofb ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-ofb 755 0 0
-file /root/fdi-test-jump ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-jump 755 0 0
-file /root/fdi-test-cfi ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-cfi 755 0 0
-file /root/fdi-test-maincall ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-maincall 755 0 0
-file /root/fdi-test-finegrain ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-finegrain 755 0 0
+file /root/fdi-test-ofb ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-ofb 777 0 0
+file /root/fdi-test-jump ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-jump 777 0 0
+file /root/fdi-test-cfi ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-cfi 777 0 0
+file /root/fdi-test-maincall ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-maincall 777 0 0
+file /root/fdi-test-finegrain ${RISCV_ROOTFS_HOME}/rootfsimg/build/fdi-test-finegrain 777 0 0
 

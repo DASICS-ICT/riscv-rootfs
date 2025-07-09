@@ -39,7 +39,7 @@ void exit_function() {
 }
 
 int main() {
-	atexit(exit_function);
+	// atexit(exit_function);
 
     printf("╔═══════════════════════════════════════╗\n");
     printf("║  FDI Test 3: control flow check test  ║\n");

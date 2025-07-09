@@ -9,14 +9,21 @@
 #include "usyscall.h"
 
 /* Add dasics exceptions */
-#define EXC_DASICS_UFETCH_FAULT     24
-#define EXC_DASICS_SFETCH_FAULT     25
-#define EXC_DASICS_ULOAD_FAULT      26
-#define EXC_DASICS_SLOAD_FAULT      27
-#define EXC_DASICS_USTORE_FAULT     28
-#define EXC_DASICS_SSTORE_FAULT     29
-#define EXC_DASICS_UECALL_FAULT     30
-#define EXC_DASICS_SECALL_FAULT     31
+/* Add dasics exceptions */
+#define EXC_DASICS_ECALL_FAULT     1
+#define EXC_DASICS_LOAD_FAULT      2
+#define EXC_DASICS_STORE_FAULT     3
+#define EXC_DASICS_JUMP_FAULT     4
+#define EXC_MPK_LOAD_FAULT          5
+#define EXC_MPK_STORE_FAULT         6
+// #define EXC_DASICS_UFETCH_FAULT     24
+// #define EXC_DASICS_SFETCH_FAULT     25
+// #define EXC_DASICS_ULOAD_FAULT      26
+// #define EXC_DASICS_SLOAD_FAULT      27
+// #define EXC_DASICS_USTORE_FAULT     28
+// #define EXC_DASICS_SSTORE_FAULT     29
+// #define EXC_DASICS_UECALL_FAULT     30
+// #define EXC_DASICS_SECALL_FAULT     31
 
 /* DASICS csrs */
 #define CSR_DUMCFG          0x9e0
@@ -67,7 +74,7 @@
 
 #define CSR_DMAINCALL       0x8b0
 #define CSR_DRETURNPC       0x8b1
-// #define CSR_DFZRETURN       0x8b2
+#define CSR_DFZRETURN       0x8b2
 
 #define CSR_DJBOUND0LO      0x8c0
 #define CSR_DJBOUND0HI      0x8c1

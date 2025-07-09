@@ -27,7 +27,7 @@ void exit_function() {
 
 int main() {
 
-	atexit(exit_function);
+	// atexit(exit_function);
 
 	printf("╔═══════════════════════════════════════╗\n");
     printf("║  FDI Test 1: memory out of bound test ║\n");

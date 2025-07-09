@@ -79,13 +79,13 @@ void register_udasics(uint64_t funcptr)
     // Set maincall & ufault handler
     umaincall_helper = (funcptr != 0) ? funcptr : (uint64_t) dasics_umaincall_helper;
     csr_write(0x8b0, (uint64_t)dasics_umaincall);
-    // csr_write(0x005, (uint64_t)dasics_ufault_entry);
+    csr_write(0x005, (uint64_t)dasics_ufault_entry);
 }
 
 void unregister_udasics(void) 
 {
     csr_write(0x8b0, 0);
-    // csr_write(0x005, 0);
+    csr_write(0x005, 0);
 
     // Free bounds hash table
     hashed_bound_t *current, *temp;
@@ -268,6 +268,7 @@ void dasics_ufault_handler(void)
     uint64_t ucause = csr_read(ucause);
     uint64_t utval = csr_read(utval);
     uint64_t uepc = csr_read(uepc);
+    uint64_t dfreason = csr_read(0x8b3);
 
     long sysno, arg1, arg2, arg3, arg4, arg5, arg6;
     __asm__ volatile(
@@ -291,15 +292,15 @@ void dasics_ufault_handler(void)
         :: "memory"
     );
 
-    switch(ucause)
+    switch(dfreason)
     {
-        case EXC_DASICS_UFETCH_FAULT:
-            printf("[DASICS EXCEPTION]Info: dasics ufetch fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
+        case EXC_DASICS_JUMP_FAULT:
+            printf("[DASICS EXCEPTION]Info: dasics ufetch fault occurs, dfreason = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", dfreason, uepc, utval);
             break;
-        case EXC_DASICS_ULOAD_FAULT: case EXC_DASICS_USTORE_FAULT: {
-            int is_uload = (ucause == EXC_DASICS_ULOAD_FAULT);
-            printf("[DASICS EXCEPTION]Info: dasics %s fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", \
-                is_uload ? "uload" : "ustore", ucause, uepc, utval);
+        case EXC_DASICS_LOAD_FAULT: case EXC_DASICS_STORE_FAULT: {
+            int is_uload = (dfreason == EXC_DASICS_LOAD_FAULT);
+            printf("[DASICS EXCEPTION]Info: dasics %s fault occurs, dfreason = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", \
+                is_uload ? "uload" : "ustore", dfreason, uepc, utval);
             int csr_idx = dasics_ldst_checker(utval, is_uload);
             if (0 <= csr_idx && csr_idx < DASICS_LIBCFG_WIDTH) {
                 uint64_t hi, lo;
@@ -312,9 +313,9 @@ void dasics_ufault_handler(void)
             }
             break;
         }
-        case EXC_DASICS_UECALL_FAULT:
+        case EXC_DASICS_ECALL_FAULT:
             //printf("[DASICS EXCEPTION]Info: dasics uecall fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
-            printf("[DASICS EXCEPTION]Info: dasics lib ecall occurs (ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx), try to check arguments...\n", ucause, uepc, utval);
+            printf("[DASICS EXCEPTION]Info: dasics lib ecall occurs (dfreason = 0x%lx, uepc = 0x%lx, utval = 0x%lx), try to check arguments...\n", dfreason, uepc, utval);
             if(dasics_syscall_checker(sysno, arg1, arg2, arg3, arg4, arg5, arg6)){
                     printf("[DASICS EXCEPTION]Info: lib ecall arguments OK! sycall number:%d, syscall is permitted \n", sysno);
                     uint64_t ret = dasics_syscall_proxy(sysno, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -326,14 +327,14 @@ void dasics_ufault_handler(void)
             printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: lib ecall arguments beyond authority, dasics ecall fault occurs!\n");
             break;
         default:
-            printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: unexpected dasics fault occurs, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
+            printf("\x1b[31m%s\x1b[0m","[DASICS EXCEPTION]Error: unexpected dasics fault occurs, dfreason = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", dfreason, uepc, utval);
             break;
     }
-    printf("[DASICS EXCEPTION]Info: dasics_return_pc:0x%lx\n", dasics_return_pc);	
+    // printf("[DASICS EXCEPTION]Info: dasics_return_pc:0x%lx\n", dasics_return_pc);	
 
     // switch base on cause types.
     // currently just skip this inst.
-    csr_write(uepc, uepc + 4);
+    // csr_write(uepc, uepc + 4);
     // rvc will compress jump/branch inst.
     //if (ucause == EXC_DASICS_UFETCH_FAULT)
       //  csr_write(uepc, uepc + 2);
@@ -341,8 +342,9 @@ void dasics_ufault_handler(void)
        // csr_write(uepc, uepc + 4); 
 
     // Restore those saved registers
-    csr_write(0x8b1, dasics_return_pc);
+    // csr_write(0x8b1, dasics_return_pc);
     // csr_write(0x8b2, dasics_free_zone_return_pc);
+    exit(1);
 
 }
 
