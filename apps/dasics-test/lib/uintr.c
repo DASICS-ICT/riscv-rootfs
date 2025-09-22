@@ -22,7 +22,7 @@ void u_intr_handler(void) {
     uint64_t utval = csr_read(utval);
     uint64_t uepc = csr_read(uepc);
 	printf("[U_INTR_HANDLER] catch u-intr, ucause = 0x%lx, uepc = 0x%lx, utval = 0x%lx\n", ucause, uepc, utval);
-	if (ucause == CAUSE_IRQ_U_EXT){
+	if (ucause == CAUSE_IRQ_U_TIMER){
 		printf("[U_INTR_HANDLER] clear timer\n");
 		csr_write(0x045,0);
 	}
