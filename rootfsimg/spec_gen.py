@@ -78,6 +78,14 @@ spec_info = {
     [ "input.source", "280" ],
     [ "input.source.out" ]
   ),
+  "bzip2_test": (
+    [
+      "${SPEC}/spec06_exe/bzip2_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/bzip2/dryer.jpg"
+    ],
+    [ "dryer.jpg", "2" ],
+    [ "dryer.jpg.out" ]
+  ),
   "cactusADM": (
     [
       "${SPEC}/spec06_exe/cactusADM_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
@@ -202,6 +210,101 @@ spec_info = {
     [ "scilab.i", "-o", "scilab.s" ],
     [ "scilab.s" ]
   ),
+  "gcc_test": (    # SPEC 403.gcc test 集（cccp.i, 158KB；命令: gcc cccp.i -o cccp.s）
+    [
+      "${SPEC}/spec06_exe/gcc_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/gcc/cccp.i"
+    ],
+    [ "cccp.i", "-o", "cccp.s" ],
+    [ "cccp.s" ]
+  ),
+  # ============ SPEC CPU2006 SPECINT 12 个 benchmark 的 test 输入 variant ============
+  # 命令来自 DASICS-SPEC/spec2006-lite/<benchmark>/run-test.sh，多命令的 benchmark
+  # （perlbench / gobmk / bzip2）只取一个子命令做 smoke test。
+  # bzip2_test 和 gcc_test 已经在上面定义；下面是其余 10 个。
+  "perlbench_test": (    # run-test.sh: -I. -I./lib test.pl > test.out
+    [
+      "${SPEC}/spec06_exe/perlbench_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/perlbench/test.pl",
+      "dir lib ${SPEC}/cpu2006_run_dir/perlbench/lib"
+    ],
+    [ "-I.", "-I./lib", "test.pl" ],
+    [ "test.out" ]
+  ),
+  "mcf_test": (    # run-test.sh: inp.in
+    [
+      "${SPEC}/spec06_exe/mcf_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/mcf/inp.in"
+    ],
+    [ "inp.in" ],
+    [ "inp.out" ]
+  ),
+  "gobmk_test": (    # run-test.sh: --quiet --mode gtp < capture.tst（选最小子命令）
+    [
+      "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/gobmk/capture.tst",
+      "dir games ${SPEC}/cpu2006_run_dir/gobmk/games",
+      "dir golois ${SPEC}/cpu2006_run_dir/gobmk/golois"
+    ],
+    [ "--quiet", "--mode", "gtp", "<", "capture.tst" ],
+    [ "capture.out" ]
+  ),
+  "hmmer_test": (    # run-test.sh: --fixed 0 --mean 325 --num 45000 --sd 200 --seed 0 bombesin.hmm
+    [
+      "${SPEC}/spec06_exe/hmmer_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/hmmer/bombesin.hmm"
+    ],
+    [ "--fixed", "0", "--mean", "325", "--num", "45000", "--sd", "200", "--seed", "0", "bombesin.hmm" ],
+    [ "bombesin.out" ]
+  ),
+  "sjeng_test": (    # run-test.sh: test.txt
+    [
+      "${SPEC}/spec06_exe/sjeng_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/sjeng/test.txt"
+    ],
+    [ "test.txt" ],
+    [ "test.out" ]
+  ),
+  "libquantum_test": (    # run-test.sh: 33 5（无输入文件，纯参数）
+    [
+      "${SPEC}/spec06_exe/libquantum_base.riscv64-unknown-linux-gnu-gcc-10.2.0"
+    ],
+    [ "33", "5" ],
+    [ "test.out" ]
+  ),
+  "h264ref_test": (    # run-test.sh: -d foreman_test_encoder_baseline.cfg
+    [
+      "${SPEC}/spec06_exe/h264ref_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/h264ref/foreman_test_encoder_baseline.cfg"
+    ],
+    [ "-d", "foreman_test_encoder_baseline.cfg" ],
+    [ "foreman_test_baseline_encodelog.out" ]
+  ),
+  "omnetpp_test": (    # run-test.sh: omnetpp.ini（注意：test 和 ref 的 omnetpp.ini 同名但不同内容，layout 可能优先 ref 导致此 test 跑 ref 输入；需手工核验）
+    [
+      "${SPEC}/spec06_exe/omnetpp_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/omnetpp/omnetpp.ini"
+    ],
+    [ "omnetpp.ini" ],
+    [ "omnetpp.log" ]
+  ),
+  "astar_test": (    # run-test.sh: lake.cfg
+    [
+      "${SPEC}/spec06_exe/astar_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "${SPEC}/cpu2006_run_dir/astar/lake.cfg",
+      "${SPEC}/cpu2006_run_dir/astar/lake.bin"
+    ],
+    [ "lake.cfg" ],
+    [ "lake.out" ]
+  ),
+  "xalancbmk_test": (    # run-test.sh: -v test.xml xalanc.xsl（整个 test input 目录拷进去）
+    [
+      "${SPEC}/spec06_exe/xalancbmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
+      "dir . ${SPEC}/cpu2006_run_dir/xalancbmk"
+    ],
+    [ "-v", "test.xml", "xalanc.xsl" ],
+    [ "test.out" ]
+  ),
   "gcc_typeck": (
     [
       "${SPEC}/spec06_exe/gcc_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
@@ -224,8 +327,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/13x13.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games ${SPEC}/cpu2006_run_dir/gobmk/games",
+      "dir golois ${SPEC}/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "13x13.tst" ],
     [ "13x13.out" ]
@@ -234,8 +337,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/nngs.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games ${SPEC}/cpu2006_run_dir/gobmk/games",
+      "dir golois ${SPEC}/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "nngs.tst" ],
     [ "nngs.out" ]
@@ -244,8 +347,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/score2.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games ${SPEC}/cpu2006_run_dir/gobmk/games",
+      "dir golois ${SPEC}/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "score2.tst" ],
     [ "score2.out" ]
@@ -254,8 +357,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/trevorc.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games ${SPEC}/cpu2006_run_dir/gobmk/games",
+      "dir golois ${SPEC}/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "trevorc.tst" ],
     [ "trevorc.out" ]
@@ -264,8 +367,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/trevord.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games ${SPEC}/cpu2006_run_dir/gobmk/games",
+      "dir golois ${SPEC}/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "trevord.tst" ],
     [ "trevord.out" ]
@@ -384,8 +487,8 @@ spec_info = {
       "${SPEC}/cpu2006_run_dir/perlbench/cpu2006_mhonarc.rc",
       "${SPEC}/cpu2006_run_dir/perlbench/checkspam.pl",
       "${SPEC}/cpu2006_run_dir/perlbench/checkspam.in",
-      "dir lib /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/lib",
-      "dir rules /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/rules"
+      "dir lib ${SPEC}/cpu2006_run_dir/perlbench/lib",
+      "dir rules ${SPEC}/cpu2006_run_dir/perlbench/rules"
     ],
     [ "-I./lib", "checkspam.pl", "2500", "5", "25", "11", "150", "1", "1", "1", "1" ],
     [ "checkspam.2500.5.25.11.150.1.1.1.1.out" ]
@@ -396,8 +499,8 @@ spec_info = {
       "${SPEC}/cpu2006_run_dir/perlbench/cpu2006_mhonarc.rc",
       "${SPEC}/cpu2006_run_dir/perlbench/diffmail.pl",
       "${SPEC}/cpu2006_run_dir/perlbench/diffmail.in",
-      "dir lib /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/lib",
-      "dir rules /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/rules"
+      "dir lib ${SPEC}/cpu2006_run_dir/perlbench/lib",
+      "dir rules ${SPEC}/cpu2006_run_dir/perlbench/rules"
     ],
     [ "-I./lib", "diffmail.pl", "4", "800", "10", "17", "19", "300" ],
     [ "diffmail.4.800.10.17.19.300.out" ]
@@ -408,8 +511,8 @@ spec_info = {
       "${SPEC}/cpu2006_run_dir/perlbench/cpu2006_mhonarc.rc",
       "${SPEC}/cpu2006_run_dir/perlbench/splitmail.pl",
       "${SPEC}/cpu2006_run_dir/perlbench/splitmail.in",
-      "dir lib /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/lib",
-      "dir rules /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/rules"
+      "dir lib ${SPEC}/cpu2006_run_dir/perlbench/lib",
+      "dir rules ${SPEC}/cpu2006_run_dir/perlbench/rules"
     ],
     [ "-I./lib", "splitmail.pl", "1600", "12", "26", "16", "4500" ],
     [ "splitmail.1600.12.26.16.4500.out" ]
@@ -473,7 +576,7 @@ spec_info = {
   "xalancbmk": (
     [
       "${SPEC}/spec06_exe/xalancbmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
-      "dir . /data/jinyue/testbench/spec-all/cpu2006_run_dir/xalancbmk"
+      "dir . ${SPEC}/cpu2006_run_dir/xalancbmk"
     ],
     [ "-v", "t5.xml", "xalanc.xsl" ],
     [ "ref.out" ]
@@ -525,6 +628,8 @@ default_files = [
   "file /lib/libc.so.6 ${RISCV}/sysroot/lib/libc.so.6 755 0 0",
   "file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0",
   "file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0",
+  "file /lib/libstdc++.so.6 ${RISCV}/sysroot/lib/libstdc++.so.6 755 0 0",
+  "file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0",
   "file /lib/libdl.so.2 ${RISCV}/sysroot/lib/libdl.so.2 755 0 0",
   "file /lib/libpthread.so.0 ${RISCV}/sysroot/lib/libpthread.so.0 755 0 0",
   "",
@@ -558,20 +663,20 @@ def traverse_path(path, stack=""):
   return (all_dirs, all_files)
 
 def generate_initramfs(specs):
-  lines = default_files.copy()
+  lines = [ os.path.expandvars(line) for line in default_files ]
   for spec in specs:
     spec_files = spec_info[spec][0]
     for i, filename in enumerate(spec_files):
       if len(filename.split()) == 1:
-        # print(f"default {filename} to file 755 0 0")
-        basename = filename.split("/")[-1]
-        filename = f"file /spec/{basename} {filename} 755 0 0"
-        lines.append(filename)
+        source_path = os.path.expandvars(filename)
+        basename = source_path.split("/")[-1]
+        lines.append(f"file /spec/{basename} {source_path} 755 0 0")
       elif len(filename.split()) == 3:
         node_type, name, path = filename.split()
         if node_type != "dir":
           print(f"unknown filename: {filename}")
           continue
+        path = os.path.expandvars(path)
         all_dirs, all_files = traverse_path(path)
         lines.append(f"dir /spec/{name} 755 0 0")
         for sub_dir in all_dirs:
@@ -589,19 +694,22 @@ def generate_run_sh(specs, withTrap=False):
   lines.append("#!/bin/sh")
   lines.append("echo '===== Start running SPEC2006 ====='")
   for spec in specs:
-    lines.append(f"echo '======== BEGIN {spec} ========'")
-    lines.append("set -x")
-    lines.append("date -R")
-    lines.append("")
     spec_bin = spec_info[spec][0][0].split("/")[-1]
     spec_cmd = " ".join(spec_info[spec][1])
     spec_check = " ".join(spec_info[spec][2])
-    lines.append(f"cd /spec && time ./{spec_bin} {spec_cmd}")
-    lines.append("")
-    lines.append("date -R")
-    lines.append("set +x")
-    lines.append(f"echo '======== END   {spec} ========'")
-    lines.append(f"md5sum {spec_check}")
+    for label, dasics_flag in (("NO_DASICS", ""), ("DASICS", " -dasics")):
+      lines.append(f"echo '======== BEGIN {spec} [{label}] ========'")
+      lines.append("set -x")
+      lines.append("date -R")
+      lines.append("")
+      lines.append(f"cd /spec && rm -f {spec_check}")
+      lines.append(f"cd /spec && time ./{spec_bin} {spec_cmd}{dasics_flag}")
+      lines.append("")
+      lines.append("date -R")
+      lines.append("set +x")
+      lines.append(f"echo '--- md5 [{label}] ---'")
+      lines.append(f"cd /spec && [ -f {spec_check} ] && md5sum {spec_check} || echo '(no output file, SPEC wrapper 无输出即正常; 看 stdout Tested OK)'")
+      lines.append(f"echo '======== END   {spec} [{label}] ========'")
   lines.append("echo '===== Finish running SPEC2006 ====='")
   if withTrap:
     lines.append("/spec_common/trap")
