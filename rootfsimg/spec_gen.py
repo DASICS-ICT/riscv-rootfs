@@ -224,8 +224,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/13x13.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/games",
+      "dir golois /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "13x13.tst" ],
     [ "13x13.out" ]
@@ -234,8 +234,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/nngs.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/games",
+      "dir golois /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "nngs.tst" ],
     [ "nngs.out" ]
@@ -244,8 +244,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/score2.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/games",
+      "dir golois /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "score2.tst" ],
     [ "score2.out" ]
@@ -254,8 +254,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/trevorc.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/games",
+      "dir golois /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "trevorc.tst" ],
     [ "trevorc.out" ]
@@ -264,8 +264,8 @@ spec_info = {
     [
       "${SPEC}/spec06_exe/gobmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
       "${SPEC}/cpu2006_run_dir/gobmk/trevord.tst",
-      "dir games /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/games",
-      "dir golois /data/jinyue/testbench/spec-all/cpu2006_run_dir/gobmk/golois"
+      "dir games /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/games",
+      "dir golois /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/gobmk/golois"
     ],
     [ "--quiet", "--mode", "gtp", "<", "trevord.tst" ],
     [ "trevord.out" ]
@@ -384,8 +384,8 @@ spec_info = {
       "${SPEC}/cpu2006_run_dir/perlbench/cpu2006_mhonarc.rc",
       "${SPEC}/cpu2006_run_dir/perlbench/checkspam.pl",
       "${SPEC}/cpu2006_run_dir/perlbench/checkspam.in",
-      "dir lib /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/lib",
-      "dir rules /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/rules"
+      "dir lib /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/perlbench/lib",
+      "dir rules /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/perlbench/rules"
     ],
     [ "-I./lib", "checkspam.pl", "2500", "5", "25", "11", "150", "1", "1", "1", "1" ],
     [ "checkspam.2500.5.25.11.150.1.1.1.1.out" ]
@@ -396,8 +396,8 @@ spec_info = {
       "${SPEC}/cpu2006_run_dir/perlbench/cpu2006_mhonarc.rc",
       "${SPEC}/cpu2006_run_dir/perlbench/diffmail.pl",
       "${SPEC}/cpu2006_run_dir/perlbench/diffmail.in",
-      "dir lib /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/lib",
-      "dir rules /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/rules"
+      "dir lib /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/perlbench/lib",
+      "dir rules /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/perlbench/rules"
     ],
     [ "-I./lib", "diffmail.pl", "4", "800", "10", "17", "19", "300" ],
     [ "diffmail.4.800.10.17.19.300.out" ]
@@ -408,8 +408,8 @@ spec_info = {
       "${SPEC}/cpu2006_run_dir/perlbench/cpu2006_mhonarc.rc",
       "${SPEC}/cpu2006_run_dir/perlbench/splitmail.pl",
       "${SPEC}/cpu2006_run_dir/perlbench/splitmail.in",
-      "dir lib /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/lib",
-      "dir rules /data/jinyue/testbench/spec-all/cpu2006_run_dir/perlbench/rules"
+      "dir lib /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/perlbench/lib",
+      "dir rules /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/perlbench/rules"
     ],
     [ "-I./lib", "splitmail.pl", "1600", "12", "26", "16", "4500" ],
     [ "splitmail.1600.12.26.16.4500.out" ]
@@ -417,7 +417,7 @@ spec_info = {
   "povray": (
     [
       "${SPEC}/spec06_exe/povray_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
-      "dir . /data/jinyue/testbench/spec-all/cpu2006_run_dir/povray"
+      "dir . /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/povray"
     ],
     [ "SPEC-benchmark-ref.ini" ],
     [ "SPEC-benchmark.log", "SPEC-benchmark.tga" ]
@@ -449,7 +449,7 @@ spec_info = {
   "sphinx3": (
     [
       "${SPEC}/spec06_exe/sphinx3_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
-      "dir . /data/jinyue/testbench/spec-all/cpu2006_run_dir/sphinx3"
+      "dir . /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/sphinx3"
     ],
     [ "ctlfile", ".", "args.an4" ],
     [ "an4.log", "considered.out", "total_considered.out" ]
@@ -465,7 +465,7 @@ spec_info = {
   "wrf": (
     [
       "${SPEC}/spec06_exe/wrf_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
-      "dir . /data/jinyue/testbench/spec-all/cpu2006_run_dir/wrf"
+      "dir . /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/wrf"
     ],
     [],
     [ "rsl.out.0000" ]
@@ -473,9 +473,9 @@ spec_info = {
   "xalancbmk": (
     [
       "${SPEC}/spec06_exe/xalancbmk_base.riscv64-unknown-linux-gnu-gcc-10.2.0",
-      "dir . /data/jinyue/testbench/spec-all/cpu2006_run_dir/xalancbmk"
+      "dir . /home/jinyue/Workspace/LightSerial/software/spec-playground/spec06-all/cpu2006_run_dir/xalancbmk"
     ],
-    [ "-v", "t5.xml", "xalanc.xsl" ],
+    [ "-v", "test.xml", "xalanc.xsl" ],
     [ "ref.out" ]
   ),
   "zeusmp": (
@@ -523,6 +523,8 @@ default_files = [
   "# libraries",
   "file /lib/ld-linux-riscv64-lp64d.so.1 ${RISCV}/sysroot/lib/ld-linux-riscv64-lp64d.so.1 755 0 0",
   "file /lib/libc.so.6 ${RISCV}/sysroot/lib/libc.so.6 755 0 0",
+  "file /lib/libstdc++.so.6 ${RISCV}/sysroot/lib/libstdc++.so.6 755 0 0",
+  "file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0",
   "file /lib/libresolv.so.2 ${RISCV}/sysroot/lib/libresolv.so.2 755 0 0",
   "file /lib/libm.so.6 ${RISCV}/sysroot/lib/libm.so.6 755 0 0",
   "file /lib/libdl.so.2 ${RISCV}/sysroot/lib/libdl.so.2 755 0 0",
@@ -589,19 +591,18 @@ def generate_run_sh(specs, withTrap=False):
   lines.append("#!/bin/sh")
   lines.append("echo '===== Start running SPEC2006 ====='")
   for spec in specs:
-    lines.append(f"echo '======== BEGIN {spec} ========'")
+    lines.append(f"echo '======== DASICS BEGIN {spec} ========'")
     lines.append("set -x")
     lines.append("date -R")
     lines.append("")
     spec_bin = spec_info[spec][0][0].split("/")[-1]
     spec_cmd = " ".join(spec_info[spec][1])
     spec_check = " ".join(spec_info[spec][2])
-    lines.append(f"cd /spec && time ./{spec_bin} {spec_cmd}")
+    lines.append(f"cd /spec && time ./{spec_bin} {spec_cmd} -dasics")
     lines.append("")
     lines.append("date -R")
     lines.append("set +x")
-    lines.append(f"echo '======== END   {spec} ========'")
-    lines.append(f"md5sum {spec_check}")
+    lines.append(f"echo '======== DASICS END   {spec} ========'")
   lines.append("echo '===== Finish running SPEC2006 ====='")
   if withTrap:
     lines.append("/spec_common/trap")
