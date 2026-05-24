@@ -101,6 +101,10 @@ int main() {
 	int32_t idx8 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)read_buffer, (uint64_t)(read_buffer + 499));
 	memset(read_buffer, '\0', sizeof(read_buffer));
 
+	// Flush all software-reserved lib boundaries to the hardware CSRs before
+	// transferring control to the untrusted lib code.
+	dasics_libcfg_active();
+
 	lib_call(&test_syscall);
 
     dasics_libcfg_free(idx0);

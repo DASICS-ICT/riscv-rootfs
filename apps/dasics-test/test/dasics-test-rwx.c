@@ -61,6 +61,10 @@ int main() {
     idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbuffer, (uint64_t)(pub_rwbuffer + 100));
     idx2 = dasics_libcfg_alloc(0                                , (uint64_t)secret      , (uint64_t)(      secret + 100));
 
+    // Push the freshly allocated software entries into the hardware CSRs in
+    // a single batched sequence before crossing into the untrusted lib world.
+    dasics_libcfg_active();
+
 	lib_call(&test_rwx);
 
     // Free those used libcfg via handlers

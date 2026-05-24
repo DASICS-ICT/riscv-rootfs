@@ -14,6 +14,7 @@ static uint64_t ufault_print_info = 1;
 
 #define BOUND_REG_WRITE(hi,lo,idx)   \
         case idx:  \
+            DASICS_PROLOGUE(); \
             csr_write(0x890 + idx * 2, lo);  \
             csr_write(0x891 + idx * 2, hi);  \
             break;
@@ -43,25 +44,127 @@ static uint64_t ufault_print_info = 1;
                 if (ufault_print_info) printf("\x1b[31m%s\x1b[0m","[DASICS]Error: out of libound register range\n"); \
         }
 
+#define JBOUND_REG_READ(hi,lo,idx)  \
+        case idx:  \
+            lo = csr_read(0x8c0 + idx * 2);  \
+            hi = csr_read(0x8c1 + idx * 2);  \
+            break;
+
+#define JBOUND_REG_WRITE(hi,lo,idx) \
+        case idx:  \
+            DASICS_PROLOGUE(); \
+            csr_write(0x8c0 + idx * 2, lo);  \
+            csr_write(0x8c1 + idx * 2, hi);  \
+            break;
+
+#define JCONCAT(OP) JBOUND_REG_##OP
+
+#define JUMPBOUND_LOOKUP(HI,LO,IDX,OP) \
+        switch (IDX) \
+        {               \
+            JCONCAT(OP)(HI,LO,0); \
+            JCONCAT(OP)(HI,LO,1); \
+            JCONCAT(OP)(HI,LO,2); \
+            JCONCAT(OP)(HI,LO,3); \
+            default: \
+                if (ufault_print_info) printf("\x1b[31m%s\x1b[0m","[DASICS]Error: out of jumpbound register range\n"); \
+        }
+
 typedef struct {
     uint64_t lo;
     uint64_t hi;
 } bound_t;
+
+/*
+ * Software shadow of DASICS boundary registers.
+ *
+ * Hardware exposes 16 lib boundary slots and 4 jump boundary slots. We mirror
+ * each slot in software to decouple allocation bookkeeping from the actual
+ * CSR writes:
+ *   - allocated: the slot has been reserved by alloc() and not yet freed
+ *   - active   : the slot is currently programmed in the corresponding CSRs
+ *
+ * alloc/free only mutate the software array. dasics_libcfg_active /
+ * dasics_jumpcfg_active flush pending changes (allocated != active) into the
+ * hardware in a single batched sequence guarded by one DASICS_PROLOGUE.
+ */
+typedef struct {
+    uint64_t lo;
+    uint64_t hi;
+    uint16_t cfg;        /* lib: V|R|W bits (4 bits used). jump: V bit only. */
+    uint8_t  allocated;
+    uint8_t  active;
+} sw_bound_t;
+
+static sw_bound_t sw_libbounds[DASICS_LIBCFG_WIDTH];
+static sw_bound_t sw_jumpbounds[DASICS_JUMPCFG_WIDTH];
 
 void set_ufault_print_info(uint64_t status) 
 {
     ufault_print_info = status;
 }
 
+/*
+ * Read every lib/jump boundary CSR and reconstruct the software shadow so
+ * that, immediately after register_udasics(), the software view matches the
+ * hardware exactly. Slots whose V bit is unset are reset to a clean state.
+ */
+static void dasics_sync_from_hw(void)
+{
+    int32_t step;
+    int32_t idx;
+    uint64_t libcfg = csr_read(0x880);
+
+    step = 4;
+    for (idx = 0; idx < DASICS_LIBCFG_WIDTH; ++idx) {
+        uint64_t curr_cfg = (libcfg >> (idx * step)) & DASICS_LIBCFG_MASK;
+        if (curr_cfg & DASICS_LIBCFG_V) {
+            sw_libbounds[idx].cfg = (uint16_t)curr_cfg;
+            sw_libbounds[idx].allocated = 1;
+            sw_libbounds[idx].active = 1;
+            LIBBOUND_LOOKUP(sw_libbounds[idx].hi, sw_libbounds[idx].lo, idx, READ);
+        } else {
+            sw_libbounds[idx].cfg = 0;
+            sw_libbounds[idx].lo = 0;
+            sw_libbounds[idx].hi = 0;
+            sw_libbounds[idx].allocated = 0;
+            sw_libbounds[idx].active = 0;
+        }
+    }
+
+    uint64_t jumpcfg = csr_read(0x8c8);
+
+    step = 16;
+    for (idx = 0; idx < DASICS_JUMPCFG_WIDTH; ++idx) {
+        uint64_t curr_cfg = (jumpcfg >> (idx * step)) & DASICS_JUMPCFG_MASK;
+        if (curr_cfg & DASICS_JUMPCFG_V) {
+            sw_jumpbounds[idx].cfg = (uint16_t)(curr_cfg & DASICS_JUMPCFG_MASK);
+            sw_jumpbounds[idx].allocated = 1;
+            sw_jumpbounds[idx].active = 1;
+            JUMPBOUND_LOOKUP(sw_jumpbounds[idx].hi, sw_jumpbounds[idx].lo, idx, READ);
+        } else {
+            sw_jumpbounds[idx].cfg = 0;
+            sw_jumpbounds[idx].lo = 0;
+            sw_jumpbounds[idx].hi = 0;
+            sw_jumpbounds[idx].allocated = 0;
+            sw_jumpbounds[idx].active = 0;
+        }
+    }
+}
+
 void register_udasics(uint64_t funcptr) 
 {
     umaincall_helper = (funcptr != 0) ? funcptr : (uint64_t) dasics_umaincall_helper;
+    DASICS_PROLOGUE();
     csr_write(0x8b0, (uint64_t)dasics_umaincall);
     csr_write(0x005, (uint64_t)dasics_ufault_entry);
+
+    dasics_sync_from_hw();
 }
 
 void unregister_udasics(void) 
 {
+    DASICS_PROLOGUE();
     csr_write(0x8b0, 0);
     csr_write(0x005, 0);    
 }
@@ -80,15 +183,22 @@ static int dasics_bound_checker(uint64_t lo, uint64_t hi, int perm)
     int32_t idx, items = 0;
     int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
 
-    // Fill bounds array with permission matched libbounds
+    // Fill bounds array with permission matched libbounds.
+    // Source the data from the software shadow: alloc() may have reserved a
+    // slot whose CSRs were not yet written, but at the time the fault handler
+    // runs, the user must have called dasics_libcfg_active() and the software
+    // view is identical to the hardware view.
     for (idx = 0; idx < max_cfgs; ++idx) {
-        uint32_t cfg = dasics_libcfg_get(idx);
-        if (cfg == -1 || (cfg & DASICS_LIBCFG_V) == 0) {
+        if (!sw_libbounds[idx].allocated) {
+            continue;
+        }
+        uint32_t cfg = sw_libbounds[idx].cfg & DASICS_LIBCFG_MASK;
+        if ((cfg & DASICS_LIBCFG_V) == 0) {
             continue;
         }
         else if ((cfg & (perm | DASICS_LIBCFG_V)) != DASICS_LIBCFG_V) {
-            // Permission matched, add this libbound to bound list
-            LIBBOUND_LOOKUP(bounds[items].hi, bounds[items].lo, idx, READ);
+            bounds[items].lo = sw_libbounds[idx].lo;
+            bounds[items].hi = sw_libbounds[idx].hi;
             items++;
         }
     }
@@ -179,8 +289,10 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
             break;
     }
 
+    DASICS_PROLOGUE();
     csr_write(0x8b1, dasics_return_pc);             // DasicsReturnPC
     csr_write(0x8b2, dasics_free_zone_return_pc);   // DasicsFreeZoneReturnPC
+    asm("fence.i");
 
     va_end(args);
 
@@ -237,6 +349,7 @@ void dasics_ufault_handler(void)
             if(dasics_syscall_checker(sysno, arg1, arg2, arg3, arg4, arg5, arg6)){
                     if (ufault_print_info) printf("[DASICS UEXCEPTION]Info: lib ecall arguments OK! sycall number:%d, syscall is permitted \n", sysno);
                     uint64_t ret = dasics_syscall_proxy(sysno, arg1, arg2, arg3, arg4, arg5, arg6);
+                    DASICS_PROLOGUE();
                     csr_write(uepc, uepc + 4);         
                     csr_write(0x8b1, dasics_return_pc);
                     csr_write(0x8b2, dasics_free_zone_return_pc);
@@ -266,96 +379,25 @@ void dasics_ufault_handler(void)
        // csr_write(uepc, uepc + 4); 
 
     // Restore those saved registers
+    DASICS_PROLOGUE();
     csr_write(0x8b1, dasics_return_pc);
     csr_write(0x8b2, dasics_free_zone_return_pc);
 
 }
 
+/*
+ * Reserve a free lib boundary slot in the software shadow.
+ * No CSR is touched here; the caller must invoke dasics_libcfg_active()
+ * to push the freshly allocated entry into hardware.
+ */
 int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi) {
-    uint64_t libcfg = csr_read(0x880);  // DasicsLibCfg
-    int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
-    int32_t step = 4;
-
-    for (int32_t idx = 0; idx < max_cfgs; ++idx) {
-        uint64_t curr_cfg = (libcfg >> (idx * step)) & DASICS_LIBCFG_MASK;
-
-        if ((curr_cfg & DASICS_LIBCFG_V) == 0)  // Found available config
-        {
-            // Write DASICS bounds csr
-            switch (idx) {
-                case 0:
-                    csr_write(0x890, lo);   // DasicsLibBound0Lo
-                    csr_write(0x891, hi);   // DasicsLibBound0Hi
-                    break;
-                case 1:
-                    csr_write(0x892, lo);   // DasicsLibBound1Lo
-                    csr_write(0x893, hi);   // DasicsLibBound1Hi
-                    break;
-                case 2:
-                    csr_write(0x894, lo);   // DasicsLibBound2Lo
-                    csr_write(0x895, hi);   // DasicsLibBound2Hi
-                    break;
-                case 3:
-                    csr_write(0x896, lo);   // DasicsLibBound3Lo
-                    csr_write(0x897, hi);   // DasicsLibBound3Hi
-                    break;
-                case 4:
-                    csr_write(0x898, lo);   // DasicsLibBound4Lo
-                    csr_write(0x899, hi);   // DasicsLibBound4Hi
-                    break;
-                case 5:
-                    csr_write(0x89a, lo);   // DasicsLibBound5Lo
-                    csr_write(0x89b, hi);   // DasicsLibBound5Hi
-                    break;
-                case 6:
-                    csr_write(0x89c, lo);   // DasicsLibBound6Lo
-                    csr_write(0x89d, hi);   // DasicsLibBound6Hi
-                    break;
-                case 7:
-                    csr_write(0x89e, lo);   // DasicsLibBound7Lo
-                    csr_write(0x89f, hi);   // DasicsLibBound7Hi
-                    break;
-                case 8:
-                    csr_write(0x8a0, lo);   // DasicsLibBound8Lo
-                    csr_write(0x8a1, hi);   // DasicsLibBound8Hi
-                    break;
-                case 9:
-                    csr_write(0x8a2, lo);   // DasicsLibBound9Lo
-                    csr_write(0x8a3, hi);   // DasicsLibBound9Hi
-                    break;
-                case 10:
-                    csr_write(0x8a4, lo);   // DasicsLibBound10Lo
-                    csr_write(0x8a5, hi);   // DasicsLibBound10Hi
-                    break;
-                case 11:
-                    csr_write(0x8a6, lo);   // DasicsLibBound11Lo
-                    csr_write(0x8a7, hi);   // DasicsLibBound11Hi
-                    break;
-                case 12:
-                    csr_write(0x8a8, lo);   // DasicsLibBound12Lo
-                    csr_write(0x8a9, hi);   // DasicsLibBound12Hi
-                    break;
-                case 13:
-                    csr_write(0x8aa, lo);   // DasicsLibBound13Lo
-                    csr_write(0x8ab, hi);   // DasicsLibBound13Hi
-                    break;
-                case 14:
-                    csr_write(0x8ac, lo);   // DasicsLibBound14Lo
-                    csr_write(0x8ad, hi);   // DasicsLibBound14Hi
-                    break;
-                case 15:
-                    csr_write(0x8ae, lo);   // DasicsLibBound15Lo
-                    csr_write(0x8af, hi);   // DasicsLibBound15Hi
-                    break;
-                default:
-                    break;
-            }
-
-            // Write config
-            libcfg &= ~(DASICS_LIBCFG_MASK << (idx * step));
-            libcfg |= ((cfg & DASICS_LIBCFG_MASK) | DASICS_LIBCFG_V) << (idx * step);
-            csr_write(0x880, libcfg);   // DasicsLibCfg
-
+    for (int32_t idx = 0; idx < DASICS_LIBCFG_WIDTH; ++idx) {
+        if (!sw_libbounds[idx].allocated) {
+            sw_libbounds[idx].lo = lo;
+            sw_libbounds[idx].hi = hi;
+            sw_libbounds[idx].cfg = (uint16_t)((cfg & DASICS_LIBCFG_MASK) | DASICS_LIBCFG_V);
+            sw_libbounds[idx].allocated = 1;
+            sw_libbounds[idx].active = 0;
             return idx;
         }
     }
@@ -363,60 +405,78 @@ int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi) {
     return -1;
 }
 
+/*
+ * Release a software lib boundary slot. The 'active' flag is intentionally
+ * left untouched: if the slot is currently programmed in hardware, the next
+ * dasics_libcfg_active() call will detect (allocated=0, active=1) and clear
+ * the V bit in the cfg CSR.
+ */
 int32_t dasics_libcfg_free(int32_t idx) {
     if (idx < 0 || idx >= DASICS_LIBCFG_WIDTH) return -1;
+    if (!sw_libbounds[idx].allocated) return -1;
 
-    int32_t step = 4;
-    uint64_t libcfg = csr_read(0x880);  // DasicsLibCfg
-    libcfg &= ~(DASICS_LIBCFG_V << (idx * step));
-    csr_write(0x880, libcfg);   // DasicsLibCfg
+    sw_libbounds[idx].allocated = 0;
+    sw_libbounds[idx].cfg = 0;
     return 0;
 }
 
 uint32_t dasics_libcfg_get(int32_t idx) {
     if (idx < 0 || idx >= DASICS_LIBCFG_WIDTH) return -1;
+    if (!sw_libbounds[idx].allocated) return 0;
+    return sw_libbounds[idx].cfg & DASICS_LIBCFG_MASK;
+}
 
+/*
+ * Flush every pending lib boundary slot (allocated != active) to hardware.
+ * All CSR writes form a single batch guarded by one DASICS_PROLOGUE so the
+ * underlying privilege gate is asserted exactly once per batch.
+ */
+void dasics_libcfg_active(void) {
     int32_t step = 4;
-    uint64_t libcfg = csr_read(0x880);  // DasicsLibCfg
-    return (libcfg >> (idx * step)) & DASICS_LIBCFG_MASK;
+    int32_t need_sync = 0;
+
+    for (int32_t idx = 0; idx < DASICS_LIBCFG_WIDTH; ++idx) {
+        if (sw_libbounds[idx].allocated != sw_libbounds[idx].active) {
+            need_sync = 1;
+            break;
+        }
+    }
+    if (!need_sync) return;
+
+    uint64_t libcfg = csr_read(0x880);
+
+    for (int32_t idx = 0; idx < DASICS_LIBCFG_WIDTH; ++idx) {
+        if (sw_libbounds[idx].allocated == sw_libbounds[idx].active) {
+            continue;
+        }
+
+        if (sw_libbounds[idx].allocated) {
+            uint64_t lo = sw_libbounds[idx].lo;
+            uint64_t hi = sw_libbounds[idx].hi;
+            LIBBOUND_LOOKUP(hi, lo, idx, WRITE);
+
+            libcfg &= ~(DASICS_LIBCFG_MASK << (idx * step));
+            libcfg |= ((uint64_t)(sw_libbounds[idx].cfg & DASICS_LIBCFG_MASK)) << (idx * step);
+            sw_libbounds[idx].active = 1;
+        } else {
+            libcfg &= ~(DASICS_LIBCFG_V << (idx * step));
+            sw_libbounds[idx].active = 0;
+        }
+    }
+
+    DASICS_PROLOGUE();
+    csr_write(0x880, libcfg);
 }
 
 int32_t dasics_jumpcfg_alloc(uint64_t lo, uint64_t hi)
 {
-    uint64_t jumpcfg = csr_read(0x8c8);    // DasicsJumpCfg
-    int32_t max_cfgs = DASICS_JUMPCFG_WIDTH;
-    int32_t step = 16;
-
-    for (int32_t idx = 0; idx < max_cfgs; ++idx) {
-        uint64_t curr_cfg = (jumpcfg >> (idx * step)) & DASICS_JUMPCFG_MASK;
-        if ((curr_cfg & DASICS_JUMPCFG_V) == 0) // found available cfg
-        {
-            // Write DASICS jump boundary CSRs
-            switch (idx) {
-                case 0:
-                    csr_write(0x8c0, lo);  // DasicsJumpBound0Lo
-                    csr_write(0x8c1, hi);  // DasicsJumpBound0Hi
-                    break;
-                case 1:
-                    csr_write(0x8c2, lo);  // DasicsJumpBound1Lo
-                    csr_write(0x8c3, hi);  // DasicsJumpBound1Hi
-                    break;
-                case 2:
-                    csr_write(0x8c4, lo);  // DasicsJumpBound2Lo
-                    csr_write(0x8c5, hi);  // DasicsJumpBound2Hi
-                    break;
-                case 3:
-                    csr_write(0x8c6, lo);  // DasicsJumpBound3Lo
-                    csr_write(0x8c7, hi);  // DasicsJumpBound3Hi
-                    break;
-                default:
-                    break;
-            }
-
-            jumpcfg &= ~(DASICS_JUMPCFG_MASK << (idx * step));
-            jumpcfg |= DASICS_JUMPCFG_V << (idx * step);
-            csr_write(0x8c8, jumpcfg); // DasicsJumpCfg
-
+    for (int32_t idx = 0; idx < DASICS_JUMPCFG_WIDTH; ++idx) {
+        if (!sw_jumpbounds[idx].allocated) {
+            sw_jumpbounds[idx].lo = lo;
+            sw_jumpbounds[idx].hi = hi;
+            sw_jumpbounds[idx].cfg = (uint16_t)DASICS_JUMPCFG_V;
+            sw_jumpbounds[idx].allocated = 1;
+            sw_jumpbounds[idx].active = 0;
             return idx;
         }
     }
@@ -425,15 +485,48 @@ int32_t dasics_jumpcfg_alloc(uint64_t lo, uint64_t hi)
 }
 
 int32_t dasics_jumpcfg_free(int32_t idx) {
-    if (idx < 0 || idx >= DASICS_JUMPCFG_WIDTH) {
-        return -1;
+    if (idx < 0 || idx >= DASICS_JUMPCFG_WIDTH) return -1;
+    if (!sw_jumpbounds[idx].allocated) return -1;
+
+    sw_jumpbounds[idx].allocated = 0;
+    sw_jumpbounds[idx].cfg = 0;
+    return 0;
+}
+
+void dasics_jumpcfg_active(void) {
+    int32_t step = 16;
+    int32_t need_sync = 0;
+
+    for (int32_t idx = 0; idx < DASICS_JUMPCFG_WIDTH; ++idx) {
+        if (sw_jumpbounds[idx].allocated != sw_jumpbounds[idx].active) {
+            need_sync = 1;
+            break;
+        }
+    }
+    if (!need_sync) return;
+
+    uint64_t jumpcfg = csr_read(0x8c8);
+
+    for (int32_t idx = 0; idx < DASICS_JUMPCFG_WIDTH; ++idx) {
+        if (sw_jumpbounds[idx].allocated == sw_jumpbounds[idx].active) {
+            continue;
+        }
+
+        if (sw_jumpbounds[idx].allocated) {
+            uint64_t lo = sw_jumpbounds[idx].lo;
+            uint64_t hi = sw_jumpbounds[idx].hi;
+            JUMPBOUND_LOOKUP(hi, lo, idx, WRITE);
+
+            jumpcfg &= ~(DASICS_JUMPCFG_MASK << (idx * step));
+            jumpcfg |= ((uint64_t)(sw_jumpbounds[idx].cfg & DASICS_JUMPCFG_MASK)) << (idx * step);
+            sw_jumpbounds[idx].active = 1;
+        } else {
+            jumpcfg &= ~(((uint64_t)DASICS_JUMPCFG_V) << (idx * step));
+            sw_jumpbounds[idx].active = 0;
+        }
     }
 
-    int32_t step = 16;
-    uint64_t jumpcfg = csr_read(0x8c8);    // DasicsJumpCfg
-    jumpcfg &= ~(DASICS_JUMPCFG_V << (idx * step));
-    csr_write(0x8c8, jumpcfg); // DasicsJumpCfg
-    return 0;
+    csr_write(0x8c8, jumpcfg);
 }
 
 

@@ -32,13 +32,7 @@ file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0
 
 file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
 file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab 755 0 0
-file /etc/passwd ${RISCV_ROOTFS_HOME}/rootfsimg/etc/passwd 755 0 0
-file /etc/group ${RISCV_ROOTFS_HOME}/rootfsimg/etc/group 755 0 0
-file /etc/profile ${RISCV_ROOTFS_HOME}/rootfsimg/profile 755 0 0
 slink /init /bin/busybox 755 0 0
-
-dir /root/benchmark 755 0 0
-file /root/benchmark/stream ${RISCV_ROOTFS_HOME}/rootfsimg/build/stream 755 0 0
 
 # scripts
 dir /root/scripts 755 0 0
@@ -54,54 +48,12 @@ file /root/scripts/2/85-mount.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/2/85-mou
 file /root/scripts/5/run.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/5/run.sh 755 0 0
 file /init-dsid.sh ${RISCV_ROOTFS_HOME}/rootfsimg/init-dsid.sh 755 0 0
 
-#redis
-dir /root/redis 755 0 0
-file /root/redis/redis-server ${RISCV_ROOTFS_HOME}/rootfsimg/build/redis-server 755 0 0
-file /root/redis/redis.conf ${RISCV_ROOTFS_HOME}/apps/redis/repo/redis.conf 644 0 0
-file /root/redis/run-redis.sh ${RISCV_ROOTFS_HOME}/apps/redis/scripts/run-redis.sh 644 0 0
-
-#dwarf
-dir /root/dwarf 755 0 0
-dir /root/dwarf/run 755 0 0
-file /root/dwarf/run/input.txt ${RISCV_ROOTFS_HOME}/apps/dwarf/run/input.txt 644 0 0
-file /root/dwarf/run/run.sh ${RISCV_ROOTFS_HOME}/apps/dwarf/run/run.sh 755 0 0
-
-dir /root/dwarf/md5 755 0 0
-file /root/dwarf/md5/a.out ${RISCV_ROOTFS_HOME}/rootfsimg/build/md5 755 0 0
-slink /root/dwarf/md5/input.txt /root/dwarf/run/input.txt 777 0 0
-slink /root/dwarf/md5/run.sh /root/dwarf/run/run.sh 777 0 0
-
-dir /root/dwarf/sort 755 0 0
-file /root/dwarf/sort/a.out ${RISCV_ROOTFS_HOME}/rootfsimg/build/sort 755 0 0
-slink /root/dwarf/sort/input.txt /root/dwarf/run/input.txt 777 0 0
-slink /root/dwarf/sort/run.sh /root/dwarf/run/run.sh 777 0 0
-
-dir /root/dwarf/wordcount 755 0 0
-file /root/dwarf/wordcount/a.out ${RISCV_ROOTFS_HOME}/rootfsimg/build/wordcount 755 0 0
-slink /root/dwarf/wordcount/input.txt /root/dwarf/run/input.txt 777 0 0
-slink /root/dwarf/wordcount/run.sh /root/dwarf/run/run.sh 777 0 0
-
-#dropbear ssh (only used to login)
-dir /etc/dropbear 755 0 0
-file /bin/ssh-dropbear ${RISCV_ROOTFS_HOME}/rootfsimg/build/ssh-dropbear 755 0 0
-slink /bin/ssh /bin/ssh-dropbear 755 0 0
-#dropbear ssh dependencies
-file /lib/libcrypt.so.1 ${RISCV}/sysroot/lib/libcrypt.so.1 755 0 0
-file /lib/libnss_files.so.2 ${RISCV}/sysroot/lib/libnss_files.so.2 755 0 0
-file /lib/libutil.so.1 ${RISCV}/sysroot/lib/libutil.so.1 755 0 0
-file /var/log/lastlog /dev/null 755 0 0
-
-#zlib
-file /lib/libz.so.1.2.11 ${RISCV_ROOTFS_HOME}/rootfsimg/build/zlib 755 0 0
-slink /lib/libz.so /lib/libz.so.1.2.11 755 0 0
-slink /lib/libz.so.1 /lib/libz.so.1.2.11 755 0 0
-
-#gmp libs?
-
-#strace
-#file /bin/strace ${RISCV_ROOTFS_HOME}/rootfsimg/build/strace 755 0 0
-#file /lib/librt.so.1 ${RISCV}/sysroot/lib/librt.so.1 755 0 0
-
-#hello
-file /root/hello ${RISCV_ROOTFS_HOME}/rootfsimg/build/hello 755 0 0
+#dasics-test
+file /root/dasics-test-free ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-free 755 0 0
+file /root/dasics-test-jump ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-jump 755 0 0
+file /root/dasics-test-ofb ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-ofb 755 0 0
+file /root/dasics-test-rwx ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-rwx 755 0 0
+file /root/dasics-test-syscall ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-syscall 755 0 0
+file /root/n-ext-test ${RISCV_ROOTFS_HOME}/rootfsimg/build/n-ext-test 755 0 0
+file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
 

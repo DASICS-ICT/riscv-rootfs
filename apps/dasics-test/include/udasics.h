@@ -8,6 +8,14 @@
 #include "uattr.h"
 #include "usyscall.h"
 
+#define CSR_DLCFG           0x880
+
+#define DASICS_PROLOGUE() \
+    do { \
+        __asm__ __volatile__ ("csrr t3, %0" : : "i"(CSR_DLCFG)); \
+    } while (0)
+
+
 /* Add dasics exceptions */
 #define EXC_DASICS_ECALL_FAULT     1
 #define EXC_DASICS_LOAD_FAULT      2
@@ -102,9 +110,11 @@ void     dasics_ufault_handler(void);
 int32_t  dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi);
 int32_t  dasics_libcfg_free(int32_t idx);
 uint32_t dasics_libcfg_get(int32_t idx);
+void     dasics_libcfg_active(void);
 void dasics_print_cfg_register(int32_t idx);
-int32_t dasics_jumpcfg_alloc(uint64_t lo, uint64_t hi); 
-int32_t dasics_jumpcfg_free(int32_t idx);
+int32_t  dasics_jumpcfg_alloc(uint64_t lo, uint64_t hi);
+int32_t  dasics_jumpcfg_free(int32_t idx);
+void     dasics_jumpcfg_active(void);
 
 // extern uint64_t umaincall_helper;
 extern void dasics_ufault_entry(void);
