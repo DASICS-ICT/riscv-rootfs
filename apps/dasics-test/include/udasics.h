@@ -16,12 +16,15 @@
 #define EXC_MPK_LOAD_FAULT          5
 #define EXC_MPK_STORE_FAULT         6
 /* DASICS csrs */
-#define CSR_DUMCFG          0x9e0
+#define CSR_SFETCHCTL       0x9e0
+#define CSR_DUMCFG          0x9e1
 #define CSR_DUMBOUNDLO      0x9e2
 #define CSR_DUMBOUNDHI      0x9e3
 
 /* DASICS Main cfg */
-#define DASICS_MAINCFG_MASK 0xfUL
+#define DASICS_SMAINCFG_MASK 0x3ffUL
+#define DASICS_UMAINCFG_MASK 0x3eUL
+#define DASICS_MAINCFG_MASK DASICS_SMAINCFG_MASK
 #define DASICS_UCFG_CLS     0x8UL
 #define DASICS_SCFG_CLS     0x4UL
 #define DASICS_UCFG_ENA     0x2UL
