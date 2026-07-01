@@ -2,12 +2,14 @@
 #include <stdio.h>
 
 #include "ucsr.h"
+#include "uattr.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define DASICS_CSR_TAG "\033[1;34m[DASICS-CSR]\033[0m"
 #define DASICS_CSR_BEGIN_TAG "\033[1;31m[DASICS-CSR]"
 #define DASICS_CSR_SUMMARY_TAG "\033[1;32m[DASICS-CSR]"
 #define DASICS_CSR_COLOR_END "\033[0m"
+#define ATTR_CSR_PROBE __attribute__((noinline, used)) ATTR_ULIB_TEXT
 
 #ifndef DASICS_CSR_SMOKE_VERBOSE
 #define DASICS_CSR_SMOKE_VERBOSE 0
@@ -101,6 +103,18 @@ static void dasics_write_csr(unsigned long addr, unsigned long value)
     default:
         break;
     }
+}
+
+static ATTR_CSR_PROBE unsigned long dasics_untrusted_read_freason(unsigned long seed)
+{
+    unsigned long value = seed;
+    asm volatile ("csrr %0, 0x8b3" : "+r"(value));
+    return value;
+}
+
+static ATTR_CSR_PROBE void dasics_untrusted_write_libcfg(unsigned long value)
+{
+    asm volatile ("csrw 0x880, %0" :: "rK"(value) : "memory");
 }
 
 static int check_csr(const struct csr_case *test, unsigned long *total)
@@ -211,12 +225,48 @@ static int run_jump_bound_checks(unsigned long *total)
     return failures;
 }
 
+static int run_protection_checks(unsigned long *total)
+{
+    int failures = 0;
+
+    const unsigned long freason_before = 0x5UL;
+    const unsigned long read_seed = 0xfeedfacecafebeefUL;
+    dasics_write_csr(0x8b3, freason_before);
+    unsigned long read_value = dasics_untrusted_read_freason(read_seed);
+    unsigned long freason_after = dasics_read_csr(0x8b3);
+    int read_pass = read_value == read_seed && freason_after == freason_before;
+
+    (*total)++;
+    printf(DASICS_CSR_TAG " case=CSR-PROT-U-UNTRUSTED-R csr=DasicsFReason addr=0x8b3 read=0x%lx expect=0x%lx freason_before=0x%lx freason_after=0x%lx result=%s\n",
+           read_value, read_seed, freason_before, freason_after,
+           read_pass ? "PASS" : "FAIL");
+    failures += read_pass ? 0 : 1;
+
+    const unsigned long libcfg_before = 0x0123456789abcdefUL;
+    const unsigned long libcfg_attack = 0xffffffffffffffffUL;
+    dasics_write_csr(0x880, libcfg_before);
+    dasics_untrusted_write_libcfg(libcfg_attack);
+    unsigned long libcfg_after = dasics_read_csr(0x880);
+    int write_pass = libcfg_after == libcfg_before;
+
+    (*total)++;
+    printf(DASICS_CSR_TAG " case=CSR-PROT-U-UNTRUSTED-W csr=DasicsLibCfg addr=0x880 write=0x%lx read=0x%lx expect=0x%lx result=%s\n",
+           libcfg_attack, libcfg_after, libcfg_before,
+           write_pass ? "PASS" : "FAIL");
+    failures += write_pass ? 0 : 1;
+
+    return failures;
+}
+
 int main(void)
 {
     unsigned long total = 0;
     int failures = 0;
 
     printf(DASICS_CSR_BEGIN_TAG " user smoke begin" DASICS_CSR_COLOR_END "\n");
+
+    /* The loader may preconfigure library zones before entering this program. */
+    clear_dasics_csrs();
 
     failures += run_reset_checks(&total);
 
@@ -235,6 +285,7 @@ int main(void)
 
     failures += run_lib_bound_checks(&total);
     failures += run_jump_bound_checks(&total);
+    failures += run_protection_checks(&total);
 
     clear_dasics_csrs();
 
