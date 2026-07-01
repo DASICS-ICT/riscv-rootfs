@@ -14,7 +14,8 @@ DASICS_LIB_APP = $(DST_DIR)/dasics-test-free \
 	   #$(DST_DIR)/mpk
 DASICS_STANDALONE_APP = $(DST_DIR)/dasics-test-csr-smoke \
 	   $(DST_DIR)/dasics-test-call-jr-returnpc-smoke \
-	   $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke
+	   $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke \
+	   $(DST_DIR)/dasics-test-load-store-permission-smoke
 override APP = $(DASICS_LIB_APP) $(DASICS_STANDALONE_APP)
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -27,6 +28,7 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-csr-smoke.c \
 	   $(TEST_DIR)/dasics-test-call-jr-returnpc-smoke.c \
 	   $(TEST_DIR)/dasics-test-jump-branch-target-permission-smoke.c \
+	   $(TEST_DIR)/dasics-test-load-store-permission-smoke.c \
 	   $(DST_DIR)/dasics-test-spectre.c \
 	   $(TEST_DIR)/n-ext-test.c \
 	   $(LIBS_DIR)/udasics.c \
@@ -61,8 +63,8 @@ INCLUDES  = $(addprefix -I, ${INC_DIR})
 CFLAGS   += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 CXXFLAGS += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 LDFLAGS  += -march=rv64imad -mabi=lp64d -static
-STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
-STANDALONE_LDFLAGS = -march=rv64imad -mabi=lp64d -static
+STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -mno-relax -msmall-data-limit=0 -MMD $(INCLUDES) -g -static
+STANDALONE_LDFLAGS = -march=rv64imad -mabi=lp64d -static -Wl,--no-relax
 
 # Files to be compiled
 LIBOBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(LIBS))))
@@ -72,7 +74,7 @@ $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $^
-$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
+$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $^
