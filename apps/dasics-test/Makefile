@@ -12,7 +12,8 @@ DASICS_LIB_APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-spectre \
 	   $(DST_DIR)/n-ext-test \
 	   #$(DST_DIR)/mpk
-DASICS_STANDALONE_APP = $(DST_DIR)/dasics-test-csr-smoke
+DASICS_STANDALONE_APP = $(DST_DIR)/dasics-test-csr-smoke \
+	   $(DST_DIR)/dasics-test-call-jr-returnpc-smoke
 override APP = $(DASICS_LIB_APP) $(DASICS_STANDALONE_APP)
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -23,6 +24,7 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-rwx.c \
 	   $(TEST_DIR)/dasics-test-syscall.c \
 	   $(TEST_DIR)/dasics-test-csr-smoke.c \
+	   $(TEST_DIR)/dasics-test-call-jr-returnpc-smoke.c \
 	   $(DST_DIR)/dasics-test-spectre.c \
 	   $(TEST_DIR)/n-ext-test.c \
 	   $(LIBS_DIR)/udasics.c \
@@ -47,9 +49,6 @@ CXX = $(CROSS_COMPILE)g++
 LD = $(CROSS_COMPILE)gcc
 STANDALONE_CC = $(DASICS_STANDALONE_CROSS_COMPILE)gcc
 STANDALONE_LD = $(DASICS_STANDALONE_CROSS_COMPILE)gcc
-DASICS_CSR_SMOKE_VERBOSE ?= 0
-DASICS_CSR_SMOKE_FLAGS_FILE = $(DST_DIR)/.dasics-csr-smoke.flags
-DASICS_CSR_SMOKE_FLAGS = DASICS_CSR_SMOKE_VERBOSE=$(DASICS_CSR_SMOKE_VERBOSE)
 
 # compile option
 # Note: gcc -O2 option and RVC will cause 
@@ -62,28 +61,19 @@ CXXFLAGS += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 LDFLAGS  += -march=rv64imad -mabi=lp64d -static
 STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 STANDALONE_LDFLAGS = -march=rv64imad -mabi=lp64d -static
-STANDALONE_CFLAGS += -DDASICS_CSR_SMOKE_VERBOSE=$(DASICS_CSR_SMOKE_VERBOSE)
 
 # Files to be compiled
 LIBOBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(LIBS))))
 
 # Compilation patterns
-$(DASICS_CSR_SMOKE_FLAGS_FILE): FORCE
-	@mkdir -p $(dir $@)
-	@tmp=$@.tmp; old=$@.old; \
-	printf '%s\n' '$(DASICS_CSR_SMOKE_FLAGS)' > $$tmp; \
-	if [ ! -f $@ ]; then mv $$tmp $@; \
-	elif ! cmp -s $$tmp $@; then cp -p $@ $$old; mv $$tmp $@; touch $@; rm -f $$old; \
-	else rm $$tmp; touch -r $@ $@; fi
-
 $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c 
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $^
-$(DST_DIR)/dasics-test-csr-smoke.o: $(TEST_DIR)/dasics-test-csr-smoke.c $(DASICS_CSR_SMOKE_FLAGS_FILE)
-	echo + CC $<
+$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
+	echo + CC $^
 	mkdir -p $(dir $@)
-	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $<
+	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $^
 $(DST_DIR)/%.o: $(TEST_DIR)/%.c 
 	echo + CC $^
 	mkdir -p $(dir $@)
@@ -102,9 +92,6 @@ $(DASICS_STANDALONE_APP):%:%.o
 	@$(STANDALONE_LD) $(STANDALONE_LDFLAGS) -o $@ $^
 
 .PHONY: install-csr-smoke
-.PHONY: FORCE
-
-FORCE:
 
 install-csr-smoke: $(DASICS_STANDALONE_APP)
 	ln -sf $< $(RISCV_ROOTFS_HOME)/rootfsimg/build/$(notdir $<)
