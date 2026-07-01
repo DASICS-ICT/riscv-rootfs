@@ -9,7 +9,6 @@
 #define DASICS_CSR_BEGIN_TAG "\033[1;31m[DASICS-CSR]"
 #define DASICS_CSR_SUMMARY_TAG "\033[1;32m[DASICS-CSR]"
 #define DASICS_CSR_COLOR_END "\033[0m"
-#define ATTR_CSR_PROBE __attribute__((noinline, used)) ATTR_ULIB_TEXT
 
 #ifndef DASICS_CSR_SMOKE_VERBOSE
 #define DASICS_CSR_SMOKE_VERBOSE 0
@@ -105,17 +104,54 @@ static void dasics_write_csr(unsigned long addr, unsigned long value)
     }
 }
 
-static ATTR_CSR_PROBE unsigned long dasics_untrusted_read_freason(unsigned long seed)
-{
-    unsigned long value = seed;
-    asm volatile ("csrr %0, 0x8b3" : "+r"(value));
-    return value;
-}
+unsigned long dasics_call_untrusted_read_freason(unsigned long seed);
+void dasics_call_untrusted_write_libcfg(unsigned long value);
 
-static ATTR_CSR_PROBE void dasics_untrusted_write_libcfg(unsigned long value)
-{
-    asm volatile ("csrw 0x880, %0" :: "rK"(value) : "memory");
-}
+asm(
+".section .text,\"ax\",@progbits\n"
+".align 3\n"
+".globl dasics_call_untrusted_read_freason\n"
+".type dasics_call_untrusted_read_freason, @function\n"
+"dasics_call_untrusted_read_freason:\n"
+"  addi sp, sp, -16\n"
+"  sd ra, 8(sp)\n"
+"  la t0, 1f\n"
+"  csrw 0x8b2, t0\n"
+"  call dasics_untrusted_read_freason_probe\n"
+"1:\n"
+"  ld ra, 8(sp)\n"
+"  addi sp, sp, 16\n"
+"  ret\n"
+".size dasics_call_untrusted_read_freason, .-dasics_call_untrusted_read_freason\n"
+".align 3\n"
+".globl dasics_call_untrusted_write_libcfg\n"
+".type dasics_call_untrusted_write_libcfg, @function\n"
+"dasics_call_untrusted_write_libcfg:\n"
+"  addi sp, sp, -16\n"
+"  sd ra, 8(sp)\n"
+"  la t0, 1f\n"
+"  csrw 0x8b2, t0\n"
+"  call dasics_untrusted_write_libcfg_probe\n"
+"1:\n"
+"  ld ra, 8(sp)\n"
+"  addi sp, sp, 16\n"
+"  ret\n"
+".size dasics_call_untrusted_write_libcfg, .-dasics_call_untrusted_write_libcfg\n"
+".section .ulibtext,\"ax\",@progbits\n"
+".align 3\n"
+".type dasics_untrusted_read_freason_probe, @function\n"
+"dasics_untrusted_read_freason_probe:\n"
+"  csrr a0, 0x8b3\n"
+"  ret\n"
+".size dasics_untrusted_read_freason_probe, .-dasics_untrusted_read_freason_probe\n"
+".align 3\n"
+".type dasics_untrusted_write_libcfg_probe, @function\n"
+"dasics_untrusted_write_libcfg_probe:\n"
+"  csrw 0x880, a0\n"
+"  ret\n"
+".size dasics_untrusted_write_libcfg_probe, .-dasics_untrusted_write_libcfg_probe\n"
+".section .text,\"ax\",@progbits\n"
+);
 
 static int check_csr(const struct csr_case *test, unsigned long *total)
 {
@@ -232,7 +268,7 @@ static int run_protection_checks(unsigned long *total)
     const unsigned long freason_before = 0x5UL;
     const unsigned long read_seed = 0xfeedfacecafebeefUL;
     dasics_write_csr(0x8b3, freason_before);
-    unsigned long read_value = dasics_untrusted_read_freason(read_seed);
+    unsigned long read_value = dasics_call_untrusted_read_freason(read_seed);
     unsigned long freason_after = dasics_read_csr(0x8b3);
     int read_pass = read_value == read_seed && freason_after == freason_before;
 
@@ -245,7 +281,7 @@ static int run_protection_checks(unsigned long *total)
     const unsigned long libcfg_before = 0x0123456789abcdefUL;
     const unsigned long libcfg_attack = 0xffffffffffffffffUL;
     dasics_write_csr(0x880, libcfg_before);
-    dasics_untrusted_write_libcfg(libcfg_attack);
+    dasics_call_untrusted_write_libcfg(libcfg_attack);
     unsigned long libcfg_after = dasics_read_csr(0x880);
     int write_pass = libcfg_after == libcfg_before;
 
