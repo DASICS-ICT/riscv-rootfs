@@ -9,6 +9,10 @@
 #define DASICS_CSR_SUMMARY_TAG "\033[1;32m[DASICS-CSR]"
 #define DASICS_CSR_COLOR_END "\033[0m"
 
+#ifndef DASICS_CSR_SMOKE_VERBOSE
+#define DASICS_CSR_SMOKE_VERBOSE 0
+#endif
+
 #define DASICS_U_CSR_LIST(M) \
     M(0x880, DasicsLibCfg) \
     M(0x890, DasicsLibBoundLo0) \
@@ -106,9 +110,11 @@ static int check_csr(const struct csr_case *test, unsigned long *total)
     int pass = read == test->expect;
 
     (*total)++;
-    printf(DASICS_CSR_TAG " case=%s csr=%s addr=0x%lx write=0x%lx read=0x%lx expect=0x%lx result=%s\n",
-           test->id, test->name, test->addr, test->write, read, test->expect,
-           pass ? "PASS" : "FAIL");
+    if (DASICS_CSR_SMOKE_VERBOSE || !pass) {
+        printf(DASICS_CSR_TAG " case=%s csr=%s addr=0x%lx write=0x%lx read=0x%lx expect=0x%lx result=%s\n",
+               test->id, test->name, test->addr, test->write, read, test->expect,
+               pass ? "PASS" : "FAIL");
+    }
 
     return pass ? 0 : 1;
 }
@@ -119,8 +125,10 @@ static int check_reset_csr(const struct csr_addr_name *csr, unsigned long *total
     int pass = read == 0;
 
     (*total)++;
-    printf(DASICS_CSR_TAG " case=CSR-SMOKE-001 csr=%s addr=0x%lx write=0x0 read=0x%lx expect=0x0 result=%s\n",
-           csr->name, csr->addr, read, pass ? "PASS" : "FAIL");
+    if (DASICS_CSR_SMOKE_VERBOSE || !pass) {
+        printf(DASICS_CSR_TAG " case=CSR-SMOKE-001 csr=%s addr=0x%lx write=0x0 read=0x%lx expect=0x0 result=%s\n",
+               csr->name, csr->addr, read, pass ? "PASS" : "FAIL");
+    }
 
     return pass ? 0 : 1;
 }
