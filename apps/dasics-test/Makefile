@@ -18,7 +18,8 @@ DASICS_STANDALONE_APP = $(DST_DIR)/dasics-test-csr-smoke \
 	   $(DST_DIR)/dasics-test-load-store-permission-smoke \
 	   $(DST_DIR)/dasics-test-ecall-fault-smoke \
 	   $(DST_DIR)/dasics-test-ecall-close-smoke \
-	   $(DST_DIR)/dasics-test-dynamic-bound-free-smoke
+	   $(DST_DIR)/dasics-test-dynamic-bound-free-smoke \
+	   $(DST_DIR)/dasics-test-dynamic-bound-replacement-smoke
 override APP = $(DASICS_LIB_APP) $(DASICS_STANDALONE_APP)
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -35,6 +36,7 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-ecall-fault-smoke.c \
 	   $(TEST_DIR)/dasics-test-ecall-close-smoke.c \
 	   $(TEST_DIR)/dasics-test-dynamic-bound-free-smoke.c \
+	   $(TEST_DIR)/dasics-test-dynamic-bound-replacement-smoke.c \
 	   $(DST_DIR)/dasics-test-spectre.c \
 	   $(TEST_DIR)/n-ext-test.c \
 	   $(LIBS_DIR)/udasics.c \
@@ -80,7 +82,7 @@ $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $^
-$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o $(DST_DIR)/dasics-test-ecall-fault-smoke.o $(DST_DIR)/dasics-test-ecall-close-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-free-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
+$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o $(DST_DIR)/dasics-test-ecall-fault-smoke.o $(DST_DIR)/dasics-test-ecall-close-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-free-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-replacement-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $^
