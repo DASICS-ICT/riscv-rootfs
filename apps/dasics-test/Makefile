@@ -9,9 +9,7 @@ DASICS_LIB_APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-ofb \
 	   $(DST_DIR)/dasics-test-syscall \
 	   $(DST_DIR)/dasics-test-rwx \
-	   $(DST_DIR)/dasics-test-spectre \
-	   $(DST_DIR)/n-ext-test \
-	   #$(DST_DIR)/mpk
+	   $(DST_DIR)/dasics-test-spectre
 DASICS_STANDALONE_APP = $(DST_DIR)/dasics-test-csr-smoke \
 	   $(DST_DIR)/dasics-test-call-jr-returnpc-smoke \
 	   $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke \
@@ -46,19 +44,13 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-context-switch-isolation-smoke.c \
 	   $(TEST_DIR)/dasics-test-returnpc-trap-preserve-smoke.c \
 	   $(DST_DIR)/dasics-test-spectre.c \
-	   $(TEST_DIR)/n-ext-test.c \
 	   $(LIBS_DIR)/udasics.c \
 	   $(LIBS_DIR)/dasics_entry.S \
-	   $(LIBS_DIR)/dasics_call.S \
-	   $(LIBS_DIR)/uintr.c \
-	   $(LIBS_DIR)/uintr_entry.S \
-	   #$(TEST_DIR)/mpk.c 
+	   $(LIBS_DIR)/dasics_call.S
 
 LIBS = lib/udasics.c \
 	   lib/dasics_entry.S \
-	   lib/dasics_call.S \
-	   lib/uintr.c \
-	   lib/uintr_entry.S 
+	   lib/dasics_call.S
 # cross compile
 CROSS_COMPILE = riscv64-unknown-elf-
 DASICS_STANDALONE_CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
@@ -79,6 +71,8 @@ INCLUDES  = $(addprefix -I, ${INC_DIR})
 CFLAGS   += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 CXXFLAGS += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 LDFLAGS  += -march=rv64imad -mabi=lp64d -static
+# Standalone DASICS fault handling is delegated to UCAS OS S-mode traps.
+CFLAGS   += -DDASICS_S_TRAP_ONLY
 STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -mno-relax -msmall-data-limit=0 -MMD $(INCLUDES) -g -static
 STANDALONE_LDFLAGS = -march=rv64imad -mabi=lp64d -static -Wl,--no-relax
 

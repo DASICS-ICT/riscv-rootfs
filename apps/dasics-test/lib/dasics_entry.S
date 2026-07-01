@@ -5,6 +5,7 @@
 #--------------------------------------------------------------------
 
 .section .text
+#ifndef DASICS_S_TRAP_ONLY
 .global dasics_ufault_entry
 .type dasics_ufault_entry, @function
 .align 2, 0x13  # nop = addi x0, x0, 0
@@ -16,6 +17,7 @@ dasics_ufault_entry:
     ld   ra, 8(sp)
     addi sp, sp, 16
     uret 
+#endif
 
 #-----------------------------------------------------------------------
 # dasics_umaincall: pass arguments to umaincall helper.
@@ -28,10 +30,14 @@ dasics_ufault_entry:
 dasics_umaincall:
     addi sp, sp, -16
     sd   ra, 8(sp)
+    li   t1, 1
+    bne  a0, t1, 1f
+    addi t1, ra, 4
+    csrw 0x8b2, t1
+1:
     ld   t0, umaincall_helper
     jalr t0
     ld   ra, 8(sp)
     addi sp, sp, 16
     ret
     //.word 0x0000f00b    # pulpret in little endian
-
