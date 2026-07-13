@@ -27,16 +27,18 @@
 
 #define BUFFER_LEN 16UL
 #define SPLIT_BOUND_LEN 8UL
-#define PARTIAL_TAIL_OFFSET 12UL
-#define PARTIAL_TAIL_LEN 4UL
+#define PARTIAL_BUFFER_LEN 24UL
+#define PARTIAL_TAIL_OFFSET 16UL
+#define PARTIAL_TAIL_LEN 8UL
 #define REAL_WRITE_LEN 46UL
+#define REAL_WRITE_BOUND_LEN 48UL
 #define UNTRUSTED_WRITE_LEN 16UL
 
 static volatile unsigned char write_readable_buffer[BUFFER_LEN]
     __attribute__((aligned(8))) = "write-readable";
 static volatile unsigned char write_split_buffer[BUFFER_LEN]
     __attribute__((aligned(8))) = "write-split-ok";
-static volatile unsigned char write_partial_buffer[BUFFER_LEN]
+static volatile unsigned char write_partial_buffer[PARTIAL_BUFFER_LEN]
     __attribute__((aligned(8))) = "write-gap-deny";
 static volatile unsigned char read_writable_buffer[BUFFER_LEN]
     __attribute__((aligned(8)));
@@ -363,7 +365,7 @@ int main(void)
                       write_partial_buffer + PARTIAL_TAIL_OFFSET,
                       PARTIAL_TAIL_LEN);
     allowed = syscall_buffer_permitted(SYS_WRITE, write_partial_buffer,
-                                       BUFFER_LEN);
+                                       PARTIAL_BUFFER_LEN);
     failures += record_bool_case("SYSCALL-BUFFER-WRITE-PARTIAL-BOUND-DENY",
                                  allowed, 0, &total);
 
@@ -405,7 +407,8 @@ int main(void)
 
     clear_syscall_buffer_csrs();
     install_lib_bound(0, DASICS_LIB_CFG_READ,
-                      syscall_buffer_real_write_message, REAL_WRITE_LEN);
+                      syscall_buffer_real_write_message,
+                      REAL_WRITE_BOUND_LEN);
     allowed = syscall_buffer_permitted(SYS_WRITE,
                                        syscall_buffer_real_write_message,
                                        REAL_WRITE_LEN);

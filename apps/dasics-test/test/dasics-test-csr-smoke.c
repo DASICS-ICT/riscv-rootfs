@@ -230,8 +230,8 @@ static int run_lib_bound_checks(unsigned long *total)
     for (unsigned int i = 0; i < ARRAY_SIZE(bounds); i++) {
         unsigned long lo_value = 0x1000000000000000UL + ((unsigned long)i << 12) + 0x123UL;
         unsigned long hi_value = 0x2000000000000000UL + ((unsigned long)i << 12) + 0x456UL;
-        struct csr_case lo_case = { "CSR-SMOKE-007", bounds[i].lo_name, bounds[i].lo_addr, lo_value, lo_value };
-        struct csr_case hi_case = { "CSR-SMOKE-007", bounds[i].hi_name, bounds[i].hi_addr, hi_value, hi_value };
+        struct csr_case lo_case = { "CSR-SMOKE-007", bounds[i].lo_name, bounds[i].lo_addr, lo_value, lo_value & ~7UL };
+        struct csr_case hi_case = { "CSR-SMOKE-007", bounds[i].hi_name, bounds[i].hi_addr, hi_value, hi_value & ~7UL };
 
         failures += check_csr(&lo_case, total);
         failures += check_csr(&hi_case, total);
@@ -252,8 +252,8 @@ static int run_jump_bound_checks(unsigned long *total)
     for (unsigned int i = 0; i < ARRAY_SIZE(bounds); i++) {
         unsigned long lo_value = 0x3000000000000000UL + ((unsigned long)i << 12) + 0x321UL;
         unsigned long hi_value = 0x4000000000000000UL + ((unsigned long)i << 12) + 0x654UL;
-        struct csr_case lo_case = { "CSR-SMOKE-009", bounds[i].lo_name, bounds[i].lo_addr, lo_value, lo_value };
-        struct csr_case hi_case = { "CSR-SMOKE-009", bounds[i].hi_name, bounds[i].hi_addr, hi_value, hi_value };
+        struct csr_case lo_case = { "CSR-SMOKE-009", bounds[i].lo_name, bounds[i].lo_addr, lo_value, lo_value & ~7UL };
+        struct csr_case hi_case = { "CSR-SMOKE-009", bounds[i].hi_name, bounds[i].hi_addr, hi_value, hi_value & ~7UL };
 
         failures += check_csr(&lo_case, total);
         failures += check_csr(&hi_case, total);
