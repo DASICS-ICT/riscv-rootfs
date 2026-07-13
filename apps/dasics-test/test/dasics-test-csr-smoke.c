@@ -228,8 +228,8 @@ static int run_lib_bound_checks(unsigned long *total)
 
     int failures = 0;
     for (unsigned int i = 0; i < ARRAY_SIZE(bounds); i++) {
-        unsigned long lo_value = 0x1000000000000000UL + ((unsigned long)i << 12) + 0x123UL;
-        unsigned long hi_value = 0x2000000000000000UL + ((unsigned long)i << 12) + 0x456UL;
+        unsigned long lo_value = 0x1000000000000000UL + ((unsigned long)i << 12) + 0x127UL;
+        unsigned long hi_value = 0x2000000000000000UL + ((unsigned long)i << 12) + 0x457UL;
         struct csr_case lo_case = { "CSR-SMOKE-007", bounds[i].lo_name, bounds[i].lo_addr, lo_value, lo_value & ~7UL };
         struct csr_case hi_case = { "CSR-SMOKE-007", bounds[i].hi_name, bounds[i].hi_addr, hi_value, hi_value & ~7UL };
 
@@ -250,8 +250,8 @@ static int run_jump_bound_checks(unsigned long *total)
 
     int failures = 0;
     for (unsigned int i = 0; i < ARRAY_SIZE(bounds); i++) {
-        unsigned long lo_value = 0x3000000000000000UL + ((unsigned long)i << 12) + 0x321UL;
-        unsigned long hi_value = 0x4000000000000000UL + ((unsigned long)i << 12) + 0x654UL;
+        unsigned long lo_value = 0x3000000000000000UL + ((unsigned long)i << 12) + 0x327UL;
+        unsigned long hi_value = 0x4000000000000000UL + ((unsigned long)i << 12) + 0x657UL;
         struct csr_case lo_case = { "CSR-SMOKE-009", bounds[i].lo_name, bounds[i].lo_addr, lo_value, lo_value & ~7UL };
         struct csr_case hi_case = { "CSR-SMOKE-009", bounds[i].hi_name, bounds[i].hi_addr, hi_value, hi_value & ~7UL };
 
@@ -309,10 +309,10 @@ int main(void)
     static const struct csr_case rw_cases[] = {
         { "CSR-SMOKE-005", "DasicsFReason", 0x8b3, 0x123456789abcdef7UL, 0x7UL },
         { "CSR-SMOKE-006", "DasicsLibCfg", 0x880, 0x0123456789abcdefUL, 0x0123456789abcdefUL },
-        { "CSR-SMOKE-008", "DasicsJumpCfg", 0x8c8, 0x0001000100010001UL, 0x0001000100010001UL },
-        { "CSR-SMOKE-010", "DasicsMainCall", 0x8b0, 0x5000000000000010UL, 0x5000000000000010UL },
-        { "CSR-SMOKE-010", "DasicsReturnPC", 0x8b1, 0x5000000000000020UL, 0x5000000000000020UL },
-        { "CSR-SMOKE-010", "DasicsActiveZoneReturnPC", 0x8b2, 0x5000000000000030UL, 0x5000000000000030UL },
+        { "CSR-SMOKE-008", "DasicsJumpCfg", 0x8c8, 0xfedcba9876543217UL, 0xfedcba9876543217UL },
+        { "CSR-SMOKE-010", "DasicsMainCall", 0x8b0, 0x5000000000000017UL, 0x5000000000000017UL },
+        { "CSR-SMOKE-010", "DasicsReturnPC", 0x8b1, 0x5000000000000027UL, 0x5000000000000027UL },
+        { "CSR-SMOKE-010", "DasicsActiveZoneReturnPC", 0x8b2, 0x5000000000000037UL, 0x5000000000000037UL },
     };
 
     for (unsigned int i = 0; i < ARRAY_SIZE(rw_cases); i++) {
