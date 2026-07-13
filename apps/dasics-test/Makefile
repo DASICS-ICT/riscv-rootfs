@@ -11,6 +11,7 @@ DASICS_LIB_APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-rwx \
 	   $(DST_DIR)/dasics-test-spectre
 DASICS_STANDALONE_APP = $(DST_DIR)/dasics-test-csr-smoke \
+	   $(DST_DIR)/dasics-test-csr-mask-ops-smoke \
 	   $(DST_DIR)/dasics-test-call-jr-returnpc-smoke \
 	   $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke \
 	   $(DST_DIR)/dasics-test-load-store-permission-smoke \
@@ -32,6 +33,7 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-rwx.c \
 	   $(TEST_DIR)/dasics-test-syscall.c \
 	   $(TEST_DIR)/dasics-test-csr-smoke.c \
+	   $(TEST_DIR)/dasics-test-csr-mask-ops-smoke.c \
 	   $(TEST_DIR)/dasics-test-call-jr-returnpc-smoke.c \
 	   $(TEST_DIR)/dasics-test-jump-branch-target-permission-smoke.c \
 	   $(TEST_DIR)/dasics-test-load-store-permission-smoke.c \
@@ -84,7 +86,7 @@ $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $^
-$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o $(DST_DIR)/dasics-test-ecall-fault-smoke.o $(DST_DIR)/dasics-test-ecall-close-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-free-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-replacement-smoke.o $(DST_DIR)/dasics-test-syscall-buffer-permission-smoke.o $(DST_DIR)/dasics-test-context-section-load-smoke.o $(DST_DIR)/dasics-test-context-switch-isolation-smoke.o $(DST_DIR)/dasics-test-returnpc-trap-preserve-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
+$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-csr-mask-ops-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o $(DST_DIR)/dasics-test-ecall-fault-smoke.o $(DST_DIR)/dasics-test-ecall-close-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-free-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-replacement-smoke.o $(DST_DIR)/dasics-test-syscall-buffer-permission-smoke.o $(DST_DIR)/dasics-test-context-section-load-smoke.o $(DST_DIR)/dasics-test-context-switch-isolation-smoke.o $(DST_DIR)/dasics-test-returnpc-trap-preserve-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $^
