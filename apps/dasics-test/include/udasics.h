@@ -68,6 +68,7 @@
 #define CSR_DMAINCALL       0x8b0
 #define CSR_DRETURNPC       0x8b1
 #define CSR_DFZRETURN       0x8b2
+#define CSR_DFREASON        0x8b3
 
 #define CSR_DJBOUND0LO      0x8c0
 #define CSR_DJBOUND0HI      0x8c1
@@ -86,6 +87,13 @@
 #define DASICS_LIBCFG_R     0x2UL
 #define DASICS_LIBCFG_W     0x1UL
 
+#define DASICS_BOUND_GRANULE 8UL
+#define DASICS_BOUND_ALIGN_DOWN(addr) \
+    ((uint64_t)(addr) & ~(DASICS_BOUND_GRANULE - 1UL))
+#define DASICS_BOUND_ALIGN_UP(addr) \
+    (((uint64_t)(addr) + DASICS_BOUND_GRANULE - 1UL) & \
+     ~(DASICS_BOUND_GRANULE - 1UL))
+
 #define DASICS_JUMPCFG_WIDTH 	4
 #define DASICS_JUMPCFG_MASK 	0xffffUL
 #define DASICS_JUMPCFG_V    	0x1UL
@@ -96,6 +104,16 @@ typedef enum {
     Umaincall_SETAZONERTPC,
     Umaincall_UNKNOWN
 } UmaincallTypes;
+
+#define DASICS_COMPLETE_APP_CONTROL_MAGIC 0x4644494150504354UL
+#define DASICS_COMPLETE_APP_CONTROL_SET 0x534554UL
+#define DASICS_COMPLETE_APP_CONTROL_RESTORE 0x525354UL
+#define DASICS_COMPLETE_APP_STAGE_A 0UL
+#define DASICS_COMPLETE_APP_STAGE_B 1UL
+#define DASICS_COMPLETE_APP_STAGE_RESTORE 2UL
+#define DASICS_COMPLETE_APP_CFG_OFF 0UL
+#define DASICS_COMPLETE_APP_CFG_UENA DASICS_UCFG_ENA
+#define DASICS_COMPLETE_APP_GETPID 306UL
 
 void register_udasics(uint64_t funcptr);
 void unregister_udasics(void);
@@ -112,8 +130,11 @@ int32_t dasics_jumpcfg_free(int32_t idx);
 // extern uint64_t umaincall_helper;
 extern void dasics_ufault_entry(void);
 extern uint64_t dasics_umaincall(UmaincallTypes type, ...);
-extern void lib_call(void* func_name);
+extern int lib_call(int (*func)(void));
 extern void lib_call_1(uint64_t arg, void* func_name);
 extern void azone_call(void* func_name);
+long dasics_complete_app_getpid(void);
+long dasics_complete_app_control(uint64_t command, uint64_t pid,
+                                 uint64_t stage, uint64_t value);
 
 #endif

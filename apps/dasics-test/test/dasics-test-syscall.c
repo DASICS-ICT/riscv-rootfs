@@ -1,120 +1,183 @@
+#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <machine/syscall.h>
 
 #include "udasics.h"
 
-const char *test_info = "[MAIN]-  Test 5: syscall interception test \n";
-static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB]: It's readonly buffer!\n";
-static char ATTR_ULIB_DATA covered_fully1[100] = "[ULIB]: This buffer is fully covered by DASICS libbounds!\n";
-static char ATTR_ULIB_DATA covered_fully2[100] = "[ULIB]: That buffer is fully covered by DASICS libbounds!\n";
-static char ATTR_ULIB_DATA covered_partially[100] = "[ULIB] ERROR: This buffer is partially covered, and should not be printed!\n";
-static char ATTR_ULIB_DATA read_buffer[500];
+#define DASICS_APP_SYSCALL_TAG "[DASICS-APP-SYSCALL]"
+#define DASICS_APP_SYSCALL_CASES 11UL
+#define SYSCALL_OUTPUT_LEN 8UL
+#define SYSCALL_GAP_LEN 24UL
+#define SYSCALL_STDOUT_FD 1L
+
+static char ATTR_ULIB_DATA attack_output[SYSCALL_OUTPUT_LEN]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        {'P', 'A', 'I', 'R', '-', 'A', '!', '\n'};
+static char ATTR_ULIB_DATA allowed_output_one[SYSCALL_OUTPUT_LEN]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        {'A', 'L', 'L', 'O', 'W', '-', '1', '\n'};
+static char ATTR_ULIB_DATA allowed_output_two[SYSCALL_OUTPUT_LEN]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        {'A', 'L', 'L', 'O', 'W', '-', '2', '\n'};
+static char ATTR_ULIB_DATA gap_output[SYSCALL_GAP_LEN]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        {'G', 'A', 'P', '-', 'O', 'U', 'T', '!',
+         'N', 'O', 'T', '-', 'A', 'L', 'L', 'O',
+         'W', 'E', 'D', '-', 'H', 'E', 'R', 'E'};
+
+struct syscall_observation_values {
+    long attack_return;
+    long allowed_one_return;
+    long allowed_two_return;
+    long gap_return;
+};
+
+static volatile struct syscall_observation_values ATTR_ULIB_DATA
+    syscall_observations __attribute__((aligned(DASICS_BOUND_GRANULE)));
 
 #pragma GCC push_options
 #pragma GCC optimize("O0")
-int ATTR_ULIB_TEXT test_syscall() {
-    // Test user main boundarys.
-	// Note: gcc -O2 option and RVC will cause 
-	// some unexpected compilation results.
-	int retval = 0;
-
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
-	char *ptr = (char *)0xffffffffabcdef00;
-	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, try to write to stdout\n"); // lib call main 
-    retval = ulib_write(1,"syscall test string 1\n",22);
-	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
-
-	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the unbounded address: 0x%lx, and write to stdout\n", ptr); // lib call main 
-    retval = ulib_write(1,ptr,5);  // raise fault
-	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
-
-	dasics_umaincall(Umaincall_PRINT, "using ecall in lib to write, but try to read from the bounded ready-only address: 0x%lx, and write to stdout\n", pub_readonly); // lib call main 
-    retval = ulib_write(1,pub_readonly,100);
-	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
-
-	dasics_umaincall(Umaincall_PRINT, "Test umaincall_print va_list: %d, %d, %d, %d, %d\n", 1, 2, 3, 4, 5);
-
-	dasics_umaincall(Umaincall_PRINT, "Try to write the 1st fully covered buffer to stdout\n");
-	retval = ulib_write(1, covered_fully1, 100);
-	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
-
-	dasics_umaincall(Umaincall_PRINT, "Try to write the 2nd fully covered buffer to stdout\n");
-	retval = ulib_write(1, covered_fully2, 100);
-	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
-
-	dasics_umaincall(Umaincall_PRINT, "Try to write the partially covered buffer to stdout\n");
-	retval = ulib_write(1, covered_partially, 100);  // raise fault
-	dasics_umaincall(Umaincall_PRINT, "write retval = %d\n", retval);
-
-	dasics_umaincall(Umaincall_PRINT, "Try to read from stdin to pub_readonly\n");
-	retval = ulib_pread(0, pub_readonly, 100, 0);  // raise fault
-	dasics_umaincall(Umaincall_PRINT, "read retval = %d\n", retval);
-
-	// dasics_umaincall(Umaincall_PRINT, "Try to read from /root/scripts/run-dasics-test.sh\n");
-
-	// int fd = ulib_openat(0, "/root/scripts/run-dasics-test.sh", O_RDONLY);  // Absolute path makes openat ignore dirfd
-	// retval = ulib_read(fd, read_buffer, 450);
-	// dasics_umaincall(Umaincall_PRINT, "read retval = %d\n", retval);
-	// ulib_close(fd);
-
-	// dasics_umaincall(Umaincall_PRINT, "read_buffer content:\n%s\n", read_buffer);
-
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
-
-	return 0;
+int ATTR_ULIB_TEXT syscall_attack_write_operation(void)
+{
+    syscall_observations.attack_return =
+        ulib_write(SYSCALL_STDOUT_FD, attack_output, SYSCALL_OUTPUT_LEN);
+    return 0;
 }
 
+int ATTR_ULIB_TEXT syscall_allowed_one_operation(void)
+{
+    syscall_observations.allowed_one_return =
+        ulib_write(SYSCALL_STDOUT_FD, allowed_output_one,
+                   SYSCALL_OUTPUT_LEN);
+    return 0;
+}
+
+int ATTR_ULIB_TEXT syscall_allowed_two_operation(void)
+{
+    syscall_observations.allowed_two_return =
+        ulib_write(SYSCALL_STDOUT_FD, allowed_output_two,
+                   SYSCALL_OUTPUT_LEN);
+    return 0;
+}
+
+int ATTR_ULIB_TEXT syscall_gap_operation(void)
+{
+    syscall_observations.gap_return =
+        ulib_write(SYSCALL_STDOUT_FD, gap_output, SYSCALL_GAP_LEN);
+    return 0;
+}
 #pragma GCC pop_options
 
-void exit_function() {
-	printf("[MAIN]test dasics finished\n");
+static int record_value_case(const char *name, uint64_t actual,
+                             uint64_t expected)
+{
+    int pass = actual == expected;
+
+    printf(DASICS_APP_SYSCALL_TAG
+           " case=%s actual=0x%lx expect=0x%lx result=%s\n",
+           name, actual, expected, pass ? "PASS" : "FAIL");
+    return pass ? 0 : 1;
 }
 
-int main() {
+static int record_bool_case(const char *name, int value)
+{
+    return record_value_case(name, value != 0, 1);
+}
 
-	atexit(exit_function);
+int main(void)
+{
+    uint64_t attack_reason = 0;
+    uint64_t gap_reason = 0;
+    long pid = dasics_complete_app_getpid();
+    int failures = 0;
 
-	printf(test_info);
+    register_udasics(0);
+    int32_t observation_bound = dasics_libcfg_alloc(
+        DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+        DASICS_BOUND_ALIGN_DOWN(&syscall_observations),
+        DASICS_BOUND_ALIGN_UP(&syscall_observations + 1));
+    // Each allowed output has one exact architectural [base, base + 8) bound.
+    int32_t allowed_one_bound = dasics_libcfg_alloc(
+        DASICS_LIBCFG_R, (uint64_t)allowed_output_one,
+        (uint64_t)(allowed_output_one + SYSCALL_OUTPUT_LEN));
+    int32_t allowed_two_bound = dasics_libcfg_alloc(
+        DASICS_LIBCFG_R, (uint64_t)allowed_output_two,
+        (uint64_t)(allowed_output_two + SYSCALL_OUTPUT_LEN));
+    // The middle eight bytes remain outside both ranges.
+    int32_t gap_low_bound = dasics_libcfg_alloc(
+        DASICS_LIBCFG_R, (uint64_t)gap_output,
+        (uint64_t)(gap_output + DASICS_BOUND_GRANULE));
+    int32_t gap_high_bound = dasics_libcfg_alloc(
+        DASICS_LIBCFG_R,
+        (uint64_t)(gap_output + 2 * DASICS_BOUND_GRANULE),
+        (uint64_t)(gap_output + SYSCALL_GAP_LEN));
+    int setup_ok = observation_bound >= 0 && allowed_one_bound >= 0 &&
+                   allowed_two_bound >= 0 && gap_low_bound >= 0 &&
+                   gap_high_bound >= 0;
+    failures += record_bool_case("SYSCALL-SETUP-BOUNDS-ALLOCATED", setup_ok);
 
-	register_udasics(0);
+    long cfg = dasics_complete_app_control(
+        DASICS_COMPLETE_APP_CONTROL_SET, (uint64_t)pid,
+        DASICS_COMPLETE_APP_STAGE_A, DASICS_COMPLETE_APP_CFG_OFF);
+    failures += record_value_case("SYSCALL-A-OS-CFG-OFF", (uint64_t)cfg,
+                                  DASICS_COMPLETE_APP_CFG_OFF);
+    syscall_observations.attack_return = -1;
+    if (setup_ok) syscall_attack_write_operation();
+    failures += record_value_case("SYSCALL-A-UNBOUNDED-WRITE-RETURNS-LEN",
+                                  syscall_observations.attack_return,
+                                  SYSCALL_OUTPUT_LEN);
 
-	int32_t idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)pub_readonly,  (uint64_t)(pub_readonly + 100));
+    syscall_observations.attack_return = -1;
+    syscall_observations.allowed_one_return = -1;
+    syscall_observations.allowed_two_return = -1;
+    syscall_observations.gap_return = -1;
+    cfg = dasics_complete_app_control(
+        DASICS_COMPLETE_APP_CONTROL_SET, (uint64_t)pid,
+        DASICS_COMPLETE_APP_STAGE_B, DASICS_COMPLETE_APP_CFG_UENA);
+    failures += record_value_case("SYSCALL-B-OS-CFG-UENA", (uint64_t)cfg,
+                                  DASICS_COMPLETE_APP_CFG_UENA);
+    if (setup_ok) {
+        lib_call(&syscall_attack_write_operation);
+        attack_reason = csr_read(CSR_DFREASON);
+        lib_call(&syscall_allowed_one_operation);
+        lib_call(&syscall_allowed_two_operation);
+        lib_call(&syscall_gap_operation);
+        gap_reason = csr_read(CSR_DFREASON);
+    }
+    failures += record_value_case("SYSCALL-B-UNBOUNDED-WRITE-REASON",
+                                  attack_reason,
+                                  EXC_DASICS_ECALL_FAULT);
+    failures += record_value_case("SYSCALL-B-UNBOUNDED-WRITE-A0-PRESERVED",
+                                  syscall_observations.attack_return,
+                                  SYSCALL_STDOUT_FD);
+    failures += record_value_case("SYSCALL-B-ALLOWED-ONE-RETURNS-LEN",
+                                  syscall_observations.allowed_one_return,
+                                  SYSCALL_OUTPUT_LEN);
+    failures += record_value_case("SYSCALL-B-ALLOWED-TWO-RETURNS-LEN",
+                                  syscall_observations.allowed_two_return,
+                                  SYSCALL_OUTPUT_LEN);
+    failures += record_value_case("SYSCALL-B-GAP-WRITE-REASON", gap_reason,
+                                  EXC_DASICS_ECALL_FAULT);
+    failures += record_value_case("SYSCALL-B-GAP-WRITE-A0-PRESERVED",
+                                  syscall_observations.gap_return,
+                                  SYSCALL_STDOUT_FD);
 
-	// For fully covered buffer 1st
-	int32_t idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1     ), (uint64_t)(covered_fully1 + 11));
-	int32_t idx2 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 + 10), (uint64_t)(covered_fully1 + 81));
-	int32_t idx3 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 + 81), (uint64_t)(covered_fully1 + 100));
+    long restored = dasics_complete_app_control(
+        DASICS_COMPLETE_APP_CONTROL_RESTORE, (uint64_t)pid,
+        DASICS_COMPLETE_APP_STAGE_RESTORE, DASICS_COMPLETE_APP_CFG_UENA);
+    failures += record_value_case("SYSCALL-OS-CFG-RESTORED",
+                                  (uint64_t)restored,
+                                  DASICS_COMPLETE_APP_CFG_UENA);
 
-	// For partially covered buffer
-	int32_t idx4 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially     ), (uint64_t)(covered_partially + 10));
-	int32_t idx5 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially + 81), (uint64_t)(covered_partially + 100));
-
-	// For fully covered buffer 2nd
-	int32_t idx6 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 -  1), (uint64_t)(covered_fully2 +  1));
-	int32_t idx7 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 +  1), (uint64_t)(covered_fully2 + 100));
-
-	// For read buffer
-	int32_t idx8 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)read_buffer, (uint64_t)(read_buffer + 500));
-	memset(read_buffer, '\0', sizeof(read_buffer));
-
-	lib_call(&test_syscall);
-
-    dasics_libcfg_free(idx0);
-	dasics_libcfg_free(idx1);
-	dasics_libcfg_free(idx2);
-	dasics_libcfg_free(idx3);
-	dasics_libcfg_free(idx4);
-	dasics_libcfg_free(idx5);
-	dasics_libcfg_free(idx6);
-	dasics_libcfg_free(idx7);
-	dasics_libcfg_free(idx8);
-
-	unregister_udasics();
-	exit(0);
-
-	return 0;
+    if (observation_bound >= 0) dasics_libcfg_free(observation_bound);
+    if (allowed_one_bound >= 0) dasics_libcfg_free(allowed_one_bound);
+    if (allowed_two_bound >= 0) dasics_libcfg_free(allowed_two_bound);
+    if (gap_low_bound >= 0) dasics_libcfg_free(gap_low_bound);
+    if (gap_high_bound >= 0) dasics_libcfg_free(gap_high_bound);
+    unregister_udasics();
+    printf(DASICS_APP_SYSCALL_TAG
+           " summary scope=os-controlled-syscall-pairs total=%lu failed=%d result=%s\n",
+           DASICS_APP_SYSCALL_CASES, failures,
+           failures ? "FAIL" : "PASS");
+    return failures ? 1 : 0;
 }

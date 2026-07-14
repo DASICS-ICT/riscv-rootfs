@@ -74,46 +74,46 @@ static int bound_coverage_cmp(const void *a, const void *b)
 {
     const bound_t *_a = (const bound_t *)a;
     const bound_t *_b = (const bound_t *)b;
-    return (_a->lo < _b->lo) ? -1 : 1;
+
+    if (_a->lo < _b->lo) return -1;
+    if (_a->lo > _b->lo) return 1;
+    if (_a->hi < _b->hi) return -1;
+    if (_a->hi > _b->hi) return 1;
+    return 0;
 }
 
-static int dasics_bound_checker(uint64_t lo, uint64_t hi, int perm)
+static int dasics_bound_checker(uint64_t start, uint64_t end, int perm)
 {
-    // In fact, this is a bound coverage problem for [lo, hi]
+    // Bound CSRs represent half-open ranges after the 8-byte WARL mask.
     bound_t bounds[DASICS_LIBCFG_WIDTH];
+    uint64_t cursor = start;
+    uint32_t required_cfg = (uint32_t)perm | DASICS_LIBCFG_V;
     int32_t idx, items = 0;
     int32_t max_cfgs = DASICS_LIBCFG_WIDTH;
 
-    // Fill bounds array with permission matched libbounds
+    if (end < start) return 0;
+    if (end == start) return 1;
+
     for (idx = 0; idx < max_cfgs; ++idx) {
         uint32_t cfg = dasics_libcfg_get(idx);
-        if (cfg == -1 || (cfg & DASICS_LIBCFG_V) == 0) {
-            continue;
-        }
-        else if ((cfg & (perm | DASICS_LIBCFG_V)) != DASICS_LIBCFG_V) {
-            // Permission matched, add this libbound to bound list
-            LIBBOUND_LOOKUP(bounds[items].hi, bounds[items].lo, idx, READ);
-            items++;
-        }
+        if ((cfg & required_cfg) != required_cfg) continue;
+
+        LIBBOUND_LOOKUP(bounds[items].hi, bounds[items].lo, idx, READ);
+        items++;
     }
 
-    // Based on the lower bound, sort bounds array in an increasing order
     qsort(bounds, items, sizeof(bound_t), bound_coverage_cmp);
 
-    // Calculate bound coverage via greedy algorithm
     for (idx = 0; idx < items; ++idx) {
-        if (bounds[idx].lo <= lo + 1 && lo <= bounds[idx].hi) {
-            lo = bounds[idx].hi;
-        }
-        else if (bounds[idx].hi < lo) {
-            continue;
-        }
-        else {
-            break;
-        }
+        if (bounds[idx].lo >= bounds[idx].hi ||
+            bounds[idx].hi <= cursor) continue;
+        if (bounds[idx].lo > cursor) break;
+
+        cursor = bounds[idx].hi;
+        if (cursor >= end) return 1;
     }
 
-    return hi <= lo;
+    return 0;
 }
 
 static uint32_t dasics_syscall_checker(SYSCALL_ARGS)
@@ -130,7 +130,10 @@ static uint32_t dasics_syscall_checker(SYSCALL_ARGS)
             }
             else {
                 int perm = (sysno == SYS_read || sysno == SYS_pread) ? DASICS_LIBCFG_W : DASICS_LIBCFG_R;
-                retval = dasics_bound_checker((uint64_t)arg2, (uint64_t)arg2 + (uint64_t)arg3 - 1, perm);
+                uint64_t start = (uint64_t)arg2;
+                uint64_t end = start + (uint64_t)arg3;
+
+                retval = dasics_bound_checker(start, end, perm);
             }
             break;
         default:
@@ -190,6 +193,32 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
     va_end(args);
 
     return retval;
+}
+
+long dasics_complete_app_getpid(void)
+{
+    register uint64_t a0 asm("a0") = 0;
+    register uint64_t a7 asm("a7") = DASICS_COMPLETE_APP_GETPID;
+
+    asm volatile("ecall" : "+r"(a0) : "r"(a7) : "memory");
+    return (long)a0;
+}
+
+long dasics_complete_app_control(uint64_t command, uint64_t pid,
+                                 uint64_t stage, uint64_t value)
+{
+    register uint64_t a0 asm("a0") = DASICS_COMPLETE_APP_CONTROL_MAGIC;
+    register uint64_t a1 asm("a1") = command;
+    register uint64_t a2 asm("a2") = pid;
+    register uint64_t a3 asm("a3") = stage;
+    register uint64_t a4 asm("a4") = value;
+    register uint64_t a7 asm("a7") = DASICS_COMPLETE_APP_GETPID;
+
+    asm volatile("ecall"
+                 : "+r"(a0)
+                 : "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a7)
+                 : "memory");
+    return (long)a0;
 }
 
 #ifndef DASICS_S_TRAP_ONLY

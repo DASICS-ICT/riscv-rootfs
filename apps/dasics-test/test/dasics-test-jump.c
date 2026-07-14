@@ -1,91 +1,98 @@
+#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <signal.h>
-#include <errno.h>
 
 #include "udasics.h"
 
-const char *test_info = "[MAIN]-  Test 2: lib function jump or call \n";
+#define DASICS_APP_JUMP_TAG "[DASICS-APP-JUMP]"
+#define DASICS_APP_JUMP_CASES 7UL
+#define JUMP_MARKER_POISON UINT64_C(0x4a554d50504f4953)
+#define JUMP_MARKER_REACHED UINT64_C(0x4a554d5054414b45)
 
-static char ATTR_ULIB_DATA secret[100] 		 = "[ULIB1]: It's the secret!";
-static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
-static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
+static volatile uint64_t ATTR_ULIB_DATA jump_marker
+    __attribute__((aligned(DASICS_BOUND_GRANULE)));
 
+static int __attribute__((noinline)) jump_main_target(void)
+{
+    jump_marker = JUMP_MARKER_REACHED;
+    return 0;
+}
+
+#pragma GCC push_options
 #pragma GCC optimize("O0")
-int test_jump_main() {
-    // Test user main boundarys.
-	// Note: gcc -O2 option and RVC will cause 
-	// some unexpected compilation results.
+int ATTR_ULIB_TEXT jump_to_main_operation(void)
+{
+    jump_main_target();
+    return 0;
+}
+#pragma GCC pop_options
 
-	printf("[UMAIN]should not jump to here !!!!\n"); 
+static int record_value_case(const char *name, uint64_t actual,
+                             uint64_t expected)
+{
+    int pass = actual == expected;
 
-	return 0;
+    printf(DASICS_APP_JUMP_TAG
+           " case=%s actual=0x%lx expect=0x%lx result=%s\n",
+           name, actual, expected, pass ? "PASS" : "FAIL");
+    return pass ? 0 : 1;
 }
 
-#pragma GCC optimize("O0")
-int ATTR_ULIB_TEXT test_jump_lib() {
-    // Test user main boundarys.
-	// Note: gcc -O2 option and RVC will cause 
-	// some unexpected compilation results.
-
-	printf("[ULIB]should not jump to here !!!!\n"); 
-
-	return 0;
+static int record_bool_case(const char *name, int value)
+{
+    return record_value_case(name, value != 0, 1);
 }
 
- #pragma GCC optimize("O0")
- int ATTR_UFREEZONE_TEXT test_free_zone() {
-    // Test user main boundarys.
- 	// Note: gcc -O2 option and RVC will cause 
- 	// some unexpected compilation results
-	dasics_umaincall(Umaincall_PRINT, " - - - - - - UFREEZONE START - - - - - - - -  \n"); // lib call main 
+int main(void)
+{
+    uint64_t jump_reason = 0;
+    long pid = dasics_complete_app_getpid();
+    int failures = 0;
 
-	dasics_umaincall(Umaincall_PRINT, "try to jump to lib function \n"); // lib call main 
-	test_jump_lib(); //raise fault
+    register_udasics(0);
+    int32_t marker_bound = dasics_libcfg_alloc(
+        DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+        DASICS_BOUND_ALIGN_DOWN(&jump_marker),
+        DASICS_BOUND_ALIGN_UP(&jump_marker + 1));
+    int setup_ok = marker_bound >= 0;
+    failures += record_bool_case("JUMP-SETUP-MARKER-BOUND", setup_ok);
 
-	dasics_umaincall(Umaincall_PRINT, " - - - - - - UFREEZONE  END - - - - - - - -   \n"); // lib call main 
-	return 0;
- }
+    long cfg = dasics_complete_app_control(
+        DASICS_COMPLETE_APP_CONTROL_SET, (uint64_t)pid,
+        DASICS_COMPLETE_APP_STAGE_A, DASICS_COMPLETE_APP_CFG_OFF);
+    failures += record_value_case("JUMP-A-OS-CFG-OFF", (uint64_t)cfg,
+                                  DASICS_COMPLETE_APP_CFG_OFF);
+    jump_marker = JUMP_MARKER_POISON;
+    if (setup_ok) jump_to_main_operation();
+    failures += record_value_case("JUMP-A-ULIB-TO-MAIN-SUCCEEDS",
+                                  jump_marker, JUMP_MARKER_REACHED);
 
-#pragma GCC optimize("O0")
-int ATTR_ULIB_TEXT test_jump() {
-    // Test user main boundarys.
-	// Note: gcc -O2 option and RVC will cause 
-	// some unexpected compilation results.
+    jump_marker = JUMP_MARKER_POISON;
+    cfg = dasics_complete_app_control(
+        DASICS_COMPLETE_APP_CONTROL_SET, (uint64_t)pid,
+        DASICS_COMPLETE_APP_STAGE_B, DASICS_COMPLETE_APP_CFG_UENA);
+    failures += record_value_case("JUMP-B-OS-CFG-UENA", (uint64_t)cfg,
+                                  DASICS_COMPLETE_APP_CFG_UENA);
+    if (setup_ok) {
+        lib_call(&jump_to_main_operation);
+        jump_reason = csr_read(CSR_DFREASON);
+    }
+    failures += record_value_case("JUMP-B-ULIB-TO-MAIN-REASON",
+                                  jump_reason, EXC_DASICS_JUMP_FAULT);
+    failures += record_value_case("JUMP-B-MAIN-TARGET-NOT-REACHED",
+                                  jump_marker, JUMP_MARKER_POISON);
 
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB START ***************** \n"); // lib call main 
+    long restored = dasics_complete_app_control(
+        DASICS_COMPLETE_APP_CONTROL_RESTORE, (uint64_t)pid,
+        DASICS_COMPLETE_APP_STAGE_RESTORE, DASICS_COMPLETE_APP_CFG_UENA);
+    failures += record_value_case("JUMP-OS-CFG-RESTORED",
+                                  (uint64_t)restored,
+                                  DASICS_COMPLETE_APP_CFG_UENA);
 
-	dasics_umaincall(Umaincall_PRINT, "try to printf directly without maincall\n"); // lib call main 
-    printf("should not print this info"); //raise fault
-
-	dasics_umaincall(Umaincall_PRINT, "try to jump to main function\n"); // lib call main 
-    test_jump_main(); //raise fault
-	dasics_umaincall(Umaincall_PRINT, "try to jump to freezone function\n"); // lib call main 
-
-	dasics_umaincall(Umaincall_SETAZONERTPC);
-	test_free_zone();
-
-	dasics_umaincall(Umaincall_PRINT, "************* ULIB   END ***************** \n"); // lib call main 
-
-	return 0;
-}
-
-void exit_function() {
-	printf("[MAIN]test dasics finished\n");
-}
-
-int main() {
-	atexit(exit_function);
-
-	printf(test_info);
-
-	register_udasics(0);
-
-	lib_call(&test_jump);
-
-	unregister_udasics();
-
-	return 0;
+    if (marker_bound >= 0) dasics_libcfg_free(marker_bound);
+    unregister_udasics();
+    printf(DASICS_APP_JUMP_TAG
+           " summary scope=os-controlled-ulib-main-pair total=%lu failed=%d result=%s\n",
+           DASICS_APP_JUMP_CASES, failures,
+           failures ? "FAIL" : "PASS");
+    return failures ? 1 : 0;
 }

@@ -10,11 +10,14 @@
 #define CSR_UTVAL           0x043
 #define CSR_UIP             0x044
 
+#define CSR_STRINGIFY_RAW(reg) #reg
+#define CSR_STRINGIFY(reg) CSR_STRINGIFY_RAW(reg)
+
 #define csr_read(reg) ({ unsigned long __tmp; \
-  asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
+  asm volatile ("csrr %0, " CSR_STRINGIFY(reg) : "=r"(__tmp)); \
   __tmp; })
 
 #define csr_write(reg, val) ({ \
-  asm volatile ("csrw " #reg ", %0" :: "rK"(val)); })
+  asm volatile ("csrw " CSR_STRINGIFY(reg) ", %0" :: "rK"(val)); })
 
 #endif
