@@ -57,13 +57,17 @@ void register_udasics(uint64_t funcptr)
 {
     umaincall_helper = (funcptr != 0) ? funcptr : (uint64_t) dasics_umaincall_helper;
     csr_write(0x8b0, (uint64_t)dasics_umaincall);
+#ifndef DASICS_S_TRAP_ONLY
     csr_write(0x005, (uint64_t)dasics_ufault_entry);
+#endif
 }
 
 void unregister_udasics(void) 
 {
     csr_write(0x8b0, 0);
+#ifndef DASICS_S_TRAP_ONLY
     csr_write(0x005, 0);    
+#endif
 }
 
 static int bound_coverage_cmp(const void *a, const void *b)
@@ -170,9 +174,10 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
         case Umaincall_PRINT: {
             const char *format = va_arg(args, const char *);
             vprintf(format, args);
+            break;
         }
         case Umaincall_SETAZONERTPC:
-            dasics_free_zone_return_pc = 0x1e264;
+            /* dasics_umaincall derives the free-zone return PC from its caller. */
             break;
         default:
             printf("\x1b[33m%s\x1b[0m","Warning: Invalid umaincall number %d!\n", type); //could not use printf in kernel
@@ -187,6 +192,7 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
     return retval;
 }
 
+#ifndef DASICS_S_TRAP_ONLY
 void dasics_ufault_handler(void)
 {
     // Save some registers that should be saved by callees
@@ -270,6 +276,7 @@ void dasics_ufault_handler(void)
     csr_write(0x8b2, dasics_free_zone_return_pc);
 
 }
+#endif
 
 int32_t dasics_libcfg_alloc(uint64_t cfg, uint64_t lo, uint64_t hi) {
     uint64_t libcfg = csr_read(0x880);  // DasicsLibCfg

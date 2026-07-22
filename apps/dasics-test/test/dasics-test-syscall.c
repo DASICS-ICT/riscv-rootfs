@@ -8,11 +8,20 @@
 #include "udasics.h"
 
 const char *test_info = "[MAIN]-  Test 5: syscall interception test \n";
-static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB]: It's readonly buffer!\n";
-static char ATTR_ULIB_DATA covered_fully1[100] = "[ULIB]: This buffer is fully covered by DASICS libbounds!\n";
-static char ATTR_ULIB_DATA covered_fully2[100] = "[ULIB]: That buffer is fully covered by DASICS libbounds!\n";
-static char ATTR_ULIB_DATA covered_partially[100] = "[ULIB] ERROR: This buffer is partially covered, and should not be printed!\n";
-static char ATTR_ULIB_DATA read_buffer[500];
+static char ATTR_ULIB_DATA pub_readonly[DASICS_BOUND_ALIGN_UP(100UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        "[ULIB]: It's readonly buffer!\n";
+static char ATTR_ULIB_DATA covered_fully1[DASICS_BOUND_ALIGN_UP(100UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        "[ULIB]: This buffer is fully covered by DASICS libbounds!\n";
+static char ATTR_ULIB_DATA covered_fully2[DASICS_BOUND_ALIGN_UP(100UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        "[ULIB]: That buffer is fully covered by DASICS libbounds!\n";
+static char ATTR_ULIB_DATA covered_partially[DASICS_BOUND_ALIGN_UP(100UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        "[ULIB] ERROR: This buffer is partially covered, and should not be printed!\n";
+static char ATTR_ULIB_DATA read_buffer[DASICS_BOUND_ALIGN_UP(500UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE)));
 
 #pragma GCC push_options
 #pragma GCC optimize("O0")
@@ -82,23 +91,32 @@ int main() {
 
 	register_udasics(0);
 
-	int32_t idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)pub_readonly,  (uint64_t)(pub_readonly + 99));
+	int32_t idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R,
+		(uint64_t)pub_readonly, (uint64_t)(pub_readonly + sizeof(pub_readonly)));
 
 	// For fully covered buffer 1st
-	int32_t idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1     ), (uint64_t)(covered_fully1 + 10));
-	int32_t idx2 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 +  9), (uint64_t)(covered_fully1 + 80));
-	int32_t idx3 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 + 81), (uint64_t)(covered_fully1 + 99));
+	int32_t idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)covered_fully1,
+		(uint64_t)(covered_fully1 + 16));
+	int32_t idx2 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 + 16),
+		(uint64_t)(covered_fully1 + 80));
+	int32_t idx3 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully1 + 80),
+		(uint64_t)(covered_fully1 + sizeof(covered_fully1)));
 
 	// For partially covered buffer
-	int32_t idx4 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially     ), (uint64_t)(covered_partially + 10));
-	int32_t idx5 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially + 81), (uint64_t)(covered_partially + 99));
+	int32_t idx4 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)covered_partially,
+		(uint64_t)(covered_partially + 16));
+	int32_t idx5 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_partially + 80),
+		(uint64_t)(covered_partially + sizeof(covered_partially)));
 
 	// For fully covered buffer 2nd
-	int32_t idx6 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 -  1), (uint64_t)(covered_fully2     ));
-	int32_t idx7 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 +  1), (uint64_t)(covered_fully2 + 99));
+	int32_t idx6 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)covered_fully2,
+		(uint64_t)(covered_fully2 + 8));
+	int32_t idx7 = dasics_libcfg_alloc(DASICS_LIBCFG_R, (uint64_t)(covered_fully2 + 8),
+		(uint64_t)(covered_fully2 + sizeof(covered_fully2)));
 
 	// For read buffer
-	int32_t idx8 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)read_buffer, (uint64_t)(read_buffer + 499));
+	int32_t idx8 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+		(uint64_t)read_buffer, (uint64_t)(read_buffer + sizeof(read_buffer)));
 	memset(read_buffer, '\0', sizeof(read_buffer));
 
 	lib_call(&test_syscall);

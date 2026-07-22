@@ -9,9 +9,15 @@
 
 const char *test_info = "[MAIN]-  Test 3: bound register allocation and authority \n";
 
-static char ATTR_ULIB_DATA secret[100] 		 = "[ULIB1]: It's the secret!";
-static char ATTR_ULIB_DATA pub_readonly[100] = "[ULIB1]: It's readonly buffer!";
-static char ATTR_ULIB_DATA pub_rwbuffer[100] = "[ULIB1]: It's public rw buffer!";
+static char ATTR_ULIB_DATA secret[DASICS_BOUND_ALIGN_UP(100UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        "[ULIB1]: It's the secret!";
+static char ATTR_ULIB_DATA pub_readonly[DASICS_BOUND_ALIGN_UP(100UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        "[ULIB1]: It's readonly buffer!";
+static char ATTR_ULIB_DATA pub_rwbuffer[DASICS_BOUND_ALIGN_UP(100UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        "[ULIB1]: It's public rw buffer!";
 
 #pragma GCC optimize("O0")
 int ATTR_ULIB_TEXT test_rwx() {
@@ -57,9 +63,14 @@ int main() {
 	register_udasics(0);
 
 	// Allocate libcfg before calling lib function
-    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R                  , (uint64_t)pub_readonly, (uint64_t)(pub_readonly + 100));
-    idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W, (uint64_t)pub_rwbuffer, (uint64_t)(pub_rwbuffer + 100));
-    idx2 = dasics_libcfg_alloc(0                                , (uint64_t)secret      , (uint64_t)(      secret + 100));
+    idx0 = dasics_libcfg_alloc(DASICS_LIBCFG_R,
+                               DASICS_BOUND_ALIGN_DOWN(pub_readonly),
+                               DASICS_BOUND_ALIGN_UP(pub_readonly + 100));
+    idx1 = dasics_libcfg_alloc(DASICS_LIBCFG_R | DASICS_LIBCFG_W,
+                               DASICS_BOUND_ALIGN_DOWN(pub_rwbuffer),
+                               DASICS_BOUND_ALIGN_UP(pub_rwbuffer + 100));
+    idx2 = dasics_libcfg_alloc(0, DASICS_BOUND_ALIGN_DOWN(secret),
+                               DASICS_BOUND_ALIGN_UP(secret + 100));
 
 	lib_call(&test_rwx);
 

@@ -9,7 +9,9 @@
 
 const char *test_info = "[MAIN]-  Test 1: out of bound test \n";
 
-static char ATTR_ULIB_DATA unboundedData[100] 		 = "[ULIB]: It's the unbounded data!";
+static char ATTR_ULIB_DATA unboundedData[DASICS_BOUND_ALIGN_UP(100UL)]
+    __attribute__((aligned(DASICS_BOUND_GRANULE))) =
+        "[ULIB]: It's the unbounded data!";
 
 #pragma GCC optimize("O0")
 int ATTR_ULIB_TEXT test_ofb() {
