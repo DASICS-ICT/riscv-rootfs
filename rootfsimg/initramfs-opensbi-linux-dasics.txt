@@ -1,0 +1,29 @@
+dir /dev 755 0 0
+dir /dasics 755 0 0
+dir /proc 755 0 0
+dir /sys 755 0 0
+dir /tmp 1777 0 0
+
+nod /dev/console 600 0 0 c 5 1
+nod /dev/null 666 0 0 c 1 3
+
+file /init ${DASICS_LINUX_BUILD_DIR}/init 755 0 0
+file /dasics/dasics-test-csr-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-csr-smoke 755 0 0
+file /dasics/dasics-test-csr-mask-ops-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-csr-mask-ops-smoke 755 0 0
+file /dasics/dasics-test-call-jr-returnpc-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-call-jr-returnpc-smoke 755 0 0
+file /dasics/dasics-test-maincfg-toggle-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-maincfg-toggle-smoke 755 0 0
+file /dasics/dasics-test-jump-branch-target-permission-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-jump-branch-target-permission-smoke 755 0 0
+file /dasics/dasics-test-load-store-permission-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-load-store-permission-smoke 755 0 0
+file /dasics/dasics-test-ecall-fault-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-ecall-fault-smoke 755 0 0
+file /dasics/dasics-test-ecall-close-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-ecall-close-smoke 755 0 0
+file /dasics/dasics-test-syscall-buffer-permission-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-syscall-buffer-permission-smoke 755 0 0
+file /dasics/dasics-test-dynamic-bound-free-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-dynamic-bound-free-smoke 755 0 0
+file /dasics/dasics-test-dynamic-bound-replacement-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-dynamic-bound-replacement-smoke 755 0 0
+file /dasics/dasics-test-context-section-load-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-context-section-load-smoke 755 0 0
+file /dasics/dasics-test-context-switch-isolation-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-context-switch-isolation-smoke 755 0 0
+file /dasics/dasics-test-returnpc-trap-preserve-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-returnpc-trap-preserve-smoke 755 0 0
+file /dasics/dasics-test-rwx ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-rwx 755 0 0
+file /dasics/dasics-test-jump ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-jump 755 0 0
+file /dasics/dasics-test-ofb ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-ofb 755 0 0
+file /dasics/dasics-test-free ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-free 755 0 0
+file /dasics/dasics-test-syscall ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-syscall 755 0 0
