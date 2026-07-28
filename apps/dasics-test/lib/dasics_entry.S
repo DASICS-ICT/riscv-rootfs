@@ -11,12 +11,63 @@
 .align 2, 0x13  # nop = addi x0, x0, 0
 
 dasics_ufault_entry: 
+#ifdef DASICS_N_EXTENSION_PROFILE
+    /*
+     * The N profile deliberately uses a minimal, non-production handler.
+     * uscratch carries the explicit recovery PC.  t0 is restored before
+     * uret; t1-t4 are caller-saved and are declared clobbered by the two
+     * profile-only fault sites.
+     */
+    csrrw t0, uscratch, t0
+    la    t1, dasics_n_extension_trap_count
+    ld    t2, 0(t1)
+    li    t3, 2
+    bgeu  t2, t3, 2f
+    la    t3, dasics_n_extension_trap_records
+    beqz  t2, 1f
+    addi  t3, t3, 48
+1:
+    csrr  t4, ustatus
+    sd    t4, 0(t3)
+    csrr  t4, uepc
+    sd    t4, 8(t3)
+    csrr  t4, ucause
+    sd    t4, 16(t3)
+    csrr  t4, utval
+    sd    t4, 24(t3)
+    csrr  t4, 0x8b3
+    sd    t4, 32(t3)
+    sd    t0, 40(t3)
+    addi  t2, t2, 1
+    sd    t2, 0(t1)
+2:
+    csrw  uepc, t0
+    csrrw t0, uscratch, t0
+    uret
+#else
     addi sp, sp, -16
     sd   ra, 8(sp)
     call dasics_ufault_handler
     ld   ra, 8(sp)
     addi sp, sp, 16
     uret 
+#endif
+#endif
+
+#ifdef DASICS_N_EXTENSION_PROFILE
+.section .bss
+.align 3
+.global dasics_n_extension_trap_count
+.type dasics_n_extension_trap_count, @object
+.size dasics_n_extension_trap_count, 8
+dasics_n_extension_trap_count:
+    .zero 8
+
+.global dasics_n_extension_trap_records
+.type dasics_n_extension_trap_records, @object
+.size dasics_n_extension_trap_records, 96
+dasics_n_extension_trap_records:
+    .zero 96
 #endif
 
 #-----------------------------------------------------------------------
