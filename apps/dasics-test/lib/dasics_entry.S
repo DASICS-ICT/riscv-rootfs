@@ -11,13 +11,53 @@
 .align 2, 0x13  # nop = addi x0, x0, 0
 
 dasics_ufault_entry: 
-#ifdef DASICS_N_EXTENSION_PROFILE
+	#ifdef DASICS_N_EXTENSION_PROFILE
     /*
      * The N profile deliberately uses a minimal, non-production handler.
      * uscratch carries the explicit recovery PC.  t0 is restored before
      * uret; t1-t4 are caller-saved and are declared clobbered by the two
      * profile-only fault sites.
      */
+    addi  sp, sp, -128
+    sd    ra,   0(sp)
+    sd    t0,   8(sp)
+    sd    t1,  16(sp)
+    sd    t2,  24(sp)
+    sd    t3,  32(sp)
+    sd    t4,  40(sp)
+    sd    t5,  48(sp)
+    sd    t6,  56(sp)
+    sd    a0,  64(sp)
+    sd    a1,  72(sp)
+    sd    a2,  80(sp)
+    sd    a3,  88(sp)
+    sd    a4,  96(sp)
+    sd    a5, 104(sp)
+    sd    a6, 112(sp)
+    sd    a7, 120(sp)
+
+    csrr  t0, 0x8b3
+    li    t1, 1
+    beq   t0, t1, .Ln_extension_syscall
+
+    ld    ra,   0(sp)
+    ld    t0,   8(sp)
+    ld    t1,  16(sp)
+    ld    t2,  24(sp)
+    ld    t3,  32(sp)
+    ld    t4,  40(sp)
+    ld    t5,  48(sp)
+    ld    t6,  56(sp)
+    ld    a0,  64(sp)
+    ld    a1,  72(sp)
+    ld    a2,  80(sp)
+    ld    a3,  88(sp)
+    ld    a4,  96(sp)
+    ld    a5, 104(sp)
+    ld    a6, 112(sp)
+    ld    a7, 120(sp)
+    addi  sp, sp, 128
+
     csrrw t0, uscratch, t0
     la    t1, dasics_n_extension_trap_count
     ld    t2, 0(t1)
@@ -44,7 +84,41 @@ dasics_ufault_entry:
     csrw  uepc, t0
     csrrw t0, uscratch, t0
     uret
-#else
+
+.Ln_extension_syscall:
+    mv    a0, a7
+    ld    a1, 64(sp)
+    ld    a2, 72(sp)
+    ld    a3, 80(sp)
+    ld    a4, 88(sp)
+    ld    a5, 96(sp)
+    ld    a6, 104(sp)
+    call  dasics_n_extension_syscall_handler
+    sd    a0, 64(sp)
+
+    csrr  t0, uepc
+    addi  t0, t0, 4
+    csrw  uepc, t0
+
+    ld    ra,   0(sp)
+    ld    t0,   8(sp)
+    ld    t1,  16(sp)
+    ld    t2,  24(sp)
+    ld    t3,  32(sp)
+    ld    t4,  40(sp)
+    ld    t5,  48(sp)
+    ld    t6,  56(sp)
+    ld    a0,  64(sp)
+    ld    a1,  72(sp)
+    ld    a2,  80(sp)
+    ld    a3,  88(sp)
+    ld    a4,  96(sp)
+    ld    a5, 104(sp)
+    ld    a6, 112(sp)
+    ld    a7, 120(sp)
+    addi  sp, sp, 128
+    uret
+	#else
     addi sp, sp, -16
     sd   ra, 8(sp)
     call dasics_ufault_handler

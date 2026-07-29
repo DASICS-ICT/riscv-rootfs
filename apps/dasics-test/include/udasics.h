@@ -115,6 +115,27 @@ typedef enum {
 #define DASICS_COMPLETE_APP_CFG_UENA DASICS_UCFG_ENA
 #define DASICS_COMPLETE_APP_GETPID 306UL
 
+#ifdef DASICS_N_EXTENSION_PROFILE
+#define DASICS_N_EXTENSION_SYSCALL_RECORDS 4UL
+
+typedef struct {
+    uint64_t ustatus;
+    uint64_t uepc;
+    uint64_t ucause;
+    uint64_t utval;
+    uint64_t dfreason;
+    uint64_t permitted;
+    int64_t result;
+} dasics_n_extension_syscall_record_t;
+
+extern volatile uint64_t dasics_n_extension_syscall_trap_count;
+extern volatile uint64_t dasics_n_extension_syscall_permitted_count;
+extern volatile uint64_t dasics_n_extension_syscall_denied_count;
+extern volatile dasics_n_extension_syscall_record_t
+    dasics_n_extension_syscall_records[DASICS_N_EXTENSION_SYSCALL_RECORDS];
+long dasics_n_extension_syscall_handler(SYSCALL_ARGS);
+#endif
+
 void register_udasics(uint64_t funcptr);
 void unregister_udasics(void);
 void set_ufault_print_info(uint64_t status);

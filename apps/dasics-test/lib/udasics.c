@@ -162,6 +162,67 @@ static long dasics_syscall_proxy(SYSCALL_ARGS)
     return a0;
 }
 
+#ifdef DASICS_N_EXTENSION_PROFILE
+volatile uint64_t dasics_n_extension_syscall_trap_count;
+volatile uint64_t dasics_n_extension_syscall_permitted_count;
+volatile uint64_t dasics_n_extension_syscall_denied_count;
+volatile dasics_n_extension_syscall_record_t
+    dasics_n_extension_syscall_records[DASICS_N_EXTENSION_SYSCALL_RECORDS];
+
+static uint32_t dasics_n_extension_syscall_permitted(SYSCALL_ARGS)
+{
+    switch (sysno) {
+    case SYS_read:
+    case SYS_write:
+    case SYS_pread:
+    case SYS_pwrite:
+        return dasics_syscall_checker(
+            sysno, arg1, arg2, arg3, arg4, arg5, arg6);
+    default:
+        return 0;
+    }
+}
+
+long dasics_n_extension_syscall_handler(SYSCALL_ARGS)
+{
+    uint64_t index = dasics_n_extension_syscall_trap_count;
+    uint32_t permitted = dasics_n_extension_syscall_permitted(
+        sysno, arg1, arg2, arg3, arg4, arg5, arg6);
+    volatile dasics_n_extension_syscall_record_t *record = NULL;
+    long result;
+
+    if (index < DASICS_N_EXTENSION_SYSCALL_RECORDS) {
+        record = &dasics_n_extension_syscall_records[index];
+        record->ustatus = csr_read(ustatus);
+        record->uepc = csr_read(uepc);
+        record->ucause = csr_read(ucause);
+        record->utval = csr_read(utval);
+        record->dfreason = csr_read(CSR_DFREASON);
+        record->permitted = permitted;
+    }
+    dasics_n_extension_syscall_trap_count = index + 1;
+
+    if (!permitted) {
+        dasics_n_extension_syscall_denied_count++;
+        result = -1;
+    } else {
+        dasics_n_extension_syscall_permitted_count++;
+        /*
+         * This function and dasics_syscall_proxy reside in trusted .text.  The
+         * reissued ecall is therefore an ordinary U-mode syscall (cause 8),
+         * which remains delegated to HS rather than looping back into HU.
+         */
+        result = dasics_syscall_proxy(
+            sysno, arg1, arg2, arg3, arg4, arg5, arg6);
+    }
+
+    if (record != NULL) {
+        record->result = result;
+    }
+    return result;
+}
+#endif
+
 uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
 {
     uint64_t dasics_return_pc = csr_read(0x8b1);            // DasicsReturnPC
