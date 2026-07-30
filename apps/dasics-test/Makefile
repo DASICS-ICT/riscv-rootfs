@@ -77,6 +77,7 @@ CXXFLAGS += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 LDFLAGS  += -march=rv64imad -mabi=lp64d -static
 DASICS_S_TRAP_ONLY ?= 1
 DASICS_N_EXTENSION_PROFILE ?= 0
+DASICS_PROFILE_CFLAGS :=
 ifeq ($(filter 0 1,$(strip $(DASICS_S_TRAP_ONLY))),)
 $(error DASICS_S_TRAP_ONLY must be 0 or 1)
 endif
@@ -87,17 +88,22 @@ ifeq ($(strip $(DASICS_N_EXTENSION_PROFILE)),1)
 ifneq ($(strip $(DASICS_S_TRAP_ONLY)),0)
 $(error DASICS_N_EXTENSION_PROFILE requires DASICS_S_TRAP_ONLY=0)
 endif
-CFLAGS   += -DDASICS_N_EXTENSION_PROFILE
+DASICS_PROFILE_CFLAGS += -DDASICS_N_EXTENSION_PROFILE
 endif
 ifeq ($(strip $(DASICS_S_TRAP_ONLY)),1)
 # The legacy standalone profile delegates DASICS faults to UCAS OS S-mode.
-CFLAGS   += -DDASICS_S_TRAP_ONLY
+DASICS_PROFILE_CFLAGS += -DDASICS_S_TRAP_ONLY
 endif
+CFLAGS += $(DASICS_PROFILE_CFLAGS)
 STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -mno-relax -msmall-data-limit=0 -MMD $(INCLUDES) -g -static
 STANDALONE_LDFLAGS = -march=rv64imad -mabi=lp64d -static -Wl,--no-relax
+STANDALONE_CFLAGS += $(DASICS_PROFILE_CFLAGS)
 
 # Files to be compiled
 LIBOBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(LIBS))))
+ifeq ($(strip $(DASICS_N_EXTENSION_PROFILE)),1)
+STANDALONE_LIBOBJS = $(addprefix $(DST_DIR)/standalone-lib/, $(addsuffix .o, $(basename $(LIBS))))
+endif
 
 # Compilation patterns
 $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c 
@@ -116,12 +122,20 @@ $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.S
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $^
+$(DST_DIR)/standalone-lib/lib/%.o: $(LIBS_DIR)/%.c
+	echo + CC $^
+	mkdir -p $(dir $@)
+	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -DDASICS_STANDALONE_RUNTIME -c -o $@ $^
+$(DST_DIR)/standalone-lib/lib/%.o: $(LIBS_DIR)/%.S
+	echo + CC $^
+	mkdir -p $(dir $@)
+	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $^
 
 $(DASICS_LIB_APP):%:%.o $(LIBOBJS)
 	@echo + LD $@
 	@$(LD) $(LDFLAGS) -o $@ $^
 
-$(DASICS_STANDALONE_APP):%:%.o
+$(DASICS_STANDALONE_APP):%:%.o $(STANDALONE_LIBOBJS)
 	@echo + LD $@
 	@$(STANDALONE_LD) $(STANDALONE_LDFLAGS) -o $@ $^
 

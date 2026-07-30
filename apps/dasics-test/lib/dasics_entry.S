@@ -13,12 +13,12 @@
 dasics_ufault_entry: 
 	#ifdef DASICS_N_EXTENSION_PROFILE
     /*
-     * The N profile deliberately uses a minimal, non-production handler.
-     * uscratch carries the explicit recovery PC.  t0 is restored before
-     * uret; t1-t4 are caller-saved and are declared clobbered by the two
-     * profile-only fault sites.
+     * This remains a validation runtime rather than a production user-trap
+     * framework.  It follows the LibDASICS rule that a U trap must preserve
+     * every caller-clobbered register.  A test may supply an exact recovery PC
+     * through uscratch; other non-RVC validation sites recover at uepc + 4.
      */
-    addi  sp, sp, -128
+    addi  sp, sp, -144
     sd    ra,   0(sp)
     sd    t0,   8(sp)
     sd    t1,  16(sp)
@@ -36,37 +36,27 @@ dasics_ufault_entry:
     sd    a6, 112(sp)
     sd    a7, 120(sp)
 
+    csrr  t6, uscratch
+    bnez  t6, .Ln_extension_recovery_ready
+    csrr  t6, uepc
+    addi  t6, t6, 4
+.Ln_extension_recovery_ready:
+    sd    t6, 128(sp)
+    csrw  uscratch, zero
     csrr  t0, 0x8b3
-    li    t1, 1
-    beq   t0, t1, .Ln_extension_syscall
 
-    ld    ra,   0(sp)
-    ld    t0,   8(sp)
-    ld    t1,  16(sp)
-    ld    t2,  24(sp)
-    ld    t3,  32(sp)
-    ld    t4,  40(sp)
-    ld    t5,  48(sp)
-    ld    t6,  56(sp)
-    ld    a0,  64(sp)
-    ld    a1,  72(sp)
-    ld    a2,  80(sp)
-    ld    a3,  88(sp)
-    ld    a4,  96(sp)
-    ld    a5, 104(sp)
-    ld    a6, 112(sp)
-    ld    a7, 120(sp)
-    addi  sp, sp, 128
-
-    csrrw t0, uscratch, t0
+    /*
+     * Keep one common ordered record stream for every N-profile workload.
+     * The OFB and syscall tests retain their stronger case-specific records.
+     */
     la    t1, dasics_n_extension_trap_count
     ld    t2, 0(t1)
-    li    t3, 2
-    bgeu  t2, t3, 2f
+    li    t3, 32
+    bgeu  t2, t3, .Ln_extension_record_done
     la    t3, dasics_n_extension_trap_records
-    beqz  t2, 1f
-    addi  t3, t3, 48
-1:
+    li    t4, 48
+    mul   t4, t2, t4
+    add   t3, t3, t4
     csrr  t4, ustatus
     sd    t4, 0(t3)
     csrr  t4, uepc
@@ -77,16 +67,14 @@ dasics_ufault_entry:
     sd    t4, 24(t3)
     csrr  t4, 0x8b3
     sd    t4, 32(t3)
-    sd    t0, 40(t3)
+    sd    t6, 40(t3)
+.Ln_extension_record_done:
     addi  t2, t2, 1
     sd    t2, 0(t1)
-2:
-    csrw  uepc, t0
-    csrrw t0, uscratch, t0
-    uret
 
-.Ln_extension_syscall:
-    mv    a0, a7
+    li    t1, 1
+    bne   t0, t1, .Ln_extension_set_recovery
+    ld    a0, 120(sp)
     ld    a1, 64(sp)
     ld    a2, 72(sp)
     ld    a3, 80(sp)
@@ -96,8 +84,8 @@ dasics_ufault_entry:
     call  dasics_n_extension_syscall_handler
     sd    a0, 64(sp)
 
-    csrr  t0, uepc
-    addi  t0, t0, 4
+.Ln_extension_set_recovery:
+    ld    t0, 128(sp)
     csrw  uepc, t0
 
     ld    ra,   0(sp)
@@ -116,7 +104,7 @@ dasics_ufault_entry:
     ld    a5, 104(sp)
     ld    a6, 112(sp)
     ld    a7, 120(sp)
-    addi  sp, sp, 128
+    addi  sp, sp, 144
     uret
 	#else
     addi sp, sp, -16
@@ -139,9 +127,9 @@ dasics_n_extension_trap_count:
 
 .global dasics_n_extension_trap_records
 .type dasics_n_extension_trap_records, @object
-.size dasics_n_extension_trap_records, 96
+.size dasics_n_extension_trap_records, 1536
 dasics_n_extension_trap_records:
-    .zero 96
+    .zero 1536
 #endif
 
 #-----------------------------------------------------------------------

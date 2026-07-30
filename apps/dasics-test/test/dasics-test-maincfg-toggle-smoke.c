@@ -1,5 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
+#ifdef DASICS_N_EXTENSION_PROFILE
+#include "udasics.h"
+#endif
 
 #define STR_IMPL(value) #value
 #define XSTR(value) STR_IMPL(value)
@@ -7,6 +10,7 @@
 #define MAINCFG_TOGGLE_MAGIC 0x4644494d43464755UL
 #define MAINCFG_TOGGLE_ARM 0x41524dUL
 #define MAINCFG_TOGGLE_REPORT 0x525054UL
+#define MAINCFG_TOGGLE_HU_REPORT 0x4855525054UL
 #define MAINCFG_TOGGLE_GETPID 306UL
 #define MAINCFG_TOGGLE_OBSERVATIONS 16UL
 
@@ -46,6 +50,24 @@ extern void maincfg_toggle_jump_invoke(uint64_t target, uint64_t *link,
 static volatile uint64_t maincfg_toggle_ecall_guard = MAINCFG_TOGGLE_ECALL_GUARD;
 static volatile uint64_t maincfg_toggle_load_data = MAINCFG_TOGGLE_LOAD_VALUE;
 static volatile uint64_t maincfg_toggle_store_data;
+static char *const maincfg_toggle_sites[] = {
+    maincfg_toggle_ecall_site,
+    maincfg_toggle_load_site,
+    maincfg_toggle_store_site,
+    maincfg_toggle_jump_site,
+};
+static char *const maincfg_toggle_recoveries[] = {
+    maincfg_toggle_ecall_recovery,
+    maincfg_toggle_load_recovery,
+    maincfg_toggle_store_recovery,
+    maincfg_toggle_jump_recovery,
+};
+static const volatile uint64_t *const maincfg_toggle_operands[] = {
+    &maincfg_toggle_ecall_guard,
+    &maincfg_toggle_load_data,
+    &maincfg_toggle_store_data,
+    (const volatile uint64_t *)maincfg_toggle_jump_target,
+};
 
 asm(
     ".option push\n"
@@ -223,32 +245,42 @@ static uint64_t symbol_address(char *symbol)
 static int arm_observation(uint64_t pid, uint64_t step,
                            enum maincfg_toggle_operation op)
 {
-    static char *const sites[] = {
-        maincfg_toggle_ecall_site,
-        maincfg_toggle_load_site,
-        maincfg_toggle_store_site,
-        maincfg_toggle_jump_site,
-    };
-    static char *const recoveries[] = {
-        maincfg_toggle_ecall_recovery,
-        maincfg_toggle_load_recovery,
-        maincfg_toggle_store_recovery,
-        maincfg_toggle_jump_recovery,
-    };
-    static const volatile uint64_t *const operands[] = {
-        &maincfg_toggle_ecall_guard,
-        &maincfg_toggle_load_data,
-        &maincfg_toggle_store_data,
-        (const volatile uint64_t *)maincfg_toggle_jump_target,
-    };
-
     return maincfg_toggle_control(
-               MAINCFG_TOGGLE_ARM, pid, step, symbol_address(sites[op]),
-               (uint64_t)(uintptr_t)operands[op],
-               symbol_address(recoveries[op])) == (long)pid
+               MAINCFG_TOGGLE_ARM, pid, step,
+               symbol_address(maincfg_toggle_sites[op]),
+               (uint64_t)(uintptr_t)maincfg_toggle_operands[op],
+               symbol_address(maincfg_toggle_recoveries[op])) == (long)pid
                ? 0
                : 1;
 }
+
+#ifdef DASICS_N_EXTENSION_PROFILE
+static int report_hu_fault(uint64_t pid, uint64_t step,
+                           uint64_t trap_before)
+{
+    uint64_t trap_after = dasics_n_extension_trap_count;
+    uint64_t packed_cause_reason;
+    volatile dasics_n_extension_trap_record_t *record;
+
+    csr_write(CSR_USCRATCH, 0);
+    if (trap_after == trap_before) {
+        return 0;
+    }
+    if (trap_before >= DASICS_N_EXTENSION_TRAP_RECORDS ||
+        trap_after != trap_before + 1) {
+        return 1;
+    }
+
+    record = &dasics_n_extension_trap_records[trap_before];
+    packed_cause_reason =
+        (record->ucause << 32) | (record->dfreason & 0xffffffffUL);
+    return maincfg_toggle_control(
+               MAINCFG_TOGGLE_HU_REPORT, pid, step, record->uepc,
+               record->utval, packed_cause_reason) == (long)pid
+               ? 0
+               : 1;
+}
+#endif
 
 static int report_observation(uint64_t pid, uint64_t step, uint64_t side0,
                               uint64_t side1)
@@ -275,8 +307,15 @@ int main(void)
         for (int stage = 0; stage < 4; stage++, step++) {
             uint64_t side0 = 0;
             uint64_t side1 = 0;
+#ifdef DASICS_N_EXTENSION_PROFILE
+            uint64_t trap_before = dasics_n_extension_trap_count;
+#endif
 
             failures += arm_observation((uint64_t)pid, step, op);
+#ifdef DASICS_N_EXTENSION_PROFILE
+            csr_write(CSR_USCRATCH,
+                      symbol_address(maincfg_toggle_recoveries[op]));
+#endif
             switch (op) {
             case MAINCFG_TOGGLE_ECALL:
                 side0 = maincfg_toggle_ecall_invoke();
@@ -298,6 +337,9 @@ int main(void)
                     symbol_address(maincfg_toggle_jump_target), &side0, &side1);
                 break;
             }
+#ifdef DASICS_N_EXTENSION_PROFILE
+            failures += report_hu_fault((uint64_t)pid, step, trap_before);
+#endif
             failures += report_observation((uint64_t)pid, step, side0, side1);
         }
     }

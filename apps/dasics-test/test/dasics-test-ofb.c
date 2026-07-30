@@ -20,18 +20,6 @@ static volatile uint64_t ATTR_ULIB_DATA load_observation
     __attribute__((aligned(DASICS_BOUND_GRANULE)));
 
 #ifdef DASICS_N_EXTENSION_PROFILE
-typedef struct {
-    uint64_t ustatus;
-    uint64_t uepc;
-    uint64_t ucause;
-    uint64_t utval;
-    uint64_t dfreason;
-    uint64_t recovery;
-} dasics_n_extension_trap_record_t;
-
-extern volatile uint64_t dasics_n_extension_trap_count;
-extern volatile dasics_n_extension_trap_record_t
-    dasics_n_extension_trap_records[2];
 extern char dasics_n_extension_load_fault[];
 extern char dasics_n_extension_load_recovery[];
 extern char dasics_n_extension_store_fault[];

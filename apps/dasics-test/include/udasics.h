@@ -117,6 +117,19 @@ typedef enum {
 
 #ifdef DASICS_N_EXTENSION_PROFILE
 #define DASICS_N_EXTENSION_SYSCALL_RECORDS 4UL
+#define DASICS_N_EXTENSION_TRAP_RECORDS 32UL
+#define DASICS_N_EXTENSION_UCHECK_CAUSE 24UL
+#define DASICS_N_EXTENSION_USTATUS_UIE 0x1UL
+#define DASICS_N_EXTENSION_USTATUS_UPIE 0x10UL
+
+typedef struct {
+    uint64_t ustatus;
+    uint64_t uepc;
+    uint64_t ucause;
+    uint64_t utval;
+    uint64_t dfreason;
+    uint64_t recovery;
+} dasics_n_extension_trap_record_t;
 
 typedef struct {
     uint64_t ustatus;
@@ -133,7 +146,12 @@ extern volatile uint64_t dasics_n_extension_syscall_permitted_count;
 extern volatile uint64_t dasics_n_extension_syscall_denied_count;
 extern volatile dasics_n_extension_syscall_record_t
     dasics_n_extension_syscall_records[DASICS_N_EXTENSION_SYSCALL_RECORDS];
+extern volatile uint64_t dasics_n_extension_trap_count;
+extern volatile dasics_n_extension_trap_record_t
+    dasics_n_extension_trap_records[DASICS_N_EXTENSION_TRAP_RECORDS];
 long dasics_n_extension_syscall_handler(SYSCALL_ARGS);
+void dasics_n_extension_runtime_init(void);
+void dasics_n_extension_runtime_fini(void);
 #endif
 
 void register_udasics(uint64_t funcptr);

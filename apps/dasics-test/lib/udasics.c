@@ -1,7 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#if defined(DASICS_STANDALONE_RUNTIME)
+#include <sys/syscall.h>
+#define SYS_pread SYS_pread64
+#define SYS_pwrite SYS_pwrite64
+#elif defined(DASICS_UCASOS_RUNTIME)
+#include <syscall.h>
+#define SYS_read 63
+#define SYS_write 64
+#define SYS_pread 67
+#define SYS_pwrite 68
+#else
 #include <machine/syscall.h>
+#endif
 #include "udasics.h"
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
 
 uint64_t umaincall_helper;
 static uint64_t ufault_print_info = 1;
@@ -70,18 +86,6 @@ void unregister_udasics(void)
 #endif
 }
 
-static int bound_coverage_cmp(const void *a, const void *b)
-{
-    const bound_t *_a = (const bound_t *)a;
-    const bound_t *_b = (const bound_t *)b;
-
-    if (_a->lo < _b->lo) return -1;
-    if (_a->lo > _b->lo) return 1;
-    if (_a->hi < _b->hi) return -1;
-    if (_a->hi > _b->hi) return 1;
-    return 0;
-}
-
 static int dasics_bound_checker(uint64_t start, uint64_t end, int perm)
 {
     // Bound CSRs represent half-open ranges after the 8-byte WARL mask.
@@ -102,7 +106,23 @@ static int dasics_bound_checker(uint64_t start, uint64_t end, int perm)
         items++;
     }
 
-    qsort(bounds, items, sizeof(bound_t), bound_coverage_cmp);
+    /*
+     * Keep the validation runtime usable with UCAS OS tiny libc, which has
+     * no qsort.  Sixteen entries make a local insertion sort sufficient.
+     */
+    for (idx = 1; idx < items; ++idx) {
+        bound_t item = bounds[idx];
+        int32_t pos = idx;
+
+        while (pos > 0 &&
+               (bounds[pos - 1].lo > item.lo ||
+                (bounds[pos - 1].lo == item.lo &&
+                 bounds[pos - 1].hi > item.hi))) {
+            bounds[pos] = bounds[pos - 1];
+            pos--;
+        }
+        bounds[pos] = item;
+    }
 
     for (idx = 0; idx < items; ++idx) {
         if (bounds[idx].lo >= bounds[idx].hi ||
@@ -186,7 +206,9 @@ static uint32_t dasics_n_extension_syscall_permitted(SYSCALL_ARGS)
 long dasics_n_extension_syscall_handler(SYSCALL_ARGS)
 {
     uint64_t index = dasics_n_extension_syscall_trap_count;
-    uint32_t permitted = dasics_n_extension_syscall_permitted(
+    uint32_t proxyable = sysno == SYS_read || sysno == SYS_write ||
+                         sysno == SYS_pread || sysno == SYS_pwrite;
+    uint32_t permitted = proxyable && dasics_n_extension_syscall_permitted(
         sysno, arg1, arg2, arg3, arg4, arg5, arg6);
     volatile dasics_n_extension_syscall_record_t *record = NULL;
     long result;
@@ -202,7 +224,15 @@ long dasics_n_extension_syscall_handler(SYSCALL_ARGS)
     }
     dasics_n_extension_syscall_trap_count = index + 1;
 
-    if (!permitted) {
+    if (!proxyable) {
+        /*
+         * A denied non-proxy syscall has no architectural writeback.  Keep
+         * the original a0, matching the legacy HS handler and LibDASICS trap
+         * context semantics.
+         */
+        dasics_n_extension_syscall_denied_count++;
+        result = arg1;
+    } else if (!permitted) {
         dasics_n_extension_syscall_denied_count++;
         result = -1;
     } else {
@@ -220,6 +250,94 @@ long dasics_n_extension_syscall_handler(SYSCALL_ARGS)
         record->result = result;
     }
     return result;
+}
+
+static const char *dasics_n_extension_fault_kind(uint64_t reason)
+{
+    switch (reason) {
+    case EXC_DASICS_ECALL_FAULT:
+        return "ecall";
+    case EXC_DASICS_LOAD_FAULT:
+        return "load";
+    case EXC_DASICS_STORE_FAULT:
+        return "store";
+    case EXC_DASICS_JUMP_FAULT:
+        return "jump";
+    default:
+        return "unknown";
+    }
+}
+
+__attribute__((constructor))
+void dasics_n_extension_runtime_init(void)
+{
+    dasics_n_extension_trap_count = 0;
+    dasics_n_extension_syscall_trap_count = 0;
+    dasics_n_extension_syscall_permitted_count = 0;
+    dasics_n_extension_syscall_denied_count = 0;
+    csr_write(CSR_USTATUS, DASICS_N_EXTENSION_USTATUS_UIE);
+    register_udasics(0);
+}
+
+__attribute__((destructor))
+void dasics_n_extension_runtime_fini(void)
+{
+    uint64_t observed = dasics_n_extension_trap_count;
+    uint64_t stored = observed < DASICS_N_EXTENSION_TRAP_RECORDS
+                          ? observed
+                          : DASICS_N_EXTENSION_TRAP_RECORDS;
+    uint64_t reasons[5] = {0, 0, 0, 0, 0};
+    uint64_t final_ustatus = csr_read(CSR_USTATUS);
+    int failures = observed > DASICS_N_EXTENSION_TRAP_RECORDS;
+
+    for (uint64_t i = 0; i < stored; i++) {
+        volatile dasics_n_extension_trap_record_t *record =
+            &dasics_n_extension_trap_records[i];
+        uint64_t reason = record->dfreason;
+        int record_ok =
+            record->ucause == DASICS_N_EXTENSION_UCHECK_CAUSE &&
+            (record->ustatus &
+             (DASICS_N_EXTENSION_USTATUS_UIE |
+              DASICS_N_EXTENSION_USTATUS_UPIE)) ==
+                DASICS_N_EXTENSION_USTATUS_UPIE &&
+            reason >= EXC_DASICS_ECALL_FAULT &&
+            reason <= EXC_DASICS_JUMP_FAULT &&
+            (record->recovery & 3UL) == 0;
+
+        if (reason <= EXC_DASICS_JUMP_FAULT) {
+            reasons[reason]++;
+        }
+        failures += record_ok ? 0 : 1;
+        printf("DASICS_N_EXTENSION_RUNTIME_TRAP version=1 "
+               "sequence=%lu kind=%s ucause=0x%lx ustatus=0x%lx "
+               "uepc=0x%lx utval=0x%lx dfreason=0x%lx "
+               "recovery=0x%lx check=%s\n",
+               i + 1, dasics_n_extension_fault_kind(reason),
+               record->ucause, record->ustatus, record->uepc,
+               record->utval, reason, record->recovery,
+               record_ok ? "PASS" : "FAIL");
+    }
+
+    if (observed != 0 &&
+        (final_ustatus &
+         (DASICS_N_EXTENSION_USTATUS_UIE |
+          DASICS_N_EXTENSION_USTATUS_UPIE)) !=
+            (DASICS_N_EXTENSION_USTATUS_UIE |
+             DASICS_N_EXTENSION_USTATUS_UPIE)) {
+        failures++;
+    }
+    printf("DASICS_N_EXTENSION_RUNTIME version=1 traps=%lu ecall=%lu "
+           "load=%lu store=%lu jump=%lu overflow=%lu "
+           "final_ustatus=0x%lx failed=%d result=%s\n",
+           observed, reasons[EXC_DASICS_ECALL_FAULT],
+           reasons[EXC_DASICS_LOAD_FAULT],
+           reasons[EXC_DASICS_STORE_FAULT],
+           reasons[EXC_DASICS_JUMP_FAULT],
+           observed > DASICS_N_EXTENSION_TRAP_RECORDS
+               ? observed - DASICS_N_EXTENSION_TRAP_RECORDS
+               : 0,
+           final_ustatus, failures, failures ? "FAIL" : "PASS");
+    unregister_udasics();
 }
 #endif
 
