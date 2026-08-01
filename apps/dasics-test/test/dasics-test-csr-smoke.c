@@ -62,6 +62,16 @@
     M(0x8c7, DasicsJumpBoundHi3) \
     M(0x8c8, DasicsJumpCfg)
 
+#define DASICS_STANDARD_N_U_CSR_LIST(M) \
+    M(UStatus, ustatus, 0x000, 0x10UL) \
+    M(UIE, uie, 0x004, 0x1UL) \
+    M(UTVec, utvec, 0x005, 0x8UL) \
+    M(UScratch, uscratch, 0x040, 0x5a5a5a5a5a5a5a5aUL) \
+    M(UEPC, uepc, 0x041, 0x8UL) \
+    M(UCause, ucause, 0x042, 0x1UL) \
+    M(UTVal, utval, 0x043, 0x8UL) \
+    M(UIP, uip, 0x044, 0x1UL)
+
 struct csr_case {
     const char *id;
     const char *name;
@@ -104,6 +114,17 @@ static void dasics_write_csr(unsigned long addr, unsigned long value)
     }
 }
 
+static unsigned long dasics_read_standard_n_csr(unsigned long addr)
+{
+    switch (addr) {
+#define READ_N_CASE(name, symbol, addr, attack_mask) case addr: return csr_read(addr);
+    DASICS_STANDARD_N_U_CSR_LIST(READ_N_CASE)
+#undef READ_N_CASE
+    default:
+        return 0;
+    }
+}
+
 unsigned long dasics_call_untrusted_read_freason(unsigned long seed);
 void dasics_call_untrusted_write_libcfg(unsigned long value);
 
@@ -119,6 +140,7 @@ asm(
 "  csrw 0x8b2, t0\n"
 "  call dasics_untrusted_read_freason_probe\n"
 "1:\n"
+"  csrw 0x8b2, zero\n"
 "  ld ra, 8(sp)\n"
 "  addi sp, sp, 16\n"
 "  ret\n"
@@ -133,6 +155,7 @@ asm(
 "  csrw 0x8b2, t0\n"
 "  call dasics_untrusted_write_libcfg_probe\n"
 "1:\n"
+"  csrw 0x8b2, zero\n"
 "  ld ra, 8(sp)\n"
 "  addi sp, sp, 16\n"
 "  ret\n"
@@ -150,6 +173,80 @@ asm(
 "  csrw 0x880, a0\n"
 "  ret\n"
 ".size dasics_untrusted_write_libcfg_probe, .-dasics_untrusted_write_libcfg_probe\n"
+".section .text,\"ax\",@progbits\n"
+);
+
+#define DECLARE_STANDARD_N_PROBE(name, symbol, addr, attack_mask) \
+    unsigned long dasics_call_untrusted_read_##symbol(unsigned long seed); \
+    unsigned long dasics_call_untrusted_write_##symbol(unsigned long value);
+DASICS_STANDARD_N_U_CSR_LIST(DECLARE_STANDARD_N_PROBE)
+#undef DECLARE_STANDARD_N_PROBE
+
+asm(
+".macro DEFINE_STANDARD_N_CSR_PROBE name, csr\n"
+".section .text,\"ax\",@progbits\n"
+".align 3\n"
+".globl dasics_call_untrusted_read_\\name\n"
+".type dasics_call_untrusted_read_\\name, @function\n"
+"dasics_call_untrusted_read_\\name:\n"
+"  addi sp, sp, -16\n"
+"  sd ra, 8(sp)\n"
+"  mv a1, a0\n"
+"  la t0, 1f\n"
+"  csrw 0x8b2, t0\n"
+"  call dasics_untrusted_read_\\name\\()_probe\n"
+"  li a0, 0\n"
+"  j 2f\n"
+"1:\n"
+"  li a0, 1\n"
+"2:\n"
+"  csrw 0x8b2, zero\n"
+"  ld ra, 8(sp)\n"
+"  addi sp, sp, 16\n"
+"  ret\n"
+".size dasics_call_untrusted_read_\\name, .-dasics_call_untrusted_read_\\name\n"
+".align 3\n"
+".globl dasics_call_untrusted_write_\\name\n"
+".type dasics_call_untrusted_write_\\name, @function\n"
+"dasics_call_untrusted_write_\\name:\n"
+"  addi sp, sp, -16\n"
+"  sd ra, 8(sp)\n"
+"  la t0, 1f\n"
+"  csrw 0x8b2, t0\n"
+"  call dasics_untrusted_write_\\name\\()_probe\n"
+"  li a0, 0\n"
+"  j 2f\n"
+"1:\n"
+"  li a0, 1\n"
+"2:\n"
+"  csrw 0x8b2, zero\n"
+"  ld ra, 8(sp)\n"
+"  addi sp, sp, 16\n"
+"  ret\n"
+".size dasics_call_untrusted_write_\\name, .-dasics_call_untrusted_write_\\name\n"
+".section .ulibtext,\"ax\",@progbits\n"
+".align 3\n"
+".type dasics_untrusted_read_\\name\\()_probe, @function\n"
+"dasics_untrusted_read_\\name\\()_probe:\n"
+"  csrr a1, \\csr\n"
+"  ret\n"
+".size dasics_untrusted_read_\\name\\()_probe, .-dasics_untrusted_read_\\name\\()_probe\n"
+".align 3\n"
+".type dasics_untrusted_write_\\name\\()_probe, @function\n"
+"dasics_untrusted_write_\\name\\()_probe:\n"
+"  csrw \\csr, a0\n"
+"  ret\n"
+".size dasics_untrusted_write_\\name\\()_probe, .-dasics_untrusted_write_\\name\\()_probe\n"
+".endm\n"
+"DEFINE_STANDARD_N_CSR_PROBE ustatus, 0x000\n"
+"DEFINE_STANDARD_N_CSR_PROBE uie, 0x004\n"
+"DEFINE_STANDARD_N_CSR_PROBE utvec, 0x005\n"
+"DEFINE_STANDARD_N_CSR_PROBE uscratch, 0x040\n"
+"DEFINE_STANDARD_N_CSR_PROBE uepc, 0x041\n"
+"DEFINE_STANDARD_N_CSR_PROBE ucause, 0x042\n"
+"DEFINE_STANDARD_N_CSR_PROBE utval, 0x043\n"
+"DEFINE_STANDARD_N_CSR_PROBE uip, 0x044\n"
+".purgem DEFINE_STANDARD_N_CSR_PROBE\n"
 ".section .text,\"ax\",@progbits\n"
 );
 
@@ -294,6 +391,51 @@ static int run_protection_checks(unsigned long *total)
     return failures;
 }
 
+static int run_standard_n_csr_protection_checks(unsigned long *total)
+{
+    struct standard_n_csr_case {
+        const char *name;
+        unsigned long addr;
+        unsigned long attack_mask;
+        unsigned long (*read_probe)(unsigned long);
+        unsigned long (*write_probe)(unsigned long);
+    };
+    static const struct standard_n_csr_case cases[] = {
+#define N_PROTECTION_CASE(name, symbol, addr, attack_mask) \
+        { #name, addr, attack_mask, dasics_call_untrusted_read_##symbol, \
+          dasics_call_untrusted_write_##symbol },
+        DASICS_STANDARD_N_U_CSR_LIST(N_PROTECTION_CASE)
+#undef N_PROTECTION_CASE
+    };
+
+    int failures = 0;
+    for (unsigned int i = 0; i < ARRAY_SIZE(cases); i++) {
+        const struct standard_n_csr_case *test = &cases[i];
+        const unsigned long seed = 0xd15ea5e000000000UL ^ test->addr;
+        unsigned long trapped = test->read_probe(seed);
+        int read_pass = trapped == 1;
+
+        (*total)++;
+        printf(DASICS_CSR_TAG " case=N-CSR-PROT-U-UNTRUSTED-R csr=%s addr=0x%lx trapped=%lu expect=1 result=%s\n",
+               test->name, test->addr, trapped,
+               read_pass ? "PASS" : "FAIL");
+        failures += read_pass ? 0 : 1;
+
+        unsigned long before = dasics_read_standard_n_csr(test->addr);
+        unsigned long attack = before ^ test->attack_mask;
+        trapped = test->write_probe(attack);
+        unsigned long after = dasics_read_standard_n_csr(test->addr);
+        int write_pass = trapped == 1 && after == before;
+
+        (*total)++;
+        printf(DASICS_CSR_TAG " case=N-CSR-PROT-U-UNTRUSTED-W csr=%s addr=0x%lx trapped=%lu expect=1 before=0x%lx attack=0x%lx after=0x%lx result=%s\n",
+               test->name, test->addr, trapped, before, attack, after,
+               write_pass ? "PASS" : "FAIL");
+        failures += write_pass ? 0 : 1;
+    }
+    return failures;
+}
+
 int main(void)
 {
     unsigned long total = 0;
@@ -322,6 +464,7 @@ int main(void)
     failures += run_lib_bound_checks(&total);
     failures += run_jump_bound_checks(&total);
     failures += run_protection_checks(&total);
+    failures += run_standard_n_csr_protection_checks(&total);
 
     clear_dasics_csrs();
 
