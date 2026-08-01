@@ -34,8 +34,6 @@ int ATTR_ULIB_TEXT ofb_load_operation(void)
 
 #ifdef DASICS_N_EXTENSION_PROFILE
     asm volatile(
-        "la t0, dasics_n_extension_load_recovery\n"
-        "csrw uscratch, t0\n"
         ".global dasics_n_extension_load_fault\n"
         "dasics_n_extension_load_fault:\n"
         "lb %0, 0(%1)\n"
@@ -60,8 +58,6 @@ int ATTR_ULIB_TEXT ofb_store_operation(void)
 
 #ifdef DASICS_N_EXTENSION_PROFILE
     asm volatile(
-        "la t0, dasics_n_extension_store_recovery\n"
-        "csrw uscratch, t0\n"
         ".global dasics_n_extension_store_fault\n"
         "dasics_n_extension_store_fault:\n"
         "sb %0, 0(%1)\n"
