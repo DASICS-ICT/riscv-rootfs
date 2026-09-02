@@ -4,6 +4,11 @@ DST_DIR ?= $(APP_DIR)/build
 TEST_DIR = $(APP_DIR)/test
 LIBS_DIR = $(APP_DIR)/lib
 
+DASICS_INTERACTIVE_APP =
+ifeq ($(strip $(DASICS_N_EXTENSION_PROFILE)),1)
+DASICS_INTERACTIVE_APP = $(DST_DIR)/dasics-test-interactive-protection-demo
+endif
+
 DASICS_LIB_APP = $(DST_DIR)/dasics-test-free \
 	   $(DST_DIR)/dasics-test-jump \
 	   $(DST_DIR)/dasics-test-ofb \
@@ -23,7 +28,8 @@ DASICS_STANDALONE_APP = $(DST_DIR)/dasics-test-csr-smoke \
 	   $(DST_DIR)/dasics-test-context-section-load-smoke \
 	   $(DST_DIR)/dasics-test-context-switch-isolation-smoke \
 	   $(DST_DIR)/dasics-test-returnpc-trap-preserve-smoke \
-	   $(DST_DIR)/dasics-test-maincfg-toggle-smoke
+	   $(DST_DIR)/dasics-test-maincfg-toggle-smoke \
+	   $(DASICS_INTERACTIVE_APP)
 override APP = $(DASICS_LIB_APP) $(DASICS_STANDALONE_APP)
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
@@ -47,6 +53,7 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 	   $(TEST_DIR)/dasics-test-context-switch-isolation-smoke.c \
 	   $(TEST_DIR)/dasics-test-returnpc-trap-preserve-smoke.c \
 	   $(TEST_DIR)/dasics-test-maincfg-toggle-smoke.c \
+	   $(TEST_DIR)/dasics-test-interactive-protection-demo.c \
 	   $(DST_DIR)/dasics-test-spectre.c \
 	   $(LIBS_DIR)/udasics.c \
 	   $(LIBS_DIR)/dasics_entry.S \
@@ -110,7 +117,7 @@ $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $^
-$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-csr-mask-ops-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o $(DST_DIR)/dasics-test-ecall-fault-smoke.o $(DST_DIR)/dasics-test-ecall-close-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-free-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-replacement-smoke.o $(DST_DIR)/dasics-test-syscall-buffer-permission-smoke.o $(DST_DIR)/dasics-test-context-section-load-smoke.o $(DST_DIR)/dasics-test-context-switch-isolation-smoke.o $(DST_DIR)/dasics-test-returnpc-trap-preserve-smoke.o $(DST_DIR)/dasics-test-maincfg-toggle-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
+$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-csr-mask-ops-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o $(DST_DIR)/dasics-test-ecall-fault-smoke.o $(DST_DIR)/dasics-test-ecall-close-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-free-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-replacement-smoke.o $(DST_DIR)/dasics-test-syscall-buffer-permission-smoke.o $(DST_DIR)/dasics-test-context-section-load-smoke.o $(DST_DIR)/dasics-test-context-switch-isolation-smoke.o $(DST_DIR)/dasics-test-returnpc-trap-preserve-smoke.o $(DST_DIR)/dasics-test-maincfg-toggle-smoke.o $(DST_DIR)/dasics-test-interactive-protection-demo.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $^

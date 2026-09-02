@@ -188,6 +188,25 @@ volatile uint64_t dasics_n_extension_syscall_permitted_count;
 volatile uint64_t dasics_n_extension_syscall_denied_count;
 volatile dasics_n_extension_syscall_record_t
     dasics_n_extension_syscall_records[DASICS_N_EXTENSION_SYSCALL_RECORDS];
+static uint64_t dasics_n_extension_dumped_traps;
+
+void dasics_n_extension_user_trap_handler_trace(uint64_t sequence)
+{
+    const volatile dasics_n_extension_trap_record_t *record;
+
+    if (sequence == 0 || sequence > DASICS_N_EXTENSION_TRAP_RECORDS) {
+        printf("DASICS_N_EXTENSION_USER_TRAP_HANDLER version=1 "
+               "sequence=%lu record=UNAVAILABLE\n", sequence);
+        return;
+    }
+
+    record = &dasics_n_extension_trap_records[sequence - 1];
+    printf("DASICS_N_EXTENSION_USER_TRAP_HANDLER version=1 "
+           "sequence=%lu ucause=0x%lx ustatus=0x%lx uepc=0x%lx "
+           "utval=0x%lx dfreason=0x%lx recovery=0x%lx\n",
+           sequence, record->ucause, record->ustatus, record->uepc,
+           record->utval, record->dfreason, record->recovery);
+}
 
 static uint32_t dasics_n_extension_syscall_permitted(SYSCALL_ARGS)
 {
@@ -268,6 +287,84 @@ static const char *dasics_n_extension_fault_kind(uint64_t reason)
     }
 }
 
+static int dasics_n_extension_record_ok(
+    const volatile dasics_n_extension_trap_record_t *record)
+{
+    return record->ucause == DASICS_N_EXTENSION_UCHECK_CAUSE &&
+           (record->ustatus &
+            (DASICS_N_EXTENSION_USTATUS_UIE |
+             DASICS_N_EXTENSION_USTATUS_UPIE)) ==
+               DASICS_N_EXTENSION_USTATUS_UPIE &&
+           record->dfreason >= EXC_DASICS_ECALL_FAULT &&
+           record->dfreason <= EXC_DASICS_JUMP_FAULT &&
+           (record->recovery & 3UL) == 0;
+}
+
+static void dasics_n_extension_print_context(
+    uint64_t sequence,
+    const volatile dasics_n_extension_trap_record_t *record)
+{
+    uint64_t reason = record->dfreason;
+    int record_ok = dasics_n_extension_record_ok(record);
+
+    printf("DASICS_N_EXTENSION_RUNTIME_TRAP version=1 "
+           "sequence=%lu kind=%s ucause=0x%lx ustatus=0x%lx "
+           "uepc=0x%lx utval=0x%lx dfreason=0x%lx "
+           "recovery=0x%lx check=%s\n",
+           sequence, dasics_n_extension_fault_kind(reason),
+           record->ucause, record->ustatus, record->uepc,
+           record->utval, reason, record->recovery,
+           record_ok ? "PASS" : "FAIL");
+    printf("DASICS_N_EXTENSION_CONTEXT_CSR version=1 sequence=%lu "
+           "ustatus=0x%lx uie=0x%lx utvec=0x%lx uscratch=0x%lx "
+           "uepc=0x%lx ucause=0x%lx utval=0x%lx uip=0x%lx "
+           "dfreason=0x%lx recovery=0x%lx\n",
+           sequence, record->ustatus, record->uie, record->utvec,
+           record->uscratch, record->uepc, record->ucause,
+           record->utval, record->uip, record->dfreason,
+           record->recovery);
+    printf("DASICS_N_EXTENSION_CONTEXT_GPR version=1 sequence=%lu group=0 "
+           "x0=0x%lx ra=0x%lx sp=0x%lx gp=0x%lx tp=0x%lx "
+           "t0=0x%lx t1=0x%lx t2=0x%lx\n",
+           sequence, record->gpr[0], record->gpr[1], record->gpr[2],
+           record->gpr[3], record->gpr[4], record->gpr[5],
+           record->gpr[6], record->gpr[7]);
+    printf("DASICS_N_EXTENSION_CONTEXT_GPR version=1 sequence=%lu group=1 "
+           "s0=0x%lx s1=0x%lx a0=0x%lx a1=0x%lx a2=0x%lx "
+           "a3=0x%lx a4=0x%lx a5=0x%lx\n",
+           sequence, record->gpr[8], record->gpr[9], record->gpr[10],
+           record->gpr[11], record->gpr[12], record->gpr[13],
+           record->gpr[14], record->gpr[15]);
+    printf("DASICS_N_EXTENSION_CONTEXT_GPR version=1 sequence=%lu group=2 "
+           "a6=0x%lx a7=0x%lx s2=0x%lx s3=0x%lx s4=0x%lx "
+           "s5=0x%lx s6=0x%lx s7=0x%lx\n",
+           sequence, record->gpr[16], record->gpr[17], record->gpr[18],
+           record->gpr[19], record->gpr[20], record->gpr[21],
+           record->gpr[22], record->gpr[23]);
+    printf("DASICS_N_EXTENSION_CONTEXT_GPR version=1 sequence=%lu group=3 "
+           "s8=0x%lx s9=0x%lx s10=0x%lx s11=0x%lx t3=0x%lx "
+           "t4=0x%lx t5=0x%lx t6=0x%lx\n",
+           sequence, record->gpr[24], record->gpr[25], record->gpr[26],
+           record->gpr[27], record->gpr[28], record->gpr[29],
+           record->gpr[30], record->gpr[31]);
+}
+
+void dasics_n_extension_dump_context(void)
+{
+    uint64_t observed = dasics_n_extension_trap_count;
+    uint64_t stored = observed < DASICS_N_EXTENSION_TRAP_RECORDS
+                          ? observed
+                          : DASICS_N_EXTENSION_TRAP_RECORDS;
+    uint64_t start = dasics_n_extension_dumped_traps;
+
+    if (start > stored)
+        start = stored;
+    for (uint64_t i = start; i < stored; i++)
+        dasics_n_extension_print_context(
+            i + 1, &dasics_n_extension_trap_records[i]);
+    dasics_n_extension_dumped_traps = stored;
+}
+
 __attribute__((constructor))
 void dasics_n_extension_runtime_init(void)
 {
@@ -275,6 +372,7 @@ void dasics_n_extension_runtime_init(void)
     dasics_n_extension_syscall_trap_count = 0;
     dasics_n_extension_syscall_permitted_count = 0;
     dasics_n_extension_syscall_denied_count = 0;
+    dasics_n_extension_dumped_traps = 0;
     csr_write(CSR_USTATUS, DASICS_N_EXTENSION_USTATUS_UIE);
     register_udasics(0);
 }
@@ -290,32 +388,17 @@ void dasics_n_extension_runtime_fini(void)
     uint64_t final_ustatus = csr_read(CSR_USTATUS);
     int failures = observed > DASICS_N_EXTENSION_TRAP_RECORDS;
 
+    dasics_n_extension_dump_context();
     for (uint64_t i = 0; i < stored; i++) {
         volatile dasics_n_extension_trap_record_t *record =
             &dasics_n_extension_trap_records[i];
         uint64_t reason = record->dfreason;
-        int record_ok =
-            record->ucause == DASICS_N_EXTENSION_UCHECK_CAUSE &&
-            (record->ustatus &
-             (DASICS_N_EXTENSION_USTATUS_UIE |
-              DASICS_N_EXTENSION_USTATUS_UPIE)) ==
-                DASICS_N_EXTENSION_USTATUS_UPIE &&
-            reason >= EXC_DASICS_ECALL_FAULT &&
-            reason <= EXC_DASICS_JUMP_FAULT &&
-            (record->recovery & 3UL) == 0;
+        int record_ok = dasics_n_extension_record_ok(record);
 
         if (reason <= EXC_DASICS_JUMP_FAULT) {
             reasons[reason]++;
         }
         failures += record_ok ? 0 : 1;
-        printf("DASICS_N_EXTENSION_RUNTIME_TRAP version=1 "
-               "sequence=%lu kind=%s ucause=0x%lx ustatus=0x%lx "
-               "uepc=0x%lx utval=0x%lx dfreason=0x%lx "
-               "recovery=0x%lx check=%s\n",
-               i + 1, dasics_n_extension_fault_kind(reason),
-               record->ucause, record->ustatus, record->uepc,
-               record->utval, reason, record->recovery,
-               record_ok ? "PASS" : "FAIL");
     }
 
     if (observed != 0 &&

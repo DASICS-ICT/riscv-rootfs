@@ -108,6 +108,7 @@ typedef enum {
 #define DASICS_COMPLETE_APP_CONTROL_MAGIC 0x4644494150504354UL
 #define DASICS_COMPLETE_APP_CONTROL_SET 0x534554UL
 #define DASICS_COMPLETE_APP_CONTROL_RESTORE 0x525354UL
+#define DASICS_COMPLETE_APP_CONTROL_QUERY 0x515259UL
 #define DASICS_COMPLETE_APP_STAGE_A 0UL
 #define DASICS_COMPLETE_APP_STAGE_B 1UL
 #define DASICS_COMPLETE_APP_STAGE_RESTORE 2UL
@@ -124,11 +125,16 @@ typedef enum {
 
 typedef struct {
     uint64_t ustatus;
+    uint64_t uie;
+    uint64_t utvec;
+    uint64_t uscratch;
     uint64_t uepc;
     uint64_t ucause;
     uint64_t utval;
+    uint64_t uip;
     uint64_t dfreason;
     uint64_t recovery;
+    uint64_t gpr[32];
 } dasics_n_extension_trap_record_t;
 
 typedef struct {
@@ -152,6 +158,7 @@ extern volatile dasics_n_extension_trap_record_t
 long dasics_n_extension_syscall_handler(SYSCALL_ARGS);
 void dasics_n_extension_runtime_init(void);
 void dasics_n_extension_runtime_fini(void);
+void dasics_n_extension_dump_context(void);
 #endif
 
 void register_udasics(uint64_t funcptr);
