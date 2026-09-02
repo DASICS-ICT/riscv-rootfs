@@ -4,7 +4,9 @@
 #include "udasics.h"
 
 #define DASICS_APP_RWX_TAG "[DASICS-APP-RWX]"
+#if !DASICS_LINUX_DUAL_EXEC
 #define DASICS_APP_RWX_CASES 14UL
+#endif
 #define LOAD_POISON UINT64_C(0xd15ea5ed5a17c0de)
 #define TEST_BUFFER_LEN 100UL
 
@@ -76,7 +78,7 @@ static int record_bool_case(const char *name, int value)
     return record_value_case(name, value != 0, 1);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     char readonly_initial = pub_readonly[1];
     char secret_load_expected = secret[2];
@@ -84,8 +86,23 @@ int main(void)
     uint64_t readonly_reason = 0;
     uint64_t secret_load_reason = 0;
     uint64_t secret_store_reason = 0;
-    long pid = dasics_complete_app_getpid();
     int failures = 0;
+#if DASICS_LINUX_DUAL_EXEC
+    enum dasics_linux_exec_mode mode;
+    unsigned long total;
+
+    if (dasics_linux_parse_exec_mode(argc, argv, &mode)) {
+        fprintf(stderr, DASICS_APP_RWX_TAG
+                " argument-contract argc=%d result=FAIL\n", argc);
+        return 2;
+    }
+    total = mode == DASICS_LINUX_EXEC_OFF ? 5UL : 9UL;
+#else
+    long pid = dasics_complete_app_getpid();
+
+    (void)argc;
+    (void)argv;
+#endif
 
     register_udasics(0);
     int32_t readonly_bound = dasics_libcfg_alloc(
@@ -103,6 +120,58 @@ int main(void)
                    observation_bound >= 0;
 
     failures += record_bool_case("RWX-SETUP-BOUNDS-ALLOCATED", setup_ok);
+#if DASICS_LINUX_DUAL_EXEC
+    failures += record_value_case("RWX-EXEC-UMAINCFG",
+                                  dasics_linux_query_umaincfg(),
+                                  mode == DASICS_LINUX_EXEC_ON ?
+                                      DASICS_UCFG_ENA : 0);
+
+    if (mode == DASICS_LINUX_EXEC_OFF) {
+        if (setup_ok) {
+            rwx_readonly_store_operation();
+            rwx_secret_load_operation();
+            rwx_secret_store_operation();
+        }
+        failures += record_bool_case("RWX-A-READONLY-STORE-SUCCEEDS",
+                                     pub_readonly[1] == 'X');
+        failures += record_bool_case(
+            "RWX-A-SECRET-LOAD-SUCCEEDS",
+            secret_load_observation ==
+                (uint64_t)(int64_t)secret_load_expected);
+        failures += record_bool_case("RWX-A-SECRET-STORE-SUCCEEDS",
+                                     secret[3] == 'Y');
+    } else {
+        secret_load_observation = LOAD_POISON;
+        if (setup_ok) {
+            pub_rwbuffer[0] = 0;
+            lib_call(&rwx_allowed_operation);
+            lib_call(&rwx_readonly_store_operation);
+            readonly_reason = csr_read(CSR_DFREASON);
+            lib_call(&rwx_secret_load_operation);
+            secret_load_reason = csr_read(CSR_DFREASON);
+            lib_call(&rwx_secret_store_operation);
+            secret_store_reason = csr_read(CSR_DFREASON);
+        }
+        failures += record_bool_case("RWX-B-ALLOWED-RW-SUCCEEDS",
+                                     pub_rwbuffer[0] == pub_readonly[0]);
+        failures += record_value_case("RWX-B-READONLY-STORE-REASON",
+                                      readonly_reason,
+                                      EXC_DASICS_STORE_FAULT);
+        failures += record_bool_case("RWX-B-READONLY-STORE-NO-EFFECT",
+                                     pub_readonly[1] == readonly_initial);
+        failures += record_value_case("RWX-B-SECRET-LOAD-REASON",
+                                      secret_load_reason,
+                                      EXC_DASICS_LOAD_FAULT);
+        failures += record_value_case(
+            "RWX-B-SECRET-LOAD-DESTINATION-POISON",
+            secret_load_observation, LOAD_POISON);
+        failures += record_value_case("RWX-B-SECRET-STORE-REASON",
+                                      secret_store_reason,
+                                      EXC_DASICS_STORE_FAULT);
+        failures += record_bool_case("RWX-B-SECRET-STORE-NO-EFFECT",
+                                     secret[3] == secret_store_initial);
+    }
+#else
     long cfg = dasics_complete_app_control(
         DASICS_COMPLETE_APP_CONTROL_SET, (uint64_t)pid,
         DASICS_COMPLETE_APP_STAGE_A, DASICS_COMPLETE_APP_CFG_OFF);
@@ -165,14 +234,22 @@ int main(void)
     failures += record_value_case("RWX-OS-CFG-RESTORED",
                                   (uint64_t)restored,
                                   DASICS_COMPLETE_APP_CFG_UENA);
+#endif
 
     if (readonly_bound >= 0) dasics_libcfg_free(readonly_bound);
     if (rw_bound >= 0) dasics_libcfg_free(rw_bound);
     if (observation_bound >= 0) dasics_libcfg_free(observation_bound);
     unregister_udasics();
+#if DASICS_LINUX_DUAL_EXEC
+    printf(DASICS_APP_RWX_TAG
+           " summary scope=linux-exec-mode dasics=%s total=%lu failed=%d result=%s\n",
+           dasics_linux_exec_mode_name(mode), total, failures,
+           failures ? "FAIL" : "PASS");
+#else
     printf(DASICS_APP_RWX_TAG
            " summary scope=os-controlled-rwx-pair total=%lu failed=%d result=%s\n",
            DASICS_APP_RWX_CASES, failures,
            failures ? "FAIL" : "PASS");
+#endif
     return failures ? 1 : 0;
 }

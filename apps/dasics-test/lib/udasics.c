@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <machine/syscall.h>
 #include "udasics.h"
 
@@ -195,6 +196,28 @@ uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
     return retval;
 }
 
+#if DASICS_LINUX_DUAL_EXEC
+int dasics_linux_parse_exec_mode(int argc, char *argv[],
+                                 enum dasics_linux_exec_mode *mode)
+{
+    if (argc != 2 || !argv || !argv[0] || !argv[1] || argv[2] || !mode)
+        return -1;
+    if (!strcmp(argv[1], "--expect=off")) {
+        *mode = DASICS_LINUX_EXEC_OFF;
+        return 0;
+    }
+    if (!strcmp(argv[1], "--expect=on")) {
+        *mode = DASICS_LINUX_EXEC_ON;
+        return 0;
+    }
+    return -1;
+}
+
+const char *dasics_linux_exec_mode_name(enum dasics_linux_exec_mode mode)
+{
+    return mode == DASICS_LINUX_EXEC_ON ? "on" : "off";
+}
+#else
 long dasics_complete_app_getpid(void)
 {
     register uint64_t a0 asm("a0") = 0;
@@ -220,6 +243,7 @@ long dasics_complete_app_control(uint64_t command, uint64_t pid,
                  : "memory");
     return (long)a0;
 }
+#endif
 
 #ifndef DASICS_S_TRAP_ONLY
 void dasics_ufault_handler(void)

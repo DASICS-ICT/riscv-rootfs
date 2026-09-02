@@ -4,7 +4,9 @@
 #include "udasics.h"
 
 #define DASICS_APP_JUMP_TAG "[DASICS-APP-JUMP]"
+#if !DASICS_LINUX_DUAL_EXEC
 #define DASICS_APP_JUMP_CASES 7UL
+#endif
 #define JUMP_MARKER_POISON UINT64_C(0x4a554d50504f4953)
 #define JUMP_MARKER_REACHED UINT64_C(0x4a554d5054414b45)
 
@@ -42,11 +44,26 @@ static int record_bool_case(const char *name, int value)
     return record_value_case(name, value != 0, 1);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     uint64_t jump_reason = 0;
-    long pid = dasics_complete_app_getpid();
     int failures = 0;
+#if DASICS_LINUX_DUAL_EXEC
+    enum dasics_linux_exec_mode mode;
+    unsigned long total;
+
+    if (dasics_linux_parse_exec_mode(argc, argv, &mode)) {
+        fprintf(stderr, DASICS_APP_JUMP_TAG
+                " argument-contract argc=%d result=FAIL\n", argc);
+        return 2;
+    }
+    total = mode == DASICS_LINUX_EXEC_OFF ? 3UL : 4UL;
+#else
+    long pid = dasics_complete_app_getpid();
+
+    (void)argc;
+    (void)argv;
+#endif
 
     register_udasics(0);
     int32_t marker_bound = dasics_libcfg_alloc(
@@ -56,6 +73,28 @@ int main(void)
     int setup_ok = marker_bound >= 0;
     failures += record_bool_case("JUMP-SETUP-MARKER-BOUND", setup_ok);
 
+#if DASICS_LINUX_DUAL_EXEC
+    failures += record_value_case("JUMP-EXEC-UMAINCFG",
+                                  dasics_linux_query_umaincfg(),
+                                  mode == DASICS_LINUX_EXEC_ON ?
+                                      DASICS_UCFG_ENA : 0);
+    jump_marker = JUMP_MARKER_POISON;
+    if (mode == DASICS_LINUX_EXEC_OFF) {
+        if (setup_ok) jump_to_main_operation();
+        failures += record_value_case("JUMP-A-ULIB-TO-MAIN-SUCCEEDS",
+                                      jump_marker, JUMP_MARKER_REACHED);
+    } else {
+        if (setup_ok) {
+            lib_call(&jump_to_main_operation);
+            jump_reason = csr_read(CSR_DFREASON);
+        }
+        failures += record_value_case("JUMP-B-ULIB-TO-MAIN-REASON",
+                                      jump_reason,
+                                      EXC_DASICS_JUMP_FAULT);
+        failures += record_value_case("JUMP-B-MAIN-TARGET-NOT-REACHED",
+                                      jump_marker, JUMP_MARKER_POISON);
+    }
+#else
     long cfg = dasics_complete_app_control(
         DASICS_COMPLETE_APP_CONTROL_SET, (uint64_t)pid,
         DASICS_COMPLETE_APP_STAGE_A, DASICS_COMPLETE_APP_CFG_OFF);
@@ -87,12 +126,20 @@ int main(void)
     failures += record_value_case("JUMP-OS-CFG-RESTORED",
                                   (uint64_t)restored,
                                   DASICS_COMPLETE_APP_CFG_UENA);
+#endif
 
     if (marker_bound >= 0) dasics_libcfg_free(marker_bound);
     unregister_udasics();
+#if DASICS_LINUX_DUAL_EXEC
+    printf(DASICS_APP_JUMP_TAG
+           " summary scope=linux-exec-mode dasics=%s total=%lu failed=%d result=%s\n",
+           dasics_linux_exec_mode_name(mode), total, failures,
+           failures ? "FAIL" : "PASS");
+#else
     printf(DASICS_APP_JUMP_TAG
            " summary scope=os-controlled-ulib-main-pair total=%lu failed=%d result=%s\n",
            DASICS_APP_JUMP_CASES, failures,
            failures ? "FAIL" : "PASS");
+#endif
     return failures ? 1 : 0;
 }

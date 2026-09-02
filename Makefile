@@ -43,7 +43,8 @@ opensbi-linux-dasics:
 	$(MAKE) -C apps/dasics-test \
 		RISCV_ROOTFS_HOME=$(CURDIR) \
 		DST_DIR=$(DASICS_LINUX_BUILD_DIR)/tests \
-		install
+		DASICS_LINUX_DUAL_EXEC=1 \
+		build-only
 	$(DASICS_LINUX_CC) -O2 -static -march=rv64imad -mabi=lp64d \
 		-Wall -Wextra -Werror \
 		-o $(DASICS_LINUX_BUILD_DIR)/init \

@@ -16,7 +16,9 @@ APP ?= $(APP_DIR)/build/$(NAME)
 
 $(shell mkdir -p $(DST_DIR))
 
-.PHONY: install clean
+.PHONY: build-only install clean
+
+build-only: $(APP)
 
 install: $(APP)
 	$(foreach app, $^, \

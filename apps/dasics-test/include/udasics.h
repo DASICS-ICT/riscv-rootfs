@@ -26,6 +26,7 @@
 #define DASICS_UMAINCFG_MASK 0x3eUL
 #define DASICS_MAINCFG_MASK DASICS_SMAINCFG_MASK
 #define DASICS_UCFG_CLS     0x8UL
+#define DASICS_UCFG_CUET    0x4UL
 #define DASICS_SCFG_CLS     0x4UL
 #define DASICS_UCFG_ENA     0x2UL
 #define DASICS_SCFG_ENA     0x1UL
@@ -105,6 +106,54 @@ typedef enum {
     Umaincall_UNKNOWN
 } UmaincallTypes;
 
+#ifndef DASICS_LINUX_DUAL_EXEC
+#define DASICS_LINUX_DUAL_EXEC 0
+#endif
+
+#if DASICS_LINUX_DUAL_EXEC
+#define DASICS_LINUX_CONTROL_SYSCALL 306UL
+#define DASICS_LINUX_CONTROL_MAGIC 0x4441534943534c58UL
+#define DASICS_LINUX_QUERY_UMAINCFG 0x515259UL
+#define DASICS_LINUX_ENABLE_CUET 0x43554554UL
+
+enum dasics_linux_exec_mode {
+    DASICS_LINUX_EXEC_OFF,
+    DASICS_LINUX_EXEC_ON,
+};
+
+int dasics_linux_parse_exec_mode(int argc, char *argv[],
+                                 enum dasics_linux_exec_mode *mode);
+const char *dasics_linux_exec_mode_name(enum dasics_linux_exec_mode mode);
+
+static inline long dasics_linux_control(uint64_t command)
+{
+    register uint64_t a0 asm("a0") = DASICS_LINUX_CONTROL_MAGIC;
+    register uint64_t a1 asm("a1") = command;
+    register uint64_t a2 asm("a2") = 0;
+    register uint64_t a3 asm("a3") = 0;
+    register uint64_t a4 asm("a4") = 0;
+    register uint64_t a5 asm("a5") = 0;
+    register uint64_t a6 asm("a6") = 0;
+    register uint64_t a7 asm("a7") = DASICS_LINUX_CONTROL_SYSCALL;
+
+    asm volatile("ecall"
+                 : "+r"(a0)
+                 : "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5),
+                   "r"(a6), "r"(a7)
+                 : "memory");
+    return (long)a0;
+}
+
+static inline long dasics_linux_query_umaincfg(void)
+{
+    return dasics_linux_control(DASICS_LINUX_QUERY_UMAINCFG);
+}
+
+static inline long dasics_linux_enable_cuet(void)
+{
+    return dasics_linux_control(DASICS_LINUX_ENABLE_CUET);
+}
+#else
 #define DASICS_COMPLETE_APP_CONTROL_MAGIC 0x4644494150504354UL
 #define DASICS_COMPLETE_APP_CONTROL_SET 0x534554UL
 #define DASICS_COMPLETE_APP_CONTROL_RESTORE 0x525354UL
@@ -114,6 +163,7 @@ typedef enum {
 #define DASICS_COMPLETE_APP_CFG_OFF 0UL
 #define DASICS_COMPLETE_APP_CFG_UENA DASICS_UCFG_ENA
 #define DASICS_COMPLETE_APP_GETPID 306UL
+#endif
 
 void register_udasics(uint64_t funcptr);
 void unregister_udasics(void);
@@ -133,8 +183,10 @@ extern uint64_t dasics_umaincall(UmaincallTypes type, ...);
 extern int lib_call(int (*func)(void));
 extern void lib_call_1(uint64_t arg, void* func_name);
 extern void azone_call(void* func_name);
+#if !DASICS_LINUX_DUAL_EXEC
 long dasics_complete_app_getpid(void);
 long dasics_complete_app_control(uint64_t command, uint64_t pid,
                                  uint64_t stage, uint64_t value);
+#endif
 
 #endif

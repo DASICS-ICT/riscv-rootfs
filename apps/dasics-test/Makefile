@@ -58,6 +58,7 @@ LIBS = lib/udasics.c \
 # cross compile
 CROSS_COMPILE = riscv64-unknown-elf-
 DASICS_STANDALONE_CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
+DASICS_LINUX_DUAL_EXEC ?= 0
 
 AS = $(CROSS_COMPILE)gcc
 CC = $(CROSS_COMPILE)gcc
@@ -72,13 +73,19 @@ STANDALONE_LD = $(DASICS_STANDALONE_CROSS_COMPILE)gcc
 
 INCLUDES  = $(addprefix -I, ${INC_DIR})
 
-CFLAGS   += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
+CFLAGS   += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static \
+	-DDASICS_LINUX_DUAL_EXEC=$(DASICS_LINUX_DUAL_EXEC)
 CXXFLAGS += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 LDFLAGS  += -march=rv64imad -mabi=lp64d -static
 # Standalone DASICS fault handling is delegated to UCAS OS S-mode traps.
 CFLAGS   += -DDASICS_S_TRAP_ONLY
-STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -mno-relax -msmall-data-limit=0 -MMD $(INCLUDES) -g -static
+STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -mno-relax -msmall-data-limit=0 -MMD $(INCLUDES) -g -static -DDASICS_LINUX_DUAL_EXEC=$(DASICS_LINUX_DUAL_EXEC)
 STANDALONE_LDFLAGS = -march=rv64imad -mabi=lp64d -static -Wl,--no-relax
+
+ifeq ($(DASICS_LINUX_DUAL_EXEC),1)
+$(DST_DIR)/dasics-test-context-switch-isolation-smoke: STANDALONE_CFLAGS += -pthread
+$(DST_DIR)/dasics-test-context-switch-isolation-smoke: STANDALONE_LDFLAGS += -pthread
+endif
 
 # Files to be compiled
 LIBOBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(LIBS))))

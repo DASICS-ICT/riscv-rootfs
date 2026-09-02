@@ -1,0 +1,1 @@
+This executable fixture intentionally has no ELF header.

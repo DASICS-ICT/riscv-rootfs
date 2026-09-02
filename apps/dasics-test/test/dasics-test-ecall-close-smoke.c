@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "ucsr.h"
+#include "udasics.h"
 
 #define DASICS_ECALL_CLOSE_TAG "\033[1;34m[DASICS-ECALL-CLOSE]\033[0m"
 #define DASICS_ECALL_CLOSE_BEGIN_TAG "\033[1;31m[DASICS-ECALL-CLOSE]"
@@ -89,6 +90,10 @@ int main(void)
 
     printf(DASICS_ECALL_CLOSE_BEGIN_TAG " ecall close smoke begin" DASICS_ECALL_CLOSE_COLOR_END "\n");
 
+#if DASICS_LINUX_DUAL_EXEC
+    failures += dasics_linux_enable_cuet() ==
+                (long)(DASICS_UCFG_ENA | DASICS_UCFG_CUET) ? 0 : 1;
+#endif
     csr_write(0x8b3, 0);
     result = invoke_untrusted_ecall_close();
     failures += record_positive_case("ECALL-CLOSE-UNTRUSTED-U-CUET-ORDINARY-SYSCALL",

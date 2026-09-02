@@ -4,7 +4,9 @@
 #include "udasics.h"
 
 #define DASICS_APP_FREE_TAG "[DASICS-APP-FREE]"
+#if !DASICS_LINUX_DUAL_EXEC
 #define DASICS_APP_FREE_CASES 10UL
+#endif
 #define TEST_BUFFER_LEN 100UL
 
 static char ATTR_ULIB_DATA freed_buffer[DASICS_BOUND_ALIGN_UP(TEST_BUFFER_LEN)]
@@ -40,15 +42,30 @@ static int record_bool_case(const char *name, int value)
     return record_value_case(name, value != 0, 1);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     const uint32_t expected_cfg =
         DASICS_LIBCFG_V | DASICS_LIBCFG_R | DASICS_LIBCFG_W;
     uint32_t allocated_cfg = UINT32_MAX;
     uint32_t released_cfg = UINT32_MAX;
     uint64_t store_reason = 0;
-    long pid = dasics_complete_app_getpid();
     int failures = 0;
+#if DASICS_LINUX_DUAL_EXEC
+    enum dasics_linux_exec_mode mode;
+    unsigned long total;
+
+    if (dasics_linux_parse_exec_mode(argc, argv, &mode)) {
+        fprintf(stderr, DASICS_APP_FREE_TAG
+                " argument-contract argc=%d result=FAIL\n", argc);
+        return 2;
+    }
+    total = mode == DASICS_LINUX_EXEC_OFF ? 6UL : 7UL;
+#else
+    long pid = dasics_complete_app_getpid();
+
+    (void)argc;
+    (void)argv;
+#endif
 
     register_udasics(0);
     int32_t bound = dasics_libcfg_alloc(
@@ -68,6 +85,30 @@ int main(void)
     failures += record_bool_case("FREE-RELEASE-VALID-BIT-CLEARED",
                                  (released_cfg & DASICS_LIBCFG_V) == 0);
 
+#if DASICS_LINUX_DUAL_EXEC
+    failures += record_value_case("FREE-EXEC-UMAINCFG",
+                                  dasics_linux_query_umaincfg(),
+                                  mode == DASICS_LINUX_EXEC_ON ?
+                                      DASICS_UCFG_ENA : 0);
+    freed_buffer[0] = 'P';
+    if (mode == DASICS_LINUX_EXEC_OFF) {
+        if (setup_ok) free_after_release_store_operation();
+        failures += record_bool_case(
+            "FREE-A-AFTER-RELEASE-STORE-SUCCEEDS",
+            freed_buffer[0] == 'X');
+    } else {
+        if (setup_ok) {
+            lib_call(&free_after_release_store_operation);
+            store_reason = csr_read(CSR_DFREASON);
+        }
+        failures += record_value_case("FREE-B-AFTER-RELEASE-STORE-REASON",
+                                      store_reason,
+                                      EXC_DASICS_STORE_FAULT);
+        failures += record_bool_case(
+            "FREE-B-AFTER-RELEASE-STORE-NO-EFFECT",
+            freed_buffer[0] == 'P');
+    }
+#else
     long cfg = dasics_complete_app_control(
         DASICS_COMPLETE_APP_CONTROL_SET, (uint64_t)pid,
         DASICS_COMPLETE_APP_STAGE_A, DASICS_COMPLETE_APP_CFG_OFF);
@@ -99,11 +140,19 @@ int main(void)
     failures += record_value_case("FREE-OS-CFG-RESTORED",
                                   (uint64_t)restored,
                                   DASICS_COMPLETE_APP_CFG_UENA);
+#endif
 
     unregister_udasics();
+#if DASICS_LINUX_DUAL_EXEC
+    printf(DASICS_APP_FREE_TAG
+           " summary scope=linux-exec-mode dasics=%s total=%lu failed=%d result=%s\n",
+           dasics_linux_exec_mode_name(mode), total, failures,
+           failures ? "FAIL" : "PASS");
+#else
     printf(DASICS_APP_FREE_TAG
            " summary scope=os-controlled-after-free-pair total=%lu failed=%d result=%s\n",
            DASICS_APP_FREE_CASES, failures,
            failures ? "FAIL" : "PASS");
+#endif
     return failures ? 1 : 0;
 }
