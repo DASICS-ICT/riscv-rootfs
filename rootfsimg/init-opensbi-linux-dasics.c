@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/reboot.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -205,8 +204,5 @@ int main(void)
 	       "invocations=%lu failed=%lu result=%s\n",
 	       DASICS_UNIQUE_TOTAL, invocation, failures,
 	       failures ? "FAIL" : "PASS");
-	sync();
-	reboot(RB_POWER_OFF);
-	for (;;)
-		pause();
+	return failures ? 1 : 0;
 }

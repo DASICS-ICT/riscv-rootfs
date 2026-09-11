@@ -1,0 +1,12 @@
+Linux DASICS exec opt-in / N user traps
+
+/dasics/dasics-test-ofb --expect=off
+/dasics/dasics-test-ofb --expect=on -dasics
+/dasics/dasics-test-syscall --expect=off
+/dasics/dasics-test-syscall --expect=on -dasics
+
+Linux consumes the exact trailing -dasics argument. --expect only checks the
+result. No basename selection or application-controlled UENA switching.
+Protected faults print N CSRs, recovery PC and x0..x31, and resume with uret.
+The suite runs once at boot; the console remains available afterwards.
+Use ls, cat, find, ps, top, and Tab completion in the BusyBox shell.

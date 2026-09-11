@@ -1,0 +1,11 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/dasics
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t tmpfs tmpfs /tmp
+if /dasics/suite; then
+    echo LINUX_DASICS_RESULT=PASS
+else
+    echo LINUX_DASICS_RESULT=FAIL
+fi
+echo DASICS_INTERACTIVE_SHELL_READY

@@ -3,6 +3,7 @@ $(shell mkdir -p rootfsimg/build)
 APPS = hello
 APPS_DIR = $(addprefix apps/, $(APPS))
 DASICS_LINUX_BUILD_DIR ?= $(CURDIR)/rootfsimg/build/opensbi-linux-dasics
+DASICS_LINUX_N_EXTENSION ?= 1
 DASICS_LINUX_CC ?= riscv64-unknown-linux-gnu-gcc
 DASICS_LINUX_STRIP ?= riscv64-unknown-linux-gnu-strip
 DASICS_LINUX_TEST_NAMES = \
@@ -44,7 +45,9 @@ opensbi-linux-dasics:
 		RISCV_ROOTFS_HOME=$(CURDIR) \
 		DST_DIR=$(DASICS_LINUX_BUILD_DIR)/tests \
 		DASICS_LINUX_DUAL_EXEC=1 \
-		build-only
+		DASICS_N_EXTENSION_PROFILE=$(DASICS_LINUX_N_EXTENSION) \
+		DASICS_S_TRAP_ONLY=$(if $(filter 1,$(DASICS_LINUX_N_EXTENSION)),0,1) \
+		$(DASICS_LINUX_TEST_BINS)
 	$(DASICS_LINUX_CC) -O2 -static -march=rv64imad -mabi=lp64d \
 		-Wall -Wextra -Werror \
 		-o $(DASICS_LINUX_BUILD_DIR)/init \

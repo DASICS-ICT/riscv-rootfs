@@ -165,6 +165,51 @@ static inline long dasics_linux_enable_cuet(void)
 #define DASICS_COMPLETE_APP_GETPID 306UL
 #endif
 
+#ifdef DASICS_N_EXTENSION_PROFILE
+#define DASICS_N_EXTENSION_SYSCALL_RECORDS 4UL
+#define DASICS_N_EXTENSION_TRAP_RECORDS 32UL
+#define DASICS_N_EXTENSION_UCHECK_CAUSE 24UL
+#define DASICS_N_EXTENSION_USTATUS_UIE 0x1UL
+#define DASICS_N_EXTENSION_USTATUS_UPIE 0x10UL
+
+typedef struct {
+    uint64_t ustatus;
+    uint64_t uie;
+    uint64_t utvec;
+    uint64_t uscratch;
+    uint64_t uepc;
+    uint64_t ucause;
+    uint64_t utval;
+    uint64_t uip;
+    uint64_t dfreason;
+    uint64_t recovery;
+    uint64_t gpr[32];
+} dasics_n_extension_trap_record_t;
+
+typedef struct {
+    uint64_t ustatus;
+    uint64_t uepc;
+    uint64_t ucause;
+    uint64_t utval;
+    uint64_t dfreason;
+    uint64_t permitted;
+    int64_t result;
+} dasics_n_extension_syscall_record_t;
+
+extern volatile uint64_t dasics_n_extension_syscall_trap_count;
+extern volatile uint64_t dasics_n_extension_syscall_permitted_count;
+extern volatile uint64_t dasics_n_extension_syscall_denied_count;
+extern volatile dasics_n_extension_syscall_record_t
+    dasics_n_extension_syscall_records[DASICS_N_EXTENSION_SYSCALL_RECORDS];
+extern volatile uint64_t dasics_n_extension_trap_count;
+extern volatile dasics_n_extension_trap_record_t
+    dasics_n_extension_trap_records[DASICS_N_EXTENSION_TRAP_RECORDS];
+long dasics_n_extension_syscall_handler(SYSCALL_ARGS);
+void dasics_n_extension_runtime_init(void);
+void dasics_n_extension_runtime_fini(void);
+void dasics_n_extension_dump_context(void);
+#endif
+
 void register_udasics(uint64_t funcptr);
 void unregister_udasics(void);
 void set_ufault_print_info(uint64_t status);

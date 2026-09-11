@@ -39,6 +39,27 @@
 #define SENTINEL_FREASON 0x4UL
 
 #if DASICS_LINUX_DUAL_EXEC
+#ifdef DASICS_N_EXTENSION_PROFILE
+int dasics_n_extension_auto_init(void) { return 0; }
+static int n_state_is_clear(void)
+{
+    return !(csr_read(CSR_USTATUS) | csr_read(CSR_UIE) |
+             csr_read(CSR_UTVEC) | csr_read(CSR_USCRATCH) |
+             csr_read(CSR_UEPC) | csr_read(CSR_UCAUSE) |
+             csr_read(CSR_UTVAL) | csr_read(CSR_UIP));
+}
+static void write_n_sentinel(unsigned long value)
+{
+    csr_write(CSR_USTATUS, 0x11);
+    csr_write(CSR_UIE, 0);
+    csr_write(CSR_UTVEC, value & ~3UL);
+    csr_write(CSR_USCRATCH, value);
+    csr_write(CSR_UEPC, value & ~1UL);
+    csr_write(CSR_UCAUSE, 24);
+    csr_write(CSR_UTVAL, value);
+    csr_write(CSR_UIP, 0);
+}
+#endif
 #define DASICS_EXEC_CONTRACT_TOTAL 22UL
 #define DASICS_CANONICAL_PATH \
     "/dasics/dasics-test-context-switch-isolation-smoke"
@@ -158,6 +179,9 @@ static int run_context_switch_checks(void)
 
 #if DASICS_LINUX_DUAL_EXEC
 struct dasics_stable_state {
+#ifdef DASICS_N_EXTENSION_PROFILE
+    unsigned long n[8];
+#endif
     unsigned long umain_cfg;
     unsigned long lib_cfg;
     unsigned long lib_bound15_lo;
@@ -178,6 +202,16 @@ static int thread_child_result;
 
 static void read_stable_state(struct dasics_stable_state *state)
 {
+#ifdef DASICS_N_EXTENSION_PROFILE
+    state->n[0] = csr_read(CSR_USTATUS);
+    state->n[1] = csr_read(CSR_UIE);
+    state->n[2] = csr_read(CSR_UTVEC);
+    state->n[3] = csr_read(CSR_USCRATCH);
+    state->n[4] = csr_read(CSR_UEPC);
+    state->n[5] = csr_read(CSR_UCAUSE);
+    state->n[6] = csr_read(CSR_UTVAL);
+    state->n[7] = csr_read(CSR_UIP);
+#endif
     state->umain_cfg = dasics_linux_query_umaincfg();
     state->lib_cfg = read_lib_cfg();
     state->lib_bound15_lo = read_lib_bound15_lo();
@@ -231,6 +265,11 @@ static int clone_child(void *unused)
     while (!__atomic_load_n(&clone_child_release, __ATOMIC_ACQUIRE))
         syscall(SYS_sched_yield);
     pass = stable_state_matches(&clone_expected_state);
+#ifdef DASICS_N_EXTENSION_PROFILE
+    write_n_sentinel(0x22348000);
+    syscall(SYS_sched_yield);
+    pass = pass && csr_read(CSR_USCRATCH) == 0x22348000;
+#endif
     clone_child_result = pass;
     record_exec_case("shared-mm-child-inherits-state", pass);
     return pass ? 0 : 1;
@@ -242,6 +281,11 @@ static void *thread_child(void *unused)
     while (!__atomic_load_n(&thread_child_release, __ATOMIC_ACQUIRE))
         sched_yield();
     thread_child_result = stable_state_matches(&thread_expected_state);
+#ifdef DASICS_N_EXTENSION_PROFILE
+    write_n_sentinel(0x32348000);
+    sched_yield();
+    thread_child_result &= csr_read(CSR_USCRATCH) == 0x32348000;
+#endif
     return NULL;
 }
 
@@ -339,6 +383,11 @@ static int run_fork_checks(const struct dasics_stable_state *expected)
         close(release_pipe[1]);
         pass = read(release_pipe[0], &release, 1) == 1 &&
                stable_state_matches(expected);
+#ifdef DASICS_N_EXTENSION_PROFILE
+        write_n_sentinel(0x42348000);
+        sched_yield();
+        pass = pass && csr_read(CSR_USCRATCH) == 0x42348000;
+#endif
         record_exec_case("fork-child-inherits-state", pass);
         close(release_pipe[0]);
         _exit(pass ? 0 : 1);
@@ -454,7 +503,14 @@ static int run_initial_on_stage(int argc, char *argv[])
         !strcmp(argv[0], DASICS_ALIAS_PATH) &&
         dasics_linux_query_umaincfg() == DASICS_UCFG_ENA);
 
+#ifdef DASICS_N_EXTENSION_PROFILE
+    if (!n_state_is_clear())
+        return record_exec_case("initial-optin-n-state-clear", 0);
+#endif
     write_isolation_sentinel();
+#ifdef DASICS_N_EXTENSION_PROFILE
+    write_n_sentinel(0x12348000);
+#endif
     read_stable_state(&expected);
     failures += run_failed_exec_checks(&expected);
     failures += run_fork_checks(&expected);
@@ -500,6 +556,9 @@ static int run_alias_on_stage(int argc, char *argv[])
                !strcmp(argv[1], DASICS_STAGE_ALIAS_ON) &&
                dasics_linux_query_umaincfg() == DASICS_UCFG_ENA;
 
+#ifdef DASICS_N_EXTENSION_PROFILE
+    pass = pass && n_state_is_clear();
+#endif
     if (record_exec_case("alias-tail-marker-consumed-on", pass))
         return 1;
     execve(DASICS_CANONICAL_PATH, next_argv, envp);

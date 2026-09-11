@@ -7,7 +7,19 @@ dir /tmp 1777 0 0
 nod /dev/console 600 0 0 c 5 1
 nod /dev/null 666 0 0 c 1 3
 
-file /init ${DASICS_LINUX_BUILD_DIR}/init 755 0 0
+dir /bin 755 0 0
+dir /sbin 755 0 0
+dir /usr 755 0 0
+dir /usr/bin 755 0 0
+dir /etc 755 0 0
+dir /etc/init.d 755 0 0
+file /bin/busybox ${DASICS_LINUX_BUSYBOX} 755 0 0
+slink /init /bin/busybox 777 0 0
+file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab-opensbi-linux-dasics 644 0 0
+file /etc/init.d/rcS ${RISCV_ROOTFS_HOME}/rootfsimg/rcS-opensbi-linux-dasics 755 0 0
+file /dasics/suite ${DASICS_LINUX_BUILD_DIR}/init 755 0 0
+file /dasics/README ${RISCV_ROOTFS_HOME}/rootfsimg/dasics-linux-help.txt 644 0 0
+nod /dev/zero 666 0 0 c 1 5
 file /dasics/dasics-test-csr-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-csr-smoke 755 0 0
 file /dasics/dasics-test-csr-mask-ops-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-csr-mask-ops-smoke 755 0 0
 slink /dasics/dasics-explicit-optin-alias dasics-test-context-switch-isolation-smoke 777 0 0
@@ -29,3 +41,28 @@ file /dasics/dasics-test-jump ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-jump 7
 file /dasics/dasics-test-ofb ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-ofb 755 0 0
 file /dasics/dasics-test-free ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-free 755 0 0
 file /dasics/dasics-test-syscall ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-syscall 755 0 0
+
+slink /bin/sh busybox 777 0 0
+slink /bin/ash busybox 777 0 0
+slink /bin/cat busybox 777 0 0
+slink /bin/ls busybox 777 0 0
+slink /bin/find busybox 777 0 0
+slink /bin/echo busybox 777 0 0
+slink /bin/mount busybox 777 0 0
+slink /bin/mkdir busybox 777 0 0
+slink /bin/sleep busybox 777 0 0
+slink /bin/stty busybox 777 0 0
+slink /bin/tty busybox 777 0 0
+slink /bin/ps busybox 777 0 0
+slink /bin/top busybox 777 0 0
+slink /bin/grep busybox 777 0 0
+slink /bin/dmesg busybox 777 0 0
+slink /bin/uname busybox 777 0 0
+slink /bin/sync busybox 777 0 0
+slink /bin/test busybox 777 0 0
+slink /bin/true busybox 777 0 0
+slink /bin/false busybox 777 0 0
+slink /bin/head busybox 777 0 0
+slink /bin/tail busybox 777 0 0
+slink /bin/pwd busybox 777 0 0
+slink /bin/env busybox 777 0 0

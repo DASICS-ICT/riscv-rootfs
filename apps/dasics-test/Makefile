@@ -59,6 +59,9 @@ LIBS = lib/udasics.c \
 CROSS_COMPILE = riscv64-unknown-elf-
 DASICS_STANDALONE_CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
 DASICS_LINUX_DUAL_EXEC ?= 0
+ifeq ($(DASICS_LINUX_DUAL_EXEC),1)
+CROSS_COMPILE = $(DASICS_STANDALONE_CROSS_COMPILE)
+endif
 
 AS = $(CROSS_COMPILE)gcc
 CC = $(CROSS_COMPILE)gcc
@@ -77,11 +80,30 @@ CFLAGS   += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static \
 	-DDASICS_LINUX_DUAL_EXEC=$(DASICS_LINUX_DUAL_EXEC)
 CXXFLAGS += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 LDFLAGS  += -march=rv64imad -mabi=lp64d -static
-# Standalone DASICS fault handling is delegated to UCAS OS S-mode traps.
-CFLAGS   += -DDASICS_S_TRAP_ONLY
+DASICS_S_TRAP_ONLY ?= 1
+DASICS_N_EXTENSION_PROFILE ?= 0
+DASICS_PROFILE_CFLAGS :=
+ifeq ($(filter 0 1,$(strip $(DASICS_S_TRAP_ONLY))),)
+$(error DASICS_S_TRAP_ONLY must be 0 or 1)
+endif
+ifeq ($(filter 0 1,$(strip $(DASICS_N_EXTENSION_PROFILE))),)
+$(error DASICS_N_EXTENSION_PROFILE must be 0 or 1)
+endif
+ifeq ($(strip $(DASICS_N_EXTENSION_PROFILE)),1)
+ifneq ($(strip $(DASICS_S_TRAP_ONLY)),0)
+$(error DASICS_N_EXTENSION_PROFILE requires DASICS_S_TRAP_ONLY=0)
+endif
+DASICS_PROFILE_CFLAGS += -DDASICS_N_EXTENSION_PROFILE
+endif
+ifeq ($(strip $(DASICS_S_TRAP_ONLY)),1)
+# The legacy standalone profile delegates DASICS faults to UCAS OS S-mode.
+DASICS_PROFILE_CFLAGS += -DDASICS_S_TRAP_ONLY
+endif
+CFLAGS += $(DASICS_PROFILE_CFLAGS)
 STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -mno-relax -msmall-data-limit=0 -MMD $(INCLUDES) -g -static -DDASICS_LINUX_DUAL_EXEC=$(DASICS_LINUX_DUAL_EXEC)
 STANDALONE_LDFLAGS = -march=rv64imad -mabi=lp64d -static -Wl,--no-relax
 
+STANDALONE_CFLAGS += $(DASICS_PROFILE_CFLAGS)
 ifeq ($(DASICS_LINUX_DUAL_EXEC),1)
 $(DST_DIR)/dasics-test-context-switch-isolation-smoke: STANDALONE_CFLAGS += -pthread
 $(DST_DIR)/dasics-test-context-switch-isolation-smoke: STANDALONE_LDFLAGS += -pthread
@@ -90,29 +112,42 @@ endif
 # Files to be compiled
 LIBOBJS = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(LIBS))))
 
+ifeq ($(strip $(DASICS_N_EXTENSION_PROFILE)),1)
+STANDALONE_LIBOBJS = $(addprefix $(DST_DIR)/standalone-lib/, $(addsuffix .o, $(basename $(LIBS))))
+endif
+
 # Compilation patterns
 $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c 
 	echo + CC $^
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) $(CFLAGS) -c -o $@ $<
 $(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-csr-mask-ops-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o $(DST_DIR)/dasics-test-ecall-fault-smoke.o $(DST_DIR)/dasics-test-ecall-close-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-free-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-replacement-smoke.o $(DST_DIR)/dasics-test-syscall-buffer-permission-smoke.o $(DST_DIR)/dasics-test-context-section-load-smoke.o $(DST_DIR)/dasics-test-context-switch-isolation-smoke.o $(DST_DIR)/dasics-test-returnpc-trap-preserve-smoke.o $(DST_DIR)/dasics-test-maincfg-toggle-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
-	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $^
+	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $<
 $(DST_DIR)/%.o: $(TEST_DIR)/%.c 
 	echo + CC $^
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) $(CFLAGS) -c -o $@ $<
 $(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.S   
 	echo + CC $^
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(DST_DIR)/standalone-lib/lib/%.o: $(LIBS_DIR)/%.c
+	echo + CC $^
+	mkdir -p $(dir $@)
+	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -DDASICS_STANDALONE_RUNTIME -c -o $@ $<
+$(DST_DIR)/standalone-lib/lib/%.o: $(LIBS_DIR)/%.S
+	echo + CC $^
+	mkdir -p $(dir $@)
+	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $<
 
 $(DASICS_LIB_APP):%:%.o $(LIBOBJS)
 	@echo + LD $@
 	@$(LD) $(LDFLAGS) -o $@ $^
 
-$(DASICS_STANDALONE_APP):%:%.o
+$(DASICS_STANDALONE_APP):%:%.o $(STANDALONE_LIBOBJS)
 	@echo + LD $@
 	@$(STANDALONE_LD) $(STANDALONE_LDFLAGS) -o $@ $^
 
@@ -122,5 +157,6 @@ install-csr-smoke: $(DASICS_STANDALONE_APP)
 	ln -sf $< $(RISCV_ROOTFS_HOME)/rootfsimg/build/$(notdir $<)
 
 # Dependencies
-DEPS = $(addprefix $(DST_DIR)/, $(addsuffix .d, $(basename $(SRCS))))
+DEPS = $(DASICS_LIB_APP:%=%.d) $(DASICS_STANDALONE_APP:%=%.d) \
+       $(LIBOBJS:.o=.d) $(STANDALONE_LIBOBJS:.o=.d)
 -include $(DEPS)

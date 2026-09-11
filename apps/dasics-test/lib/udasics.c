@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if DASICS_LINUX_DUAL_EXEC || defined(DASICS_STANDALONE_RUNTIME)
+#include <sys/syscall.h>
+#define SYS_pread SYS_pread64
+#define SYS_pwrite SYS_pwrite64
+#else
 #include <machine/syscall.h>
+#endif
 #include "udasics.h"
 
 uint64_t umaincall_helper;
@@ -162,6 +168,262 @@ static long dasics_syscall_proxy(SYSCALL_ARGS)
 
     return a0;
 }
+
+#ifdef DASICS_N_EXTENSION_PROFILE
+volatile uint64_t dasics_n_extension_syscall_trap_count;
+volatile uint64_t dasics_n_extension_syscall_permitted_count;
+volatile uint64_t dasics_n_extension_syscall_denied_count;
+volatile dasics_n_extension_syscall_record_t
+    dasics_n_extension_syscall_records[DASICS_N_EXTENSION_SYSCALL_RECORDS];
+static uint64_t dasics_n_extension_dumped_traps;
+
+void dasics_n_extension_user_trap_handler_trace(uint64_t sequence)
+{
+    const volatile dasics_n_extension_trap_record_t *record;
+
+    if (sequence == 0 || sequence > DASICS_N_EXTENSION_TRAP_RECORDS) {
+        printf("DASICS_N_EXTENSION_USER_TRAP_HANDLER version=1 "
+               "sequence=%lu record=UNAVAILABLE\n", sequence);
+        return;
+    }
+
+    record = &dasics_n_extension_trap_records[sequence - 1];
+    printf("DASICS_N_EXTENSION_USER_TRAP_HANDLER version=1 "
+           "sequence=%lu ucause=0x%lx ustatus=0x%lx uepc=0x%lx "
+           "utval=0x%lx dfreason=0x%lx recovery=0x%lx\n",
+           sequence, record->ucause, record->ustatus, record->uepc,
+           record->utval, record->dfreason, record->recovery);
+}
+
+static uint32_t dasics_n_extension_syscall_permitted(SYSCALL_ARGS)
+{
+    switch (sysno) {
+    case SYS_read:
+    case SYS_write:
+    case SYS_pread:
+    case SYS_pwrite:
+        return dasics_syscall_checker(
+            sysno, arg1, arg2, arg3, arg4, arg5, arg6);
+    default:
+        return 0;
+    }
+}
+
+long dasics_n_extension_syscall_handler(SYSCALL_ARGS)
+{
+    uint64_t index = dasics_n_extension_syscall_trap_count;
+    uint32_t proxyable = sysno == SYS_read || sysno == SYS_write ||
+                         sysno == SYS_pread || sysno == SYS_pwrite;
+    uint32_t permitted = proxyable && dasics_n_extension_syscall_permitted(
+        sysno, arg1, arg2, arg3, arg4, arg5, arg6);
+    volatile dasics_n_extension_syscall_record_t *record = NULL;
+    long result;
+
+    if (index < DASICS_N_EXTENSION_SYSCALL_RECORDS) {
+        record = &dasics_n_extension_syscall_records[index];
+        record->ustatus = csr_read(ustatus);
+        record->uepc = csr_read(uepc);
+        record->ucause = csr_read(ucause);
+        record->utval = csr_read(utval);
+        record->dfreason = csr_read(CSR_DFREASON);
+        record->permitted = permitted;
+    }
+    dasics_n_extension_syscall_trap_count = index + 1;
+
+    if (!proxyable) {
+        /*
+         * A denied non-proxy syscall has no architectural writeback.  Keep
+         * the original a0, matching the legacy HS handler and LibDASICS trap
+         * context semantics.
+         */
+        dasics_n_extension_syscall_denied_count++;
+        result = arg1;
+    } else if (!permitted) {
+        dasics_n_extension_syscall_denied_count++;
+        result = -1;
+    } else {
+        dasics_n_extension_syscall_permitted_count++;
+        /*
+         * This function and dasics_syscall_proxy reside in trusted .text.  The
+         * reissued ecall is therefore an ordinary U-mode syscall (cause 8),
+         * which remains delegated to HS rather than looping back into HU.
+         */
+        result = dasics_syscall_proxy(
+            sysno, arg1, arg2, arg3, arg4, arg5, arg6);
+    }
+
+    if (record != NULL) {
+        record->result = result;
+    }
+    return result;
+}
+
+static const char *dasics_n_extension_fault_kind(uint64_t reason)
+{
+    switch (reason) {
+    case EXC_DASICS_ECALL_FAULT:
+        return "ecall";
+    case EXC_DASICS_LOAD_FAULT:
+        return "load";
+    case EXC_DASICS_STORE_FAULT:
+        return "store";
+    case EXC_DASICS_JUMP_FAULT:
+        return "jump";
+    default:
+        return "unknown";
+    }
+}
+
+static int dasics_n_extension_record_ok(
+    const volatile dasics_n_extension_trap_record_t *record)
+{
+    return record->ucause == DASICS_N_EXTENSION_UCHECK_CAUSE &&
+           (record->ustatus &
+            (DASICS_N_EXTENSION_USTATUS_UIE |
+             DASICS_N_EXTENSION_USTATUS_UPIE)) ==
+               DASICS_N_EXTENSION_USTATUS_UPIE &&
+           record->dfreason >= EXC_DASICS_ECALL_FAULT &&
+           record->dfreason <= EXC_DASICS_JUMP_FAULT &&
+           (record->recovery & 3UL) == 0;
+}
+
+static void dasics_n_extension_print_context(
+    uint64_t sequence,
+    const volatile dasics_n_extension_trap_record_t *record)
+{
+    uint64_t reason = record->dfreason;
+    int record_ok = dasics_n_extension_record_ok(record);
+
+    printf("DASICS_N_EXTENSION_RUNTIME_TRAP version=1 "
+           "sequence=%lu kind=%s ucause=0x%lx ustatus=0x%lx "
+           "uepc=0x%lx utval=0x%lx dfreason=0x%lx "
+           "recovery=0x%lx check=%s\n",
+           sequence, dasics_n_extension_fault_kind(reason),
+           record->ucause, record->ustatus, record->uepc,
+           record->utval, reason, record->recovery,
+           record_ok ? "PASS" : "FAIL");
+    printf("DASICS_N_EXTENSION_CONTEXT_CSR version=1 sequence=%lu "
+           "ustatus=0x%lx uie=0x%lx utvec=0x%lx uscratch=0x%lx "
+           "uepc=0x%lx ucause=0x%lx utval=0x%lx uip=0x%lx "
+           "dfreason=0x%lx recovery=0x%lx\n",
+           sequence, record->ustatus, record->uie, record->utvec,
+           record->uscratch, record->uepc, record->ucause,
+           record->utval, record->uip, record->dfreason,
+           record->recovery);
+    printf("DASICS_N_EXTENSION_CONTEXT_GPR version=1 sequence=%lu group=0 "
+           "x0=0x%lx ra=0x%lx sp=0x%lx gp=0x%lx tp=0x%lx "
+           "t0=0x%lx t1=0x%lx t2=0x%lx\n",
+           sequence, record->gpr[0], record->gpr[1], record->gpr[2],
+           record->gpr[3], record->gpr[4], record->gpr[5],
+           record->gpr[6], record->gpr[7]);
+    printf("DASICS_N_EXTENSION_CONTEXT_GPR version=1 sequence=%lu group=1 "
+           "s0=0x%lx s1=0x%lx a0=0x%lx a1=0x%lx a2=0x%lx "
+           "a3=0x%lx a4=0x%lx a5=0x%lx\n",
+           sequence, record->gpr[8], record->gpr[9], record->gpr[10],
+           record->gpr[11], record->gpr[12], record->gpr[13],
+           record->gpr[14], record->gpr[15]);
+    printf("DASICS_N_EXTENSION_CONTEXT_GPR version=1 sequence=%lu group=2 "
+           "a6=0x%lx a7=0x%lx s2=0x%lx s3=0x%lx s4=0x%lx "
+           "s5=0x%lx s6=0x%lx s7=0x%lx\n",
+           sequence, record->gpr[16], record->gpr[17], record->gpr[18],
+           record->gpr[19], record->gpr[20], record->gpr[21],
+           record->gpr[22], record->gpr[23]);
+    printf("DASICS_N_EXTENSION_CONTEXT_GPR version=1 sequence=%lu group=3 "
+           "s8=0x%lx s9=0x%lx s10=0x%lx s11=0x%lx t3=0x%lx "
+           "t4=0x%lx t5=0x%lx t6=0x%lx\n",
+           sequence, record->gpr[24], record->gpr[25], record->gpr[26],
+           record->gpr[27], record->gpr[28], record->gpr[29],
+           record->gpr[30], record->gpr[31]);
+}
+
+void dasics_n_extension_dump_context(void)
+{
+    uint64_t observed = dasics_n_extension_trap_count;
+    uint64_t stored = observed < DASICS_N_EXTENSION_TRAP_RECORDS
+                          ? observed
+                          : DASICS_N_EXTENSION_TRAP_RECORDS;
+    uint64_t start = dasics_n_extension_dumped_traps;
+
+    if (start > stored)
+        start = stored;
+    for (uint64_t i = start; i < stored; i++)
+        dasics_n_extension_print_context(
+            i + 1, &dasics_n_extension_trap_records[i]);
+    dasics_n_extension_dumped_traps = stored;
+}
+
+static int dasics_n_extension_initialized;
+
+__attribute__((weak)) int dasics_n_extension_auto_init(void)
+{
+    return 1;
+}
+
+__attribute__((constructor))
+void dasics_n_extension_runtime_init(void)
+{
+    if (!dasics_n_extension_auto_init())
+        return;
+    dasics_n_extension_initialized = 1;
+    dasics_n_extension_trap_count = 0;
+    dasics_n_extension_syscall_trap_count = 0;
+    dasics_n_extension_syscall_permitted_count = 0;
+    dasics_n_extension_syscall_denied_count = 0;
+    dasics_n_extension_dumped_traps = 0;
+    csr_write(CSR_USTATUS, DASICS_N_EXTENSION_USTATUS_UIE);
+    register_udasics(0);
+}
+
+__attribute__((destructor))
+void dasics_n_extension_runtime_fini(void)
+{
+    uint64_t observed = dasics_n_extension_trap_count;
+    uint64_t stored = observed < DASICS_N_EXTENSION_TRAP_RECORDS
+                          ? observed
+                          : DASICS_N_EXTENSION_TRAP_RECORDS;
+    uint64_t reasons[5] = {0, 0, 0, 0, 0};
+    uint64_t final_ustatus;
+
+    if (!dasics_n_extension_initialized)
+        return;
+    final_ustatus = csr_read(CSR_USTATUS);
+    int failures = observed > DASICS_N_EXTENSION_TRAP_RECORDS;
+
+    dasics_n_extension_dump_context();
+    for (uint64_t i = 0; i < stored; i++) {
+        volatile dasics_n_extension_trap_record_t *record =
+            &dasics_n_extension_trap_records[i];
+        uint64_t reason = record->dfreason;
+        int record_ok = dasics_n_extension_record_ok(record);
+
+        if (reason <= EXC_DASICS_JUMP_FAULT) {
+            reasons[reason]++;
+        }
+        failures += record_ok ? 0 : 1;
+    }
+
+    if (observed != 0 &&
+        (final_ustatus &
+         (DASICS_N_EXTENSION_USTATUS_UIE |
+          DASICS_N_EXTENSION_USTATUS_UPIE)) !=
+            (DASICS_N_EXTENSION_USTATUS_UIE |
+             DASICS_N_EXTENSION_USTATUS_UPIE)) {
+        failures++;
+    }
+    printf("DASICS_N_EXTENSION_RUNTIME version=1 traps=%lu ecall=%lu "
+           "load=%lu store=%lu jump=%lu overflow=%lu "
+           "final_ustatus=0x%lx failed=%d result=%s\n",
+           observed, reasons[EXC_DASICS_ECALL_FAULT],
+           reasons[EXC_DASICS_LOAD_FAULT],
+           reasons[EXC_DASICS_STORE_FAULT],
+           reasons[EXC_DASICS_JUMP_FAULT],
+           observed > DASICS_N_EXTENSION_TRAP_RECORDS
+               ? observed - DASICS_N_EXTENSION_TRAP_RECORDS
+               : 0,
+           final_ustatus, failures, failures ? "FAIL" : "PASS");
+    unregister_udasics();
+}
+#endif
 
 uint64_t dasics_umaincall_helper(UmaincallTypes type, ...)
 {
