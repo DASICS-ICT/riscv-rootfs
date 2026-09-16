@@ -9,6 +9,9 @@
 #define CSR_UCAUSE          0x042
 #define CSR_UTVAL           0x043
 #define CSR_UIP             0x044
+#define CSR_UTIMER          0x045
+#define UTIMER_IRQ          (1UL << 4)
+#define UTIMER_CAUSE        ((1UL << 63) | 4)
 
 #define CSR_STRINGIFY_RAW(reg) #reg
 #define CSR_STRINGIFY(reg) CSR_STRINGIFY_RAW(reg)

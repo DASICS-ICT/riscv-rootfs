@@ -763,3 +763,12 @@ void dasics_print_cfg_register(int32_t idx)
 {
 	printf("DASICS uLib CFG Registers: idx:%x  config: %x \n",idx,dasics_libcfg_get(idx));
 }
+
+#ifdef DASICS_N_EXTENSION_PROFILE
+/* The assembly entry has cleared UTimer and saved every integer register.
+ * Override with a short integer-only callback; printing belongs after return. */
+__attribute__((weak)) void dasics_utimer_handler(const unsigned long *frame)
+{
+    (void)frame;
+}
+#endif

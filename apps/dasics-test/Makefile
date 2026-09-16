@@ -55,6 +55,14 @@ SRCS = $(TEST_DIR)/dasics-test-free.c \
 LIBS = lib/udasics.c \
 	   lib/dasics_entry.S \
 	   lib/dasics_call.S
+ifeq ($(DASICS_N_EXTENSION_PROFILE),1)
+DASICS_STANDALONE_APP += $(DST_DIR)/dasics-test-utimer
+$(DST_DIR)/dasics-test-utimer.o: $(TEST_DIR)/dasics-test-utimer.c
+	mkdir -p $(dir $@)
+	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -pthread -c -o $@ $<
+$(DST_DIR)/dasics-test-utimer: STANDALONE_LDFLAGS += -pthread
+endif
+
 # cross compile
 CROSS_COMPILE = riscv64-unknown-elf-
 DASICS_STANDALONE_CROSS_COMPILE ?= riscv64-unknown-linux-gnu-

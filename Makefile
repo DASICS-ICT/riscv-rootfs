@@ -26,6 +26,10 @@ DASICS_LINUX_TEST_NAMES = \
 	dasics-test-ofb \
 	dasics-test-free \
 	dasics-test-syscall
+DASICS_LINUX_UTIMER ?= 0
+ifeq ($(DASICS_LINUX_UTIMER),1)
+DASICS_LINUX_TEST_NAMES += dasics-test-utimer
+endif
 DASICS_LINUX_TEST_BINS = \
 	$(addprefix $(DASICS_LINUX_BUILD_DIR)/tests/,$(DASICS_LINUX_TEST_NAMES))
 DASICS_LINUX_MAINCFG_BIN = \

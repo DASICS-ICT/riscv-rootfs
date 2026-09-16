@@ -8,4 +8,11 @@ if /dasics/suite; then
 else
     echo LINUX_DASICS_RESULT=FAIL
 fi
+if [ -x /dasics/dasics-test-utimer ]; then
+    if /dasics/dasics-test-utimer --expect=off && /dasics/dasics-test-utimer --expect=on -dasics; then
+        echo LINUX_UTIMER_RESULT=PASS
+    else
+        echo LINUX_UTIMER_RESULT=FAIL
+    fi
+fi
 echo DASICS_INTERACTIVE_SHELL_READY

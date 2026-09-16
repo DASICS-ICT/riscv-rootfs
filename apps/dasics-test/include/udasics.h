@@ -111,6 +111,13 @@ typedef enum {
 #endif
 
 #if DASICS_LINUX_DUAL_EXEC
+void dasics_utimer_handler(const unsigned long *frame);
+static inline void dasics_utimer_arm(uint64_t cycles)
+{
+    asm volatile("csrw 0x045, %0" :: "r"(cycles) : "memory");
+}
+static inline void dasics_utimer_cancel(void) { dasics_utimer_arm(0); }
+
 #define DASICS_LINUX_CONTROL_SYSCALL 306UL
 #define DASICS_LINUX_CONTROL_MAGIC 0x4441534943534c58UL
 #define DASICS_LINUX_QUERY_UMAINCFG 0x515259UL

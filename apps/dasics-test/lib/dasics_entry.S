@@ -52,6 +52,16 @@ dasics_ufault_entry:
     sd    t5, 232(sp)      /* x30 */
     sd    t6, 240(sp)      /* x31 */
 
+    /* Timer interrupts resume the interrupted instruction, without consuming
+     * the synchronous-fault recovery slot or interpreting dfreason. */
+    csrr  t0, ucause
+    li    t1, 0x8000000000000004
+    bne   t0, t1, .Ln_extension_fault
+    csrw  0x045, zero
+    mv    a0, sp
+    call  dasics_utimer_handler
+    j     .Ln_extension_restore
+.Ln_extension_fault:
     csrr  t6, uscratch
     sd    t6, 248(sp)
     bnez  t6, .Ln_extension_recovery_ready
@@ -133,6 +143,7 @@ dasics_ufault_entry:
     ld    t0, 256(sp)
     csrw  uepc, t0
 
+.Ln_extension_restore:
     ld    ra,   0(sp)
     ld    gp,  16(sp)
     ld    tp,  24(sp)
