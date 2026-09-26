@@ -8,7 +8,7 @@
 lib_call:
     addi   sp, sp, -16
     sd     ra, 8(sp)
-    .word 0x0005108b    // dasicscall.jr ra, a0
+    .word 0x000510fb    // dasicscall.jr ra, a0
     ld     ra, 8(sp)
     addi   sp, sp, 16
     ret
@@ -20,7 +20,7 @@ lib_call:
 lib_call_1:
     addi   sp, sp, -16
     sd     ra, 8(sp)
-    .word 0x0005908b    // dasicscall.jr ra, a1
+    .word 0x000590fb    // dasicscall.jr ra, a1
     ld     ra, 8(sp)
     addi   sp, sp, 16
     ret
