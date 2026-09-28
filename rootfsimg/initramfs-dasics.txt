@@ -31,7 +31,8 @@ file /lib/libgcc_s.so.1 ${RISCV}/sysroot/lib/libgcc_s.so.1 755 0 0
 
 
 file /bin/busybox ${RISCV_ROOTFS_HOME}/rootfsimg/build/busybox 755 0 0
-file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab 755 0 0
+# file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab 755 0 0
+file /etc/inittab ${RISCV_ROOTFS_HOME}/rootfsimg/inittab-dasics-autorun 755 0 0
 slink /init /bin/busybox 755 0 0
 
 # scripts
@@ -58,3 +59,5 @@ file /root/dasics-test-csr-smoke ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-tes
 file /root/dasics-test-spectre ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-spectre 755 0 0
 file /root/n-ext-test ${RISCV_ROOTFS_HOME}/rootfsimg/build/n-ext-test 755 0 0
 file /root/scripts/run-dasics-test.sh ${RISCV_ROOTFS_HOME}/rootfsimg/scripts/run-dasics-test.sh 755 0 0
+file /root/dasics-test-amo-permission-smoke ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-amo-permission-smoke 755 0 0
+file /root/dasics-test-cbo-permission-smoke ${RISCV_ROOTFS_HOME}/rootfsimg/build/dasics-test-cbo-permission-smoke 755 0 0

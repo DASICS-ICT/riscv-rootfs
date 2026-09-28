@@ -9,5 +9,6 @@ $(REPO_PATH):
 	cp config $@/.config
 
 $(APP): | $(REPO_PATH)
+	yes "" | $(MAKE) -C $(REPO_PATH) oldconfig > /dev/null
 	$(MAKE) -C $(REPO_PATH)
 	ln -sf $(abspath $(REPO_PATH)/busybox) $@
