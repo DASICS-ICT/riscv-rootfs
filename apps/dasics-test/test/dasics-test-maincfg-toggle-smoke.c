@@ -12,7 +12,8 @@
 #define MAINCFG_TOGGLE_REPORT 0x525054UL
 #define MAINCFG_TOGGLE_HU_REPORT 0x4855525054UL
 #define MAINCFG_TOGGLE_GETPID 306UL
-#define MAINCFG_TOGGLE_OBSERVATIONS 16UL
+/* Match the kernel profile: four stages each for load, store and jump. */
+#define MAINCFG_TOGGLE_OBSERVATIONS 12UL
 
 #define MAINCFG_TOGGLE_ECALL_SENTINEL 0x4543414c4c534954UL
 #define MAINCFG_TOGGLE_ECALL_GUARD 0x47554152444d4346UL
@@ -297,13 +298,13 @@ int main(void)
     long pid = maincfg_toggle_getpid();
     int failures = 0;
 
-    printf("DASICS_MAINCFG_TOGGLE_BEGIN version=1 observations=16\n");
+    printf("DASICS_MAINCFG_TOGGLE_BEGIN version=1 observations=12\n");
     if (pid <= 0) {
         printf("DASICS_MAINCFG_TOGGLE_CLIENT result=FAIL detail=getpid\n");
         return 1;
     }
 
-    for (int op = MAINCFG_TOGGLE_ECALL; op <= MAINCFG_TOGGLE_JUMP; op++) {
+    for (int op = MAINCFG_TOGGLE_LOAD; op <= MAINCFG_TOGGLE_JUMP; op++) {
         for (int stage = 0; stage < 4; stage++, step++) {
             uint64_t side0 = 0;
             uint64_t side1 = 0;

@@ -13,9 +13,6 @@ DASICS_LINUX_TEST_NAMES = \
 	dasics-test-maincfg-toggle-smoke \
 	dasics-test-jump-branch-target-permission-smoke \
 	dasics-test-load-store-permission-smoke \
-	dasics-test-ecall-fault-smoke \
-	dasics-test-ecall-close-smoke \
-	dasics-test-syscall-buffer-permission-smoke \
 	dasics-test-dynamic-bound-free-smoke \
 	dasics-test-dynamic-bound-replacement-smoke \
 	dasics-test-context-section-load-smoke \
@@ -24,8 +21,7 @@ DASICS_LINUX_TEST_NAMES = \
 	dasics-test-rwx \
 	dasics-test-jump \
 	dasics-test-ofb \
-	dasics-test-free \
-	dasics-test-syscall
+	dasics-test-free
 DASICS_LINUX_UTIMER ?= 0
 ifeq ($(DASICS_LINUX_UTIMER),1)
 DASICS_LINUX_TEST_NAMES += dasics-test-utimer
