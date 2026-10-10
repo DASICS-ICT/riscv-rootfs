@@ -13,6 +13,8 @@ DASICS_LINUX_TEST_NAMES = \
 	dasics-test-maincfg-toggle-smoke \
 	dasics-test-jump-branch-target-permission-smoke \
 	dasics-test-load-store-permission-smoke \
+	dasics-test-ecall-fault-smoke \
+	dasics-test-ecall-close-smoke \
 	dasics-test-dynamic-bound-free-smoke \
 	dasics-test-dynamic-bound-replacement-smoke \
 	dasics-test-context-section-load-smoke \

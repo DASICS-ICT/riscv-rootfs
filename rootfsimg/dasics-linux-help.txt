@@ -9,6 +9,13 @@ Linux consumes the exact trailing -dasics argument. --expect only checks the
 result. No basename selection or application-controlled UENA switching.
 Protected faults print N CSRs, recovery PC and x0..x31, and resume with uret.
 The suite runs once at boot; the console remains available afterwards.
-This profile runs 20 DASICS invocations and 28 UTimer cases. ECALL, AMO and
-CBO tests are excluded; MainCfg covers load, store and jump only.
+This profile runs 17 DASICS programs in 22 invocations, plus 28 UTimer cases
+when UTimer is enabled. ECALL fault and CUET-close tests are included;
+AMO and CBO tests are excluded. MainCfg covers load, store and jump only.
+
+For manual startup, use rootfsimg/rcS-opensbi-linux-dasics-interactive as the
+/etc/init.d/rcS source in the generated initramfs list. Run /dasics/suite for
+all DASICS tests, or /dasics/dasics-test-ecall-close-smoke -dasics for one test.
+Run /dasics/dasics-test-utimer --expect=off and
+/dasics/dasics-test-utimer --expect=on -dasics for UTimer when it is included.
 Use ls, cat, find, ps, top, and Tab completion in the BusyBox shell.

@@ -21,6 +21,10 @@
 	  "/dasics/dasics-test-jump-branch-target-permission-smoke", 1) \
 	X("dasics_test_load_store_permission_smoke", \
 	  "/dasics/dasics-test-load-store-permission-smoke", 1) \
+	X("dasics_test_ecall_fault_smoke", \
+	  "/dasics/dasics-test-ecall-fault-smoke", 1) \
+	X("dasics_test_ecall_close_smoke", \
+	  "/dasics/dasics-test-ecall-close-smoke", 1) \
 	X("dasics_test_dynamic_bound_free_smoke", \
 	  "/dasics/dasics-test-dynamic-bound-free-smoke", 1) \
 	X("dasics_test_dynamic_bound_replacement_smoke", \
@@ -80,8 +84,8 @@ enum {
 #undef COUNT_DIRECTED_INVOCATIONS
 #undef COUNT_COMPLETE_UNIQUE
 
-_Static_assert(DASICS_UNIQUE_TOTAL == 15, "unexpected DASICS program count");
-_Static_assert(DASICS_INVOCATION_TOTAL == 20,
+_Static_assert(DASICS_UNIQUE_TOTAL == 17, "unexpected DASICS program count");
+_Static_assert(DASICS_INVOCATION_TOTAL == 22,
 	       "unexpected DASICS invocation count");
 
 static int run_test(const char *name, const char *path, const char *expect,

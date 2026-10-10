@@ -28,6 +28,8 @@ file /dasics/dasics-test-call-jr-returnpc-smoke ${DASICS_LINUX_BUILD_DIR}/tests/
 file /dasics/dasics-test-maincfg-toggle-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-maincfg-toggle-smoke 755 0 0
 file /dasics/dasics-test-jump-branch-target-permission-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-jump-branch-target-permission-smoke 755 0 0
 file /dasics/dasics-test-load-store-permission-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-load-store-permission-smoke 755 0 0
+file /dasics/dasics-test-ecall-fault-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-ecall-fault-smoke 755 0 0
+file /dasics/dasics-test-ecall-close-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-ecall-close-smoke 755 0 0
 file /dasics/dasics-test-dynamic-bound-free-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-dynamic-bound-free-smoke 755 0 0
 file /dasics/dasics-test-dynamic-bound-replacement-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-dynamic-bound-replacement-smoke 755 0 0
 file /dasics/dasics-test-context-section-load-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-context-section-load-smoke 755 0 0
