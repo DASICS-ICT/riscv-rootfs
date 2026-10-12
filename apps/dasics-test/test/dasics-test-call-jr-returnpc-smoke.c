@@ -28,7 +28,7 @@ static __attribute__((noinline, used)) unsigned long call_jr_returnpc_invoke(voi
         "addi sp, sp, -16\n"
         "sd ra, 8(sp)\n"
         "la a0, call_jr_returnpc_target\n"
-        ".word 0x0005108b\n"
+        ".word 0x000510fb\n"
         "1:\n"
         "la %0, 1b\n"
         "ld ra, 8(sp)\n"

@@ -41,7 +41,7 @@ static unsigned long invoke_untrusted_ecall_fault(void)
         "addi sp, sp, -16\n"
         "sd ra, 8(sp)\n"
         "la a0, untrusted_ecall_fault_entry\n"
-        ".word 0x0005108b\n"
+        ".word 0x000510fb\n"
         "mv %0, a0\n"
         "ld ra, 8(sp)\n"
         "addi sp, sp, 16\n"
