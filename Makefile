@@ -35,7 +35,7 @@ DASICS_LINUX_MAINCFG_BIN = \
 DASICS_LINUX_STRIP_ALL_BINS = \
 	$(filter-out $(DASICS_LINUX_MAINCFG_BIN),$(DASICS_LINUX_TEST_BINS))
 
-.PHONY: rootfsimg $(APPS_DIR) opensbi-linux-dasics clean
+.PHONY: rootfsimg $(APPS_DIR) opensbi-linux-dasics opensbi-linux-dasics-kernel-modules clean
 
 all: $(APPS_DIR)
 
@@ -58,6 +58,13 @@ opensbi-linux-dasics:
 		$(DASICS_LINUX_BUILD_DIR)/init \
 		$(DASICS_LINUX_STRIP_ALL_BINS)
 	$(DASICS_LINUX_STRIP) --strip-debug $(DASICS_LINUX_MAINCFG_BIN)
+
+opensbi-linux-dasics-kernel-modules:
+	$(MAKE) -C apps/dasics-kernel-test \
+		LINUX_SRC="$(LINUX_SRC)" LINUX_BUILD_DIR="$(LINUX_BUILD_DIR)" \
+		$(if $(DASICS_KERNEL_BUILD_DIR),BUILD_DIR="$(DASICS_KERNEL_BUILD_DIR)") \
+		$(if $(CROSS_COMPILE),CROSS_COMPILE="$(CROSS_COMPILE)") \
+		$(if $(JOBS),JOBS="$(JOBS)")
 
 $(APPS_DIR): %:
 	-$(MAKE) -s -C $@ install
