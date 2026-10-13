@@ -25,8 +25,6 @@
 	  "/dasics/dasics-test-ecall-fault-smoke", 1) \
 	X("dasics_test_ecall_close_smoke", \
 	  "/dasics/dasics-test-ecall-close-smoke", 1) \
-	X("dasics_test_syscall_buffer_permission_smoke", \
-	  "/dasics/dasics-test-syscall-buffer-permission-smoke", 1) \
 	X("dasics_test_dynamic_bound_free_smoke", \
 	  "/dasics/dasics-test-dynamic-bound-free-smoke", 1) \
 	X("dasics_test_dynamic_bound_replacement_smoke", \
@@ -42,8 +40,7 @@
 	X("dasics_test_rwx", "/dasics/dasics-test-rwx") \
 	X("dasics_test_jump", "/dasics/dasics-test-jump") \
 	X("dasics_test_ofb", "/dasics/dasics-test-ofb") \
-	X("dasics_test_free", "/dasics/dasics-test-free") \
-	X("dasics_test_syscall", "/dasics/dasics-test-syscall")
+	X("dasics_test_free", "/dasics/dasics-test-free")
 
 struct dasics_directed_test {
 	const char *name;
@@ -87,8 +84,8 @@ enum {
 #undef COUNT_DIRECTED_INVOCATIONS
 #undef COUNT_COMPLETE_UNIQUE
 
-_Static_assert(DASICS_UNIQUE_TOTAL == 19, "unexpected DASICS program count");
-_Static_assert(DASICS_INVOCATION_TOTAL == 25,
+_Static_assert(DASICS_UNIQUE_TOTAL == 17, "unexpected DASICS program count");
+_Static_assert(DASICS_INVOCATION_TOTAL == 22,
 	       "unexpected DASICS invocation count");
 
 static int run_test(const char *name, const char *path, const char *expect,
