@@ -14,7 +14,7 @@ insmod /modules/fdi_verify.ko trust=1 || fail validation-module
 echo FDI_UNIFIED_STARTUP result=PASS
 case "${1:-interactive}" in
     user)
-        if /dasics/suite; then
+        if /dasics/suite --all; then
             echo LINUX_DASICS_RESULT=PASS
         else
             echo LINUX_DASICS_RESULT=FAIL

@@ -13,4 +13,10 @@ DASICS_UNIFIED_TEST_NAMES := \
 	dasics-test-lifecycle \
 	dasics-test-utimer \
 	dasics-test-amo-permission-smoke \
-	dasics-test-cbo-permission-smoke
+	dasics-test-cbo-permission-smoke \
+	fdi-test-ofb \
+	fdi-test-jump \
+	fdi-test-cfi \
+	fdi-test-maincall \
+	fdi-test-finegrain \
+	fdi-test-flexibility

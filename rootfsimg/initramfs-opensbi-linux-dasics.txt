@@ -35,6 +35,12 @@ file /dasics/dasics-test-lifecycle ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-l
 file /dasics/dasics-test-utimer ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-utimer 755 0 0
 file /dasics/dasics-test-amo-permission-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-amo-permission-smoke 755 0 0
 file /dasics/dasics-test-cbo-permission-smoke ${DASICS_LINUX_BUILD_DIR}/tests/dasics-test-cbo-permission-smoke 755 0 0
+file /dasics/fdi-test-ofb ${DASICS_LINUX_BUILD_DIR}/tests/fdi-test-ofb 755 0 0
+file /dasics/fdi-test-jump ${DASICS_LINUX_BUILD_DIR}/tests/fdi-test-jump 755 0 0
+file /dasics/fdi-test-cfi ${DASICS_LINUX_BUILD_DIR}/tests/fdi-test-cfi 755 0 0
+file /dasics/fdi-test-maincall ${DASICS_LINUX_BUILD_DIR}/tests/fdi-test-maincall 755 0 0
+file /dasics/fdi-test-finegrain ${DASICS_LINUX_BUILD_DIR}/tests/fdi-test-finegrain 755 0 0
+file /dasics/fdi-test-flexibility ${DASICS_LINUX_BUILD_DIR}/tests/fdi-test-flexibility 755 0 0
 slink /dasics/dasics-explicit-optin-alias dasics-test-context-switch-isolation-smoke 777 0 0
 file /dasics/dasics-invalid-exec ${RISCV_ROOTFS_HOME}/rootfsimg/dasics-invalid-exec.txt 755 0 0
 

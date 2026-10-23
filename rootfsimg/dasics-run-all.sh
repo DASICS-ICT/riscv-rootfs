@@ -17,12 +17,12 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 echo DASICS_ALL_BEGIN
-if /dasics/suite; then
+# Restore module state before the user suite exercises the same kernel.
+/dasics/kernel-runner all --rounds=2 || exit $?
+if /dasics/suite --all; then
     echo LINUX_DASICS_RESULT=PASS
 else
     echo LINUX_DASICS_RESULT=FAIL
     exit 1
 fi
-# The user suite already includes both UTimer modes.
-/dasics/kernel-runner all --rounds=2 || exit $?
 echo DASICS_ALL_CLEANUP=PASS

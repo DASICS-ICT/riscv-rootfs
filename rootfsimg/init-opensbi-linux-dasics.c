@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#define FLEXIBILITY_FUNCTIONS 100
 
 struct dasics_test {
     const char *name;
@@ -44,7 +45,34 @@ static const struct dasics_test tests[] = {
     { "cbo", "on", { "/dasics/dasics-test-cbo-permission-smoke", "--isa-extended", "-dasics", NULL } },
 };
 
-_Static_assert(ARRAY_SIZE(tests) == 27, "unexpected unified invocation count");
+static const struct dasics_test demo_tests[] = {
+    { "demo-ofb-off", "off", { "/dasics/fdi-test-ofb", "--expect=off", NULL } },
+    { "demo-ofb-on", "on", { "/dasics/fdi-test-ofb", "--expect=on", "-dasics", NULL } },
+    { "demo-jump-off", "off", { "/dasics/fdi-test-jump", "--expect=off", NULL } },
+    { "demo-jump-on", "on", { "/dasics/fdi-test-jump", "--expect=on", "-dasics", NULL } },
+    { "demo-cfi-off", "off", { "/dasics/fdi-test-cfi", "--expect=off", NULL } },
+    { "demo-cfi-on", "on", { "/dasics/fdi-test-cfi", "--expect=on", "-dasics", NULL } },
+    { "demo-maincall-off", "off", { "/dasics/fdi-test-maincall", "--expect=off", NULL } },
+    { "demo-maincall-on", "on", { "/dasics/fdi-test-maincall", "--expect=on", "-dasics", NULL } },
+    { "demo-finegrain-off", "off", { "/dasics/fdi-test-finegrain", "--expect=off", NULL } },
+    { "demo-finegrain-on", "on", { "/dasics/fdi-test-finegrain", "--expect=on", "-dasics", NULL } },
+};
+
+static const char *const demo_modes[] = { "off", "on" };
+
+static unsigned long unique_programs(const struct dasics_test *cases, unsigned long count)
+{
+    unsigned long total = 0;
+    for (unsigned long i = 0; i < count; i++) {
+        unsigned long j;
+        for (j = 0; j < i; j++)
+            if (!strcmp(cases[i].argv[0], cases[j].argv[0]))
+                break;
+        if (j == i)
+            total++;
+    }
+    return total;
+}
 
 static int run_test(const struct dasics_test *test, unsigned long invocation)
 {
@@ -86,16 +114,56 @@ static int run_test(const struct dasics_test *test, unsigned long invocation)
     return 1;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     unsigned long failures = 0;
+    unsigned long invocation = 0;
+    unsigned long total = 0, programs = 0;
+    int with_basic = 1, with_demos = 0;
+    if (argc == 2 && !strcmp(argv[1], "--all")) {
+        with_demos = 1;
+    } else if (argc == 2 && !strcmp(argv[1], "--demos")) {
+        with_basic = 0;
+        with_demos = 1;
+    } else if (argc != 1) {
+        fprintf(stderr, "Usage: %s [--all|--demos]\n", argv[0]);
+        return 2;
+    }
+    if (with_basic) {
+        total += ARRAY_SIZE(tests);
+        programs += unique_programs(tests, ARRAY_SIZE(tests));
+    }
+    if (with_demos) {
+        total += ARRAY_SIZE(demo_tests) + FLEXIBILITY_FUNCTIONS * ARRAY_SIZE(demo_modes);
+        programs += unique_programs(demo_tests, ARRAY_SIZE(demo_tests)) + 1;
+    }
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
-    printf("DASICS_LINUX_SUITE_BEGIN version=3 unique_total=14 invocations=27\n");
-    for (unsigned long i = 0; i < ARRAY_SIZE(tests); i++)
-        failures += run_test(&tests[i], i + 1);
-    printf("DASICS_LINUX_SUITE_SUMMARY version=3 unique_total=14 "
-           "invocations=%lu failed=%lu result=%s\n", (unsigned long)ARRAY_SIZE(tests),
+    printf("DASICS_LINUX_SUITE_BEGIN version=%u unique_total=%lu invocations=%lu\n",
+           with_demos ? 4 : 3, programs, total);
+    if (with_basic)
+        for (unsigned long i = 0; i < ARRAY_SIZE(tests); i++)
+            failures += run_test(&tests[i], ++invocation);
+    if (with_demos) {
+        for (unsigned long i = 0; i < ARRAY_SIZE(demo_tests); i++)
+            failures += run_test(&demo_tests[i], ++invocation);
+        for (unsigned long function = 0; function < FLEXIBILITY_FUNCTIONS; function++) {
+            for (unsigned long mode = 0; mode < ARRAY_SIZE(demo_modes); mode++) {
+                char name[64], expectation[16], selection[32];
+                snprintf(name, sizeof(name), "demo-flexibility-%lu-%s", function, demo_modes[mode]);
+                snprintf(expectation, sizeof(expectation), "--expect=%s", demo_modes[mode]);
+                snprintf(selection, sizeof(selection), "--function=%lu", function);
+                /* A new process owns each function's bounds and exception records. */
+                const struct dasics_test test = {
+                    name, demo_modes[mode], { "/dasics/fdi-test-flexibility", expectation,
+                        selection, mode ? "-dasics" : NULL, NULL }
+                };
+                failures += run_test(&test, ++invocation);
+            }
+        }
+    }
+    printf("DASICS_LINUX_SUITE_SUMMARY version=%u unique_total=%lu "
+           "invocations=%lu failed=%lu result=%s\n", with_demos ? 4 : 3, programs, invocation,
            failures, failures ? "FAIL" : "PASS");
     return failures ? 1 : 0;
 }
