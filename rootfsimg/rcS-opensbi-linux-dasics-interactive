@@ -1,6 +1,2 @@
 #!/bin/sh
-export PATH=/bin:/sbin:/usr/bin:/dasics
-mount -t proc proc /proc
-mount -t sysfs sysfs /sys
-mount -t tmpfs tmpfs /tmp
-echo DASICS_INTERACTIVE_SHELL_READY
+exec /dasics/startup interactive

@@ -1,5 +1,8 @@
 APP_DIR ?= $(shell pwd)
 DST_DIR ?= $(APP_DIR)/build
+DASICS_LINUX_DUAL_EXEC ?= 0
+
+include $(APP_DIR)/unified.mk
 
 TEST_DIR = $(APP_DIR)/test
 LIBS_DIR = $(APP_DIR)/lib
@@ -24,39 +27,23 @@ DASICS_STANDALONE_APP = $(DST_DIR)/dasics-test-csr-smoke \
 	   $(DST_DIR)/dasics-test-context-switch-isolation-smoke \
 	   $(DST_DIR)/dasics-test-returnpc-trap-preserve-smoke \
 	   $(DST_DIR)/dasics-test-maincfg-toggle-smoke
+ifeq ($(DASICS_LINUX_DUAL_EXEC),1)
+# S-only firmware keeps its existing probes and output contracts. Linux uses
+# the consolidated suite instead of rebuilding overlapping legacy probes.
+DASICS_LIB_APP =
+DASICS_STANDALONE_APP = $(addprefix $(DST_DIR)/,$(DASICS_UNIFIED_TEST_NAMES))
+endif
 override APP = $(DASICS_LIB_APP) $(DASICS_STANDALONE_APP)
 
 include $(RISCV_ROOTFS_HOME)/Makefile.app
-
-SRCS = $(TEST_DIR)/dasics-test-free.c \
-	   $(TEST_DIR)/dasics-test-jump.c \
-	   $(TEST_DIR)/dasics-test-ofb.c \
-	   $(TEST_DIR)/dasics-test-rwx.c \
-	   $(TEST_DIR)/dasics-test-syscall.c \
-	   $(TEST_DIR)/dasics-test-csr-smoke.c \
-	   $(TEST_DIR)/dasics-test-csr-mask-ops-smoke.c \
-	   $(TEST_DIR)/dasics-test-call-jr-returnpc-smoke.c \
-	   $(TEST_DIR)/dasics-test-jump-branch-target-permission-smoke.c \
-	   $(TEST_DIR)/dasics-test-load-store-permission-smoke.c \
-	   $(TEST_DIR)/dasics-test-ecall-fault-smoke.c \
-	   $(TEST_DIR)/dasics-test-ecall-close-smoke.c \
-	   $(TEST_DIR)/dasics-test-dynamic-bound-free-smoke.c \
-	   $(TEST_DIR)/dasics-test-dynamic-bound-replacement-smoke.c \
-	   $(TEST_DIR)/dasics-test-syscall-buffer-permission-smoke.c \
-	   $(TEST_DIR)/dasics-test-context-section-load-smoke.c \
-	   $(TEST_DIR)/dasics-test-context-switch-isolation-smoke.c \
-	   $(TEST_DIR)/dasics-test-returnpc-trap-preserve-smoke.c \
-	   $(TEST_DIR)/dasics-test-maincfg-toggle-smoke.c \
-	   $(DST_DIR)/dasics-test-spectre.c \
-	   $(LIBS_DIR)/udasics.c \
-	   $(LIBS_DIR)/dasics_entry.S \
-	   $(LIBS_DIR)/dasics_call.S
 
 LIBS = lib/udasics.c \
 	   lib/dasics_entry.S \
 	   lib/dasics_call.S
 ifeq ($(DASICS_N_EXTENSION_PROFILE),1)
+ifneq ($(DASICS_LINUX_DUAL_EXEC),1)
 DASICS_STANDALONE_APP += $(DST_DIR)/dasics-test-utimer
+endif
 $(DST_DIR)/dasics-test-utimer.o: $(TEST_DIR)/dasics-test-utimer.c
 	mkdir -p $(dir $@)
 	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -pthread -c -o $@ $<
@@ -66,7 +53,6 @@ endif
 # cross compile
 CROSS_COMPILE = riscv64-unknown-elf-
 DASICS_STANDALONE_CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
-DASICS_LINUX_DUAL_EXEC ?= 0
 ifeq ($(DASICS_LINUX_DUAL_EXEC),1)
 CROSS_COMPILE = $(DASICS_STANDALONE_CROSS_COMPILE)
 endif
@@ -79,7 +65,7 @@ STANDALONE_CC = $(DASICS_STANDALONE_CROSS_COMPILE)gcc
 STANDALONE_LD = $(DASICS_STANDALONE_CROSS_COMPILE)gcc
 
 # compile option
-# Note: gcc -O2 option and RVC will cause 
+# Note: gcc -O2 option and RVC will cause
 # some unexpected compilation results.
 
 INCLUDES  = $(addprefix -I, ${INC_DIR})
@@ -90,6 +76,8 @@ CXXFLAGS += -O0 -march=rv64imad -mabi=lp64d -MMD $(INCLUDES) -g -static
 LDFLAGS  += -march=rv64imad -mabi=lp64d -static
 DASICS_S_TRAP_ONLY ?= 1
 DASICS_N_EXTENSION_PROFILE ?= 0
+DASICS_VALIDATION_PROFILE ?= 0
+FDI_LINUX_UAPI_DIR ?= $(RISCV_ROOTFS_HOME)/../linux/include/uapi
 DASICS_PROFILE_CFLAGS :=
 ifeq ($(filter 0 1,$(strip $(DASICS_S_TRAP_ONLY))),)
 $(error DASICS_S_TRAP_ONLY must be 0 or 1)
@@ -108,6 +96,9 @@ ifeq ($(strip $(DASICS_S_TRAP_ONLY)),1)
 DASICS_PROFILE_CFLAGS += -DDASICS_S_TRAP_ONLY
 endif
 CFLAGS += $(DASICS_PROFILE_CFLAGS)
+ifeq ($(DASICS_VALIDATION_PROFILE),1)
+DASICS_PROFILE_CFLAGS += -DDASICS_VALIDATION_PROFILE=1 -iquote $(FDI_LINUX_UAPI_DIR)
+endif
 STANDALONE_CFLAGS  = -O0 -march=rv64imad -mabi=lp64d -mno-relax -msmall-data-limit=0 -MMD $(INCLUDES) -g -static -DDASICS_LINUX_DUAL_EXEC=$(DASICS_LINUX_DUAL_EXEC)
 STANDALONE_LDFLAGS = -march=rv64imad -mabi=lp64d -static -Wl,--no-relax
 
@@ -125,19 +116,20 @@ STANDALONE_LIBOBJS = $(addprefix $(DST_DIR)/standalone-lib/, $(addsuffix .o, $(b
 endif
 
 # Compilation patterns
-$(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c 
-	echo + CC $^
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $<
-$(DST_DIR)/dasics-test-csr-smoke.o $(DST_DIR)/dasics-test-csr-mask-ops-smoke.o $(DST_DIR)/dasics-test-call-jr-returnpc-smoke.o $(DST_DIR)/dasics-test-jump-branch-target-permission-smoke.o $(DST_DIR)/dasics-test-load-store-permission-smoke.o $(DST_DIR)/dasics-test-ecall-fault-smoke.o $(DST_DIR)/dasics-test-ecall-close-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-free-smoke.o $(DST_DIR)/dasics-test-dynamic-bound-replacement-smoke.o $(DST_DIR)/dasics-test-syscall-buffer-permission-smoke.o $(DST_DIR)/dasics-test-context-section-load-smoke.o $(DST_DIR)/dasics-test-context-switch-isolation-smoke.o $(DST_DIR)/dasics-test-returnpc-trap-preserve-smoke.o $(DST_DIR)/dasics-test-maincfg-toggle-smoke.o: $(DST_DIR)/%.o: $(TEST_DIR)/%.c
+$(filter-out $(DST_DIR)/dasics-test-utimer.o,$(DASICS_STANDALONE_APP:%=%.o)): $(DST_DIR)/%.o: $(TEST_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(STANDALONE_CC) $(STANDALONE_CFLAGS) -c -o $@ $<
-$(DST_DIR)/%.o: $(TEST_DIR)/%.c 
+
+$(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.c
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
-$(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.S   
+$(DST_DIR)/%.o: $(TEST_DIR)/%.c
+	echo + CC $^
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(DST_DIR)/lib/%.o: $(LIBS_DIR)/%.S
 	echo + CC $^
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<

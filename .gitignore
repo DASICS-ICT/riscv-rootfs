@@ -17,3 +17,5 @@ build/
 
 !rootfsimg/inittab-opensbi-linux-dasics
 !rootfsimg/rcS-opensbi-linux-dasics
+!rootfsimg/rcS-opensbi-linux-dasics-unified
+!apps/dasics-test/unified.mk

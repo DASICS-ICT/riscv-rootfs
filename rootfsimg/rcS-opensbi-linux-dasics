@@ -1,18 +1,2 @@
 #!/bin/sh
-export PATH=/bin:/sbin:/usr/bin:/dasics
-mount -t proc proc /proc
-mount -t sysfs sysfs /sys
-mount -t tmpfs tmpfs /tmp
-if /dasics/suite; then
-    echo LINUX_DASICS_RESULT=PASS
-else
-    echo LINUX_DASICS_RESULT=FAIL
-fi
-if [ -x /dasics/dasics-test-utimer ]; then
-    if /dasics/dasics-test-utimer --expect=off && /dasics/dasics-test-utimer --expect=on -dasics; then
-        echo LINUX_UTIMER_RESULT=PASS
-    else
-        echo LINUX_UTIMER_RESULT=FAIL
-    fi
-fi
-echo DASICS_INTERACTIVE_SHELL_READY
+exec /dasics/startup user

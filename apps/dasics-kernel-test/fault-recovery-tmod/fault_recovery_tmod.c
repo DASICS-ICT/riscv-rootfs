@@ -103,7 +103,10 @@ static int __init fault_recovery_tmod_init(void)
 	ret = fault_recovery_run_fault(fault_recovery_fault_store, (unsigned long)&fault_recovery_value,
 			   (unsigned long)&fault_recovery_after, DASICS_FAULT_STORE,
 			   -EFAULT, &parent);
-	if (ret || fault_recovery_value != original)
+	/* A recovered trap must not hide a forbidden memory side effect. */
+	if (!ret && fault_recovery_value != original)
+		ret = -EIO;
+	if (ret)
 		goto out;
 	pr_info("[DASICS-FAULT-RECOVERY]: PASS out-of-bounds write unwound\n");
 
@@ -111,7 +114,9 @@ static int __init fault_recovery_tmod_init(void)
 			   (unsigned long)fault_recovery_forbidden_target,
 			   (unsigned long)&fault_recovery_after, DASICS_FAULT_JUMP,
 			   -EPERM, &parent);
-	if (ret || fault_recovery_value != original)
+	if (!ret && fault_recovery_value != original)
+		ret = -EIO;
+	if (ret)
 		goto out;
 	pr_info("[DASICS-FAULT-RECOVERY]: PASS illegal jump unwound\n");
 

@@ -1,21 +1,31 @@
-Linux DASICS exec opt-in / N user traps
+FDI Linux validation
 
-/dasics/dasics-test-ofb --expect=off
-/dasics/dasics-test-ofb --expect=on -dasics
-/dasics/dasics-test-rwx --expect=off
-/dasics/dasics-test-rwx --expect=on -dasics
+The unified suite contains 14 programs with 27 invocations. Run /dasics/suite
+for the user suite, /dasics/kernel-runner for the three kernel suites, or
+/dasics/run-all for both. Kernel suites require their six modules in /modules.
+The startup script loads the trusted fdi_verify observer before these tests.
 
-Linux consumes the exact trailing -dasics argument. --expect only checks the
-result. No basename selection or application-controlled UENA switching.
-Protected faults print N CSRs, recovery PC and x0..x31, and resume with uret.
-The suite runs once at boot; the console remains available afterwards.
-This profile runs 17 DASICS programs in 22 invocations, plus 28 UTimer cases
-when UTimer is enabled. ECALL fault and CUET-close tests are included;
-AMO and CBO tests are excluded. MainCfg covers load, store and jump only.
+Programs and coverage:
+  dasics-test-validation-smoke             observer ABI and privilege controls
+  dasics-test-csr-unified                  user CSR banks, masks and operations
+  dasics-test-fdicall-unified              direct/indirect call encoding and ReturnPC
+  dasics-test-control-flow-unified         jump permissions and trusted destinations
+  dasics-test-memory-isa                   access widths, bounds, permissions and slots
+  dasics-test-memory-library               library-managed memory permissions
+  dasics-test-dynamic-unified              allocation, replacement and permission removal
+  dasics-test-ecall-unified                user ECALL isolation and controlled service
+  dasics-test-maincfg-toggle-smoke         MainCfg controls and restore
+  dasics-test-context-switch-isolation-smoke  fork, exec and context isolation
+  dasics-test-lifecycle                    exit followed by exec state isolation
+  dasics-test-utimer                       user timer and context isolation
+  dasics-test-amo-permission-smoke          LR, SC and AMO permissions
+  dasics-test-cbo-permission-smoke          cache-block operation permissions
 
-For manual startup, use rootfsimg/rcS-opensbi-linux-dasics-interactive as the
-/etc/init.d/rcS source in the generated initramfs list. Run /dasics/suite for
-all DASICS tests, or /dasics/dasics-test-ecall-close-smoke -dasics for one test.
-Run /dasics/dasics-test-utimer --expect=off and
-/dasics/dasics-test-utimer --expect=on -dasics for UTimer when it is included.
-Use ls, cat, find, ps, top, and Tab completion in the BusyBox shell.
+Single-case examples:
+  /dasics/dasics-test-csr-unified -dasics
+  /dasics/dasics-test-memory-isa --width=64 --scenario=matrix -dasics
+  /dasics/dasics-test-utimer --expect=on --isa-extended -dasics
+  /dasics/kernel-runner fault-recovery --rounds=2
+
+The kernel runner refuses occupied modules and unloads only its own modules.
+Exit status and emitted assertions describe the current invocation.

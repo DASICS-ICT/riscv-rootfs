@@ -1,0 +1,28 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/dasics
+fail()
+{
+    echo "FDI_UNIFIED_STARTUP result=FAIL stage=$1"
+    exit 1
+}
+mount -t devtmpfs devtmpfs /dev || fail devtmpfs
+mount -t proc proc /proc || fail proc
+mount -t sysfs sysfs /sys || fail sysfs
+mount -t tmpfs tmpfs /tmp || fail tmpfs
+insmod /modules/fdi_verify.ko trust=1 || fail validation-module
+[ -c /dev/fdi-verify ] || fail validation-device
+echo FDI_UNIFIED_STARTUP result=PASS
+case "${1:-interactive}" in
+    user)
+        if /dasics/suite; then
+            echo LINUX_DASICS_RESULT=PASS
+        else
+            echo LINUX_DASICS_RESULT=FAIL
+            exit 1
+        fi
+        ;;
+    interactive) ;;
+    auto) /dasics/run-all || exit $? ;;
+    *) fail invalid-mode ;;
+esac
+echo DASICS_INTERACTIVE_SHELL_READY
