@@ -2,29 +2,79 @@
 set -eu
 umask 077
 
-[ "$#" -eq 2 ] || exit 2
+[ "$#" -eq $((2 + @PAIRED@)) ] || exit 2
 program=$1
 runid=$2
+mode=${3-}
+mode_record=
+work_prefix=/spec/work
+if [ @PAIRED@ -eq 1 ]; then
+    case "$mode" in ordinary|fdi|diagnostic) ;; *) exit 2 ;; esac
+    mode_record=" mode=$mode"
+    work_prefix="$work_prefix/$mode"
+fi
 case "$program" in @PROGRAMS@) ;; *) exit 2 ;; esac
+if [ "$mode" = diagnostic ]; then
+    case "$program" in @DIAGNOSTIC_PROGRAMS@) ;; *) exit 2 ;; esac
+fi
+case "$program" in
+@COUNTS@
+esac
 case "$runid" in *[!0-9a-f]*|'') exit 2 ;; esac
 [ "${#runid}" -eq 32 ] || exit 2
 
 # A reused nonce must never overwrite previous execution evidence.
-mkdir -p "/spec/work/$program"
-work="/spec/work/$program/$runid"
+mkdir -p "$work_prefix/$program"
+work="$work_prefix/$program/$runid"
 mkdir "$work"
 cp -a "/spec/inputs/$program/." "$work/"
 cd "$work"
 
 complete_fail()
 {
-    printf 'SPEC_TRAIN_COMPLETE schema=1 program=%s runid=%s status=FAIL outputs=%s archive=%s\n' \
-        "$program" "$runid" "$output_count" "$archive"
+    printf 'SPEC_TRAIN_COMPLETE schema=1 program=%s runid=%s%s status=FAIL outputs=%s archive=%s\n' \
+        "$program" "$runid" "$mode_record" "$output_count" "$archive"
 }
 output_count=0
 archive=0
+runner_status=0
 trap complete_fail EXIT
-/spec/runner "$program" "$runid"
+if [ @PAIRED@ -eq 1 ]; then
+    executable="/spec/bin/$mode/$program"
+    [ -f "$executable" ] && [ ! -L "$executable" ] && [ -x "$executable" ]
+    size=$(wc -c < "$executable" | tr -d '[:space:]')
+    digest=$(sha256sum "$executable")
+    digest=${digest%% *}
+    printf 'SPEC_TRAIN_EXECUTABLE schema=1 program=%s runid=%s%s size=%s sha256=%s\n' \
+        "$program" "$runid" "$mode_record" "$size" "$digest"
+    /spec/runner "$program" "$runid" "$mode" || runner_status=$?
+else
+    /spec/runner "$program" "$runid" || runner_status=$?
+fi
+
+if [ "$mode" = fdi ] || [ "$mode" = diagnostic ]; then
+    runtime_limit=4096
+    [ "$mode" != diagnostic ] || runtime_limit=131072
+    index=1
+    while [ "$index" -le "$call_count" ]; do
+        runtime=$(printf 'runtime-%03d.log' "$index")
+        if [ "$runner_status" -ne 0 ] && [ ! -f "$runtime" ]; then
+            break
+        fi
+        [ -f "$runtime" ] && [ ! -L "$runtime" ]
+        size=$(wc -c < "$runtime" | tr -d '[:space:]')
+        [ "$size" -gt 0 ] && [ "$size" -le "$runtime_limit" ]
+        digest=$(sha256sum "$runtime")
+        digest=${digest%% *}
+        printf 'SPEC_TRAIN_RUNTIME_BEGIN schema=1 program=%s runid=%s%s index=%s bytes=%s sha256=%s\n' \
+            "$program" "$runid" "$mode_record" "$index" "$size" "$digest"
+        base64 "$runtime"
+        printf 'SPEC_TRAIN_RUNTIME_END schema=1 program=%s runid=%s%s index=%s bytes=%s sha256=%s\n' \
+            "$program" "$runid" "$mode_record" "$index" "$size" "$digest"
+        index=$((index + 1))
+    done
+fi
+[ "$runner_status" -eq 0 ] || exit "$runner_status"
 
 tab=$(printf '\t')
 while IFS="$tab" read -r index kind path; do
@@ -32,8 +82,8 @@ while IFS="$tab" read -r index kind path; do
     size=$(wc -c < "$path" | tr -d '[:space:]')
     digest=$(sha256sum "$path")
     digest=${digest%% *}
-    printf 'SPEC_TRAIN_FILE schema=1 program=%s runid=%s index=%s size=%s sha256=%s\n' \
-        "$program" "$runid" "$index" "$size" "$digest"
+    printf 'SPEC_TRAIN_FILE schema=1 program=%s runid=%s%s index=%s size=%s sha256=%s\n' \
+        "$program" "$runid" "$mode_record" "$index" "$size" "$digest"
     output_count=$((output_count + 1))
 done < "/spec/outputs/$program.list"
 
@@ -43,14 +93,14 @@ if [ -s "/spec/outputs/$program.specdiff.list" ]; then
     size=$(wc -c < "$work/specdiff.tar.gz" | tr -d '[:space:]')
     digest=$(sha256sum "$work/specdiff.tar.gz")
     digest=${digest%% *}
-    printf 'SPEC_TRAIN_ARCHIVE_BEGIN schema=1 program=%s runid=%s bytes=%s sha256=%s\n' \
-        "$program" "$runid" "$size" "$digest"
+    printf 'SPEC_TRAIN_ARCHIVE_BEGIN schema=1 program=%s runid=%s%s bytes=%s sha256=%s\n' \
+        "$program" "$runid" "$mode_record" "$size" "$digest"
     base64 "$work/specdiff.tar.gz"
-    printf 'SPEC_TRAIN_ARCHIVE_END schema=1 program=%s runid=%s bytes=%s sha256=%s\n' \
-        "$program" "$runid" "$size" "$digest"
+    printf 'SPEC_TRAIN_ARCHIVE_END schema=1 program=%s runid=%s%s bytes=%s sha256=%s\n' \
+        "$program" "$runid" "$mode_record" "$size" "$digest"
     archive=1
 fi
 
 trap - EXIT
-printf 'SPEC_TRAIN_COMPLETE schema=1 program=%s runid=%s status=OK outputs=%s archive=%s\n' \
-    "$program" "$runid" "$output_count" "$archive"
+printf 'SPEC_TRAIN_COMPLETE schema=1 program=%s runid=%s%s status=OK outputs=%s archive=%s\n' \
+    "$program" "$runid" "$mode_record" "$output_count" "$archive"
