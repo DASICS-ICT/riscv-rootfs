@@ -1,0 +1,56 @@
+#!/bin/sh
+set -eu
+umask 077
+
+[ "$#" -eq 2 ] || exit 2
+program=$1
+runid=$2
+case "$program" in @PROGRAMS@) ;; *) exit 2 ;; esac
+case "$runid" in *[!0-9a-f]*|'') exit 2 ;; esac
+[ "${#runid}" -eq 32 ] || exit 2
+
+# A reused nonce must never overwrite previous execution evidence.
+mkdir -p "/spec/work/$program"
+work="/spec/work/$program/$runid"
+mkdir "$work"
+cp -a "/spec/inputs/$program/." "$work/"
+cd "$work"
+
+complete_fail()
+{
+    printf 'SPEC_TRAIN_COMPLETE schema=1 program=%s runid=%s status=FAIL outputs=%s archive=%s\n' \
+        "$program" "$runid" "$output_count" "$archive"
+}
+output_count=0
+archive=0
+trap complete_fail EXIT
+/spec/runner "$program" "$runid"
+
+tab=$(printf '\t')
+while IFS="$tab" read -r index kind path; do
+    [ -f "$path" ] && [ ! -L "$path" ]
+    size=$(wc -c < "$path" | tr -d '[:space:]')
+    digest=$(sha256sum "$path")
+    digest=${digest%% *}
+    printf 'SPEC_TRAIN_FILE schema=1 program=%s runid=%s index=%s size=%s sha256=%s\n' \
+        "$program" "$runid" "$index" "$size" "$digest"
+    output_count=$((output_count + 1))
+done < "/spec/outputs/$program.list"
+
+if [ -s "/spec/outputs/$program.specdiff.list" ]; then
+    # Compression and transport occur after the final timed child has exited.
+    tar -czf "$work/specdiff.tar.gz" -T "/spec/outputs/$program.specdiff.list"
+    size=$(wc -c < "$work/specdiff.tar.gz" | tr -d '[:space:]')
+    digest=$(sha256sum "$work/specdiff.tar.gz")
+    digest=${digest%% *}
+    printf 'SPEC_TRAIN_ARCHIVE_BEGIN schema=1 program=%s runid=%s bytes=%s sha256=%s\n' \
+        "$program" "$runid" "$size" "$digest"
+    base64 "$work/specdiff.tar.gz"
+    printf 'SPEC_TRAIN_ARCHIVE_END schema=1 program=%s runid=%s bytes=%s sha256=%s\n' \
+        "$program" "$runid" "$size" "$digest"
+    archive=1
+fi
+
+trap - EXIT
+printf 'SPEC_TRAIN_COMPLETE schema=1 program=%s runid=%s status=OK outputs=%s archive=%s\n' \
+    "$program" "$runid" "$output_count" "$archive"

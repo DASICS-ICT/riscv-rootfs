@@ -19,3 +19,4 @@ build/
 !rootfsimg/rcS-opensbi-linux-dasics
 !rootfsimg/rcS-opensbi-linux-dasics-unified
 !apps/dasics-test/unified.mk
+!apps/spec2006/run.in
